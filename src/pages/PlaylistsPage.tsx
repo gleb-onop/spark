@@ -3,23 +3,15 @@ import { Link } from 'react-router-dom';
 import { storage } from '../utils/storage';
 import type { Playlist, Video } from '../types';
 import ShelfCard from '../components/ShelfCard.tsx';
-import CreatePlaylistModal from '../components/CreatePlaylistModal.tsx';
 
 const PlaylistsPage = () => {
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
     const [videos, setVideos] = useState<Video[]>([]);
-    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         setPlaylists(storage.getPlaylists());
         setVideos(storage.getVideos());
     }, []);
-
-    const handleCreatePlaylist = (name: string) => {
-        storage.addPlaylist(name);
-        setPlaylists(storage.getPlaylists());
-        setIsModalOpen(false);
-    };
 
     if (playlists.length === 0) {
         return (
@@ -29,17 +21,12 @@ const PlaylistsPage = () => {
                 <p className="text-inactive text-sm mb-8">
                     Создайте первый и добавьте видео
                 </p>
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="w-full p-4 bg-transparent border-2 border-dashed border-gray-300 dark:border-white/20 rounded-xl text-inherit font-semibold cursor-pointer hover:border-accent hover:text-accent transition-colors"
+                <Link
+                    to="/add"
+                    className="w-full p-4 bg-transparent border-2 border-dashed border-gray-300 dark:border-white/20 rounded-xl text-inherit font-semibold cursor-pointer hover:border-accent hover:text-accent transition-colors no-underline text-center"
                 >
                     Создать плейлист
-                </button>
-                <CreatePlaylistModal
-                    isOpen={isModalOpen}
-                    onClose={() => setIsModalOpen(false)}
-                    onCreate={handleCreatePlaylist}
-                />
+                </Link>
             </div>
         );
     }
@@ -76,18 +63,12 @@ const PlaylistsPage = () => {
                 );
             })}
 
-            <button
-                onClick={() => setIsModalOpen(true)}
-                className="w-full p-4 bg-transparent border border-dashed border-gray-300 dark:border-white/20 rounded-xl text-inherit font-semibold mt-5 cursor-pointer hover:border-accent hover:text-accent transition-colors"
+            <Link
+                to="/add"
+                className="block w-full p-4 bg-transparent border border-dashed border-gray-300 dark:border-white/20 rounded-xl text-inherit font-semibold mt-5 cursor-pointer hover:border-accent hover:text-accent transition-colors no-underline text-center"
             >
                 Создать плейлист
-            </button>
-
-            <CreatePlaylistModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                onCreate={handleCreatePlaylist}
-            />
+            </Link>
         </div>
     );
 };

@@ -86,5 +86,28 @@ export const storage = {
             return p;
         });
         storage.savePlaylists(updatedPlaylists);
+    },
+
+    addPlaylistWithVideo: (playlistName: string, videoData: Omit<Video, 'uuid' | 'createdAt'>): { playlist: Playlist; video: Video } => {
+        const newPlaylist = storage.addPlaylist(playlistName);
+
+        const videos = storage.getVideos();
+        const newVideo: Video = {
+            ...videoData,
+            uuid: crypto.randomUUID(),
+            createdAt: Date.now(),
+        };
+        storage.saveVideos([...videos, newVideo]);
+
+        const playlists = storage.getPlaylists();
+        const updatedPlaylists = playlists.map(p => {
+            if (p.uuid === newPlaylist.uuid) {
+                return { ...p, videoIds: [newVideo.uuid] };
+            }
+            return p;
+        });
+        storage.savePlaylists(updatedPlaylists);
+
+        return { playlist: newPlaylist, video: newVideo };
     }
 };
