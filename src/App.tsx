@@ -1,35 +1,32 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Header from './components/Header';
+import TabBar from './components/TabBar';
+import PlaylistsPage from './pages/PlaylistsPage';
+import PlaylistDetailsPage from './pages/PlaylistDetailsPage';
+import VideoPage from './pages/VideoPage';
+import AddPage from './pages/AddPage';
+import EditPage from './pages/EditPage';
+import './index.css';
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <BrowserRouter>
+      <div className="max-w-[390px] mx-auto min-h-screen relative flex flex-col">
+        <Header />
+        <main className="flex-1 pb-20">
+          <Routes>
+            <Route path="/" element={<Navigate to="/playlists" replace />} />
+            <Route path="/playlists" element={<PlaylistsPage />} />
+            <Route path="/playlist/:playlistId" element={<PlaylistDetailsPage />} />
+            <Route path="/video/:videoId" element={<VideoPage />} />
+            <Route path="/add" element={<AddPage />} />
+            <Route path="/edit/:videoId" element={<EditPage />} />
+          </Routes>
+        </main>
+        <TabBar />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
