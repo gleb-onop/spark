@@ -182,26 +182,29 @@ mute: 1  // обязательно для autoplay в браузере
 
 **Зацикливание фрагмента:**
 
-Если заданы `timeStart` и `timeEnd` — запускается `loopInterval = setInterval(checkLoop, 200)`.
+Если заданы `timeStart` и `timeEnd` — используется `requestAnimationFrame` для отслеживания позиции воспроизведения. Цикл автоматически управляется через `onStateChange`:
+
+- `PLAYING` → запускается `requestAnimationFrame`-loop
+- `PAUSED / BUFFERING / ENDED` → loop останавливается через `cancelAnimationFrame`
 
 ```
-function parseTime(str):  // "m:ss" → секунды
-  [m, s] = str.split(":")
-  return m * 60 + s
-
-function checkLoop():
+function tick():
   current = player.getCurrentTime()
-  if current >= parseTime(timeEnd) - 0.15:
-    player.seekTo(parseTime(timeStart), true)
+  if current >= endSec - 0.1:
+    player.seekTo(startSec, true)
+  rafId = requestAnimationFrame(tick)
 ```
 
-Порог `−0.15s` — упреждение для сглаживания скачка при перемотке.
+Преимущества перед `setInterval`:
+- Не тратит ресурсы когда видео на паузе
+- Работает на частоте обновления экрана (~60fps) для точного определения границы
+- Корректно очищается через `cancelAnimationFrame`
 
-Если `timeStart`/`timeEnd` не заданы — зацикливание через `loop: 1, playlist: youtubeId`.
+Если `timeStart`/`timeEnd` не заданы — зацикливание через `onStateChange: ENDED → playVideo()`.
 
 **Очистка:**
 
-`clearInterval(loopInterval)` при анмаунте компонента.
+`cancelAnimationFrame(rafId)` + `player.destroy()` при анмаунте компонента.
 
 **Состояния плеера:**
 

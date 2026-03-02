@@ -17,7 +17,7 @@ const VideoPage = () => {
     const [isExpanded, setIsExpanded] = useState(false);
     const playerRef = useRef<any>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const loopIntervalRef = useRef<number | null>(null);
+    const rafIdRef = useRef<number | null>(null);
 
     useEffect(() => {
         if (!videoId) return;
@@ -33,18 +33,39 @@ const VideoPage = () => {
     useEffect(() => {
         if (!video) return;
 
+        const parseTime = (str: string | null) => {
+            if (!str) return 0;
+            const [m, s] = str.split(':').map(Number);
+            return m * 60 + s;
+        };
+
+        const startSec = parseTime(video.timeStart);
+        const endSec = parseTime(video.timeEnd);
+        const hasFragment = !!(video.timeStart && video.timeEnd);
+
+        const stopLoop = () => {
+            if (rafIdRef.current !== null) {
+                cancelAnimationFrame(rafIdRef.current);
+                rafIdRef.current = null;
+            }
+        };
+
+        const startLoop = (player: any) => {
+            stopLoop();
+            const tick = () => {
+                const currentTime = player.getCurrentTime();
+                if (currentTime >= endSec - 0.1) {
+                    player.seekTo(startSec, true);
+                }
+                rafIdRef.current = requestAnimationFrame(tick);
+            };
+            rafIdRef.current = requestAnimationFrame(tick);
+        };
+
         const loadVideo = () => {
             if (playerRef.current) {
                 playerRef.current.destroy();
             }
-
-            const parseTime = (str: string | null) => {
-                if (!str) return 0;
-                const [m, s] = str.split(':').map(Number);
-                return m * 60 + s;
-            };
-
-            const timeStart = parseTime(video.timeStart);
 
             playerRef.current = new window.YT.Player('youtube-player', {
                 videoId: video.youtubeId,
@@ -56,28 +77,25 @@ const VideoPage = () => {
                     showinfo: 0,
                     iv_load_policy: 3,
                     mute: 1,
-                    start: timeStart || 0,
+                    start: startSec || 0,
                 },
                 events: {
                     onReady: (event: any) => {
                         event.target.playVideo();
-                        if (video.timeStart && video.timeEnd) {
-                            const startSec = parseTime(video.timeStart);
-                            const endSec = parseTime(video.timeEnd);
-
-                            if (loopIntervalRef.current) clearInterval(loopIntervalRef.current);
-
-                            loopIntervalRef.current = window.setInterval(() => {
-                                const currentTime = event.target.getCurrentTime();
-                                if (currentTime >= endSec - 0.15) {
-                                    event.target.seekTo(startSec, true);
-                                }
-                            }, 200);
+                        if (hasFragment) {
+                            startLoop(event.target);
                         }
                     },
                     onStateChange: (event: any) => {
-                        // Handle loop if no fragment is set (standard YT loop)
-                        if (event.data === window.YT.PlayerState.ENDED && !video.timeStart && !video.timeEnd) {
+                        if (hasFragment) {
+                            if (event.data === window.YT.PlayerState.PLAYING) {
+                                startLoop(event.target);
+                            } else {
+                                stopLoop();
+                            }
+                        }
+                        // Standard loop for videos without a fragment
+                        if (event.data === window.YT.PlayerState.ENDED && !hasFragment) {
                             event.target.playVideo();
                         }
                     }
@@ -96,7 +114,7 @@ const VideoPage = () => {
         }
 
         return () => {
-            if (loopIntervalRef.current) clearInterval(loopIntervalRef.current);
+            stopLoop();
             if (playerRef.current) playerRef.current.destroy();
         };
     }, [video]);
