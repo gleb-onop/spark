@@ -2,6 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { storage } from '../utils/storage';
 import type { Video } from '../types';
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { ChevronLeft } from "lucide-react";
 
 declare global {
     interface Window {
@@ -16,8 +19,16 @@ const VideoPage = () => {
     const [video, setVideo] = useState<Video | null>(null);
     const [playlistVideos, setPlaylistVideos] = useState<Video[]>([]);
     const [isExpanded, setIsExpanded] = useState(false);
+    const [isLooping, setIsLooping] = useState(() => localStorage.getItem('spark_looping') === 'true');
     const playerRef = useRef<any>(null);
     const intervalRef = useRef<number | null>(null);
+    const isLoopingRef = useRef(isLooping);
+
+    // Persist looping state
+    useEffect(() => {
+        isLoopingRef.current = isLooping;
+        localStorage.setItem('spark_looping', String(isLooping));
+    }, [isLooping]);
 
     // Load current video and playlist context
     useEffect(() => {
@@ -73,6 +84,8 @@ const VideoPage = () => {
             const nextVideo = playlistVideos[currentIndex + 1];
             if (nextVideo) {
                 navigate(`/video/${playlistId}/${nextVideo.uuid}`);
+            } else if (isLoopingRef.current && playlistVideos.length > 0) {
+                navigate(`/video/${playlistId}/${playlistVideos[0].uuid}`);
             } else {
                 navigate(`/playlist/${playlistId}`);
             }
@@ -145,13 +158,13 @@ const VideoPage = () => {
     if (!video) return null;
 
     return (
-        <div className="bg-inherit min-h-screen">
-            <header className="px-5 py-4 flex items-center gap-4 sticky top-0 bg-inherit z-10 border-b border-gray-200 dark:border-gray-800">
+        <div className="bg-background min-h-screen">
+            <header className="px-5 py-3 flex items-center gap-4 sticky top-0 bg-background/80 backdrop-blur-md z-10 border-b border-border">
                 <button
                     onClick={() => navigate(`/playlist/${playlistId}`)}
-                    className="bg-transparent border-none text-inherit text-2xl p-0 cursor-pointer"
+                    className="bg-transparent border-none text-inherit hover:bg-muted p-2 rounded-full transition-colors shrink-0"
                 >
-                    ←
+                    <ChevronLeft className="h-6 w-6" />
                 </button>
                 <h2 className="m-0 text-base font-semibold truncate">
                     {video.title}
@@ -173,18 +186,35 @@ const VideoPage = () => {
                     </div>
                 )}
 
-                <div className="mb-6 p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
-                    <p className={`text-sm leading-relaxed m-0 text-gray-700 dark:text-gray-300 ${isExpanded ? 'block' : 'line-clamp-3 overflow-hidden'}`}>
-                        {video.description || 'Нет описания'}
-                    </p>
-                    {video.description && video.description.length > 110 && (
-                        <button
-                            onClick={() => setIsExpanded(!isExpanded)}
-                            className="bg-transparent border-none text-accent p-0 pt-2 text-sm font-semibold cursor-pointer block"
-                        >
-                            {isExpanded ? 'скрыть' : 'ещё'}
-                        </button>
-                    )}
+                <div className="flex items-center justify-between mb-6 p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
+                    <div className="flex-1 mr-4">
+                        <p className={`text-sm leading-relaxed m-0 text-gray-700 dark:text-gray-300 ${isExpanded ? 'block' : 'line-clamp-3 overflow-hidden'}`}>
+                            {video.description || 'Нет описания'}
+                        </p>
+                        {video.description && video.description.length > 110 && (
+                            <button
+                                onClick={() => setIsExpanded(!isExpanded)}
+                                className="bg-transparent border-none text-accent p-0 pt-2 text-sm font-semibold cursor-pointer block"
+                            >
+                                {isExpanded ? 'скрыть' : 'ещё'}
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-between mb-8 px-1">
+                    <div className="flex flex-col gap-0.5">
+                        <Label htmlFor="loop-toggle" className="text-sm font-bold leading-none cursor-pointer">
+                            Зациклить плейлист
+                        </Label>
+                        <span className="text-xs text-muted-foreground">Повторять текущий список</span>
+                    </div>
+                    <Switch
+                        id="loop-toggle"
+                        checked={isLooping}
+                        onCheckedChange={setIsLooping}
+                        className="data-[state=checked]:bg-accent"
+                    />
                 </div>
 
                 <Link
