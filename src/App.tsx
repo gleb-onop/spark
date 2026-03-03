@@ -1,5 +1,4 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import Header from './components/Header';
 import TabBar from './components/TabBar';
 import PlaylistsPage from './pages/PlaylistsPage';
 import PlaylistDetailsPage from './pages/PlaylistDetailsPage';
@@ -11,9 +10,8 @@ import './index.css';
 function App() {
   return (
     <BrowserRouter>
-      <div className="max-w-[390px] mx-auto min-h-screen relative flex flex-col">
-        <Header />
-        <main className="flex-1 pb-20">
+      <div className="max-w-[390px] mx-auto min-h-screen relative flex flex-col bg-background selection:bg-accent/30">
+        <main className="flex-1 pb-24">
           <Routes>
             <Route path="/" element={<Navigate to="/playlists" replace />} />
             <Route path="/playlists" element={<PlaylistsPage />} />

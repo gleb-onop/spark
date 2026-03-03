@@ -3,11 +3,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { storage } from '../utils/storage';
 import { fetchVideoTitle } from '../utils/youtube';
 import type { Playlist } from '../types';
-import { ChevronLeft, Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PageHeader } from '@/components/PageHeader';
 
 declare global {
     interface Window {
@@ -221,180 +222,165 @@ const AddPage = () => {
     }, []);
 
     return (
-        <div className="px-5 pt-5 pb-24 bg-background min-h-screen">
-            <header className="flex items-center gap-4 mb-6 sticky top-0 bg-background/80 backdrop-blur-md z-10 py-2">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigate(-1)}
-                    className="rounded-full"
-                >
-                    <ChevronLeft className="h-6 w-6" />
-                </Button>
-                <h2 className="text-2xl font-extrabold m-0">
-                    {isNewPlaylistMode ? 'Новый плейлист' : 'Добавить видео'}
-                </h2>
-            </header>
+        <div className="flex flex-col min-h-screen bg-background pb-24">
+            <PageHeader
+                title={isNewPlaylistMode ? 'Новый плейлист' : 'Добавить видео'}
+                backPath={-1}
+            />
 
-            <div className="flex flex-col gap-5">
-                {/* Playlist name (new playlist mode) */}
-                {isNewPlaylistMode && (
-                    <div>
-                        <Label className="block text-sm mb-2 font-semibold">Название плейлиста</Label>
-                        <Input
-                            type="text"
-                            value={playlistName}
-                            onChange={(e) => setPlaylistName(e.target.value)}
-                            placeholder="Мой плейлист"
-                            autoFocus
-                        />
-                    </div>
-                )}
-
-                {/* Divider between playlist and video sections */}
-                {isNewPlaylistMode && (
-                    <div className="flex items-center gap-3 my-1">
-                        <div className="flex-1 h-px bg-border" />
-                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Первое видео</span>
-                        <div className="flex-1 h-px bg-border" />
-                    </div>
-                )}
-
-                {/* YouTube URL */}
-                <div>
-                    <Label className="block text-sm mb-2 font-semibold">YouTube URL</Label>
-                    <Input
-                        type="text"
-                        value={url}
-                        onChange={(e) => setUrl(e.target.value)}
-                        placeholder="https://youtube.com/watch?v=..."
-                        className={urlError ? 'border-red-500 focus-visible:ring-red-500' : ''}
-                    />
-                    {urlError && <div className="text-red-500 text-xs mt-1 font-medium">{urlError}</div>}
-                </div>
-
-                {/* Preview */}
-                {youtubeId && (
-                    <div className="w-full aspect-video relative rounded-xl overflow-hidden border-2 border-accent">
-                        <img
-                            src={`https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`}
-                            alt="Preview"
-                            className="absolute inset-0 w-full h-full object-cover"
-                        />
-                    </div>
-                )}
-
-                {/* Title (auto-fetched) */}
-                {youtubeId && (
-                    <div>
-                        <label className="block text-sm mb-2 font-semibold">Название</label>
-                        <div className="relative">
-                            <input
-                                type="text"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                placeholder={isFetchingTitle ? 'Загрузка...' : 'Название видео'}
-                                className="w-full p-4 rounded-xl border border-border bg-input text-inherit text-sm outline-none focus:border-accent transition-colors shadow-sm"
+            <main className="p-5 flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <section className="flex flex-col gap-6">
+                    {isNewPlaylistMode && (
+                        <div className="space-y-2">
+                            <Label htmlFor="playlist-name" className="text-sm font-bold ml-1">Название плейлиста</Label>
+                            <Input
+                                id="playlist-name"
+                                value={playlistName}
+                                onChange={(e) => setPlaylistName(e.target.value)}
+                                placeholder="Напр. Мои любимые клипы"
+                                className="h-14 rounded-2xl bg-muted/30 border-none shadow-inner"
+                                autoFocus
                             />
-                            {isFetchingTitle && (
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-                            )}
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {/* Playlist selector (add to existing mode) */}
-                {!isNewPlaylistMode && (
-                    <div className="relative">
-                        <Label className="block text-sm mb-2 font-semibold">Плейлист</Label>
-                        <div className="relative">
+                    {!isNewPlaylistMode && (
+                        <div className="space-y-2">
+                            <Label className="text-sm font-bold ml-1">Выберите плейлист</Label>
                             <select
                                 value={playlistId}
                                 onChange={(e) => setPlaylistId(e.target.value)}
-                                className="flex h-11 w-full rounded-xl border border-input bg-background px-4 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm appearance-none cursor-pointer"
+                                className="w-full h-14 px-4 bg-muted/30 border-none rounded-2xl outline-none text-foreground font-semibold shadow-inner appearance-none transition-all focus:ring-2 focus:ring-accent/20"
                             >
-                                <option value="" className="bg-background">Выберите плейлист</option>
+                                <option value="">Плейлист...</option>
                                 {playlists.map(p => (
-                                    <option key={p.uuid} value={p.uuid} className="bg-background">{p.name}</option>
+                                    <option key={p.uuid} value={p.uuid}>{p.name}</option>
                                 ))}
                             </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-xs text-muted-foreground">
-                                ▼
+                        </div>
+                    )}
+
+                    <div className="space-y-2">
+                        <Label htmlFor="video-url" className="text-sm font-bold ml-1">Ссылка на YouTube</Label>
+                        <Input
+                            id="video-url"
+                            value={url}
+                            onChange={(e) => setUrl(e.target.value)}
+                            placeholder="Вставьте ссылку..."
+                            className={`h-14 rounded-2xl bg-muted/30 border-none shadow-inner transition-all ${urlError ? 'ring-2 ring-red-500/50' : ''}`}
+                        />
+                        {urlError && <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest ml-1">{urlError}</p>}
+                    </div>
+
+                    {youtubeId && (
+                        <div className="animate-in zoom-in-95 duration-300">
+                            <div className="w-full aspect-video relative rounded-2xl overflow-hidden shadow-2xl ring-4 ring-black/5 dark:ring-white/5">
+                                <img
+                                    src={`https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`}
+                                    onError={(e) => (e.currentTarget.src = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`)}
+                                    alt="Превью"
+                                    className="absolute inset-0 w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {/* Description */}
-                <div>
-                    <Label className="block text-sm mb-2 font-semibold">Описание (необязательно)</Label>
-                    <textarea
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        placeholder="О чем это видео..."
-                        className="flex w-full rounded-xl border border-input bg-background px-4 py-3 text-base ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm min-h-[100px] resize-none"
-                    />
-                </div>
-
-                {/* Time range toggle */}
-                <div className="flex items-center justify-between mt-2">
-                    <Label htmlFor="use-range" className="text-sm font-semibold cursor-pointer">Временной диапазон</Label>
-                    <Switch
-                        id="use-range"
-                        checked={useRange}
-                        onCheckedChange={setUseRange}
-                        className="data-[state=checked]:bg-accent"
-                    />
-                </div>
-
-                {useRange && (
-                    <div className="flex gap-4 animate-in fade-in slide-in-from-top-2">
-                        <div className="flex-1">
-                            <Label className="block text-xs mb-2 text-muted-foreground">Начало (m:ss)</Label>
-                            <Input
-                                type="text"
-                                value={timeStart}
-                                onChange={(e) => setTimeStart(e.target.value)}
-                                placeholder="0:30"
-                            />
+                    {youtubeId && (
+                        <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-500">
+                            <Label htmlFor="video-title" className="text-sm font-bold ml-1">Название видео</Label>
+                            <div className="relative">
+                                <Input
+                                    id="video-title"
+                                    value={title}
+                                    onChange={(e) => setTitle(e.target.value)}
+                                    placeholder={isFetchingTitle ? 'Загрузка...' : 'Заголовок...'}
+                                    className="h-14 rounded-2xl bg-muted/30 border-none shadow-inner pr-12"
+                                />
+                                {isFetchingTitle && (
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                        <Loader2 className="h-5 w-5 animate-spin text-accent" />
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        <div className="flex-1">
-                            <Label className="block text-xs mb-2 text-muted-foreground">Конец (m:ss)</Label>
-                            <Input
-                                type="text"
-                                value={timeEnd}
-                                onChange={(e) => setTimeEnd(e.target.value)}
-                                placeholder="1:45"
-                            />
-                        </div>
-                    </div>
-                )}
+                    )}
 
-                {error && <div className="text-red-500 text-sm text-center font-medium bg-red-500/10 py-3 rounded-lg border border-red-500/20">{error}</div>}
+                    <div className="space-y-2">
+                        <Label htmlFor="video-desc" className="text-sm font-bold ml-1">Описание (необязательно)</Label>
+                        <textarea
+                            id="video-desc"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Добавьте заметки..."
+                            className="w-full min-h-[120px] p-4 bg-muted/30 border-none rounded-2xl outline-none text-foreground font-medium shadow-inner transition-all focus:ring-2 focus:ring-accent/20 resize-none"
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border border-border/50">
+                        <Label htmlFor="range-toggle" className="text-sm font-bold cursor-pointer">
+                            Использовать фрагмент
+                        </Label>
+                        <Switch
+                            id="range-toggle"
+                            checked={useRange}
+                            onCheckedChange={setUseRange}
+                        />
+                    </div>
+
+                    {useRange && (
+                        <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                            <div className="space-y-2">
+                                <Label htmlFor="start" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Старт (м:сс)</Label>
+                                <Input
+                                    id="start"
+                                    value={timeStart}
+                                    onChange={(e) => setTimeStart(e.target.value)}
+                                    placeholder="0:00"
+                                    className="h-12 rounded-xl bg-muted/30 border-none shadow-inner"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="end" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Конец (м:сс)</Label>
+                                <Input
+                                    id="end"
+                                    value={timeEnd}
+                                    onChange={(e) => setTimeEnd(e.target.value)}
+                                    placeholder="1:00"
+                                    className="h-12 rounded-xl bg-muted/30 border-none shadow-inner"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {error && (
+                        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 animate-in shake-1 duration-500">
+                            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                            <p className="text-red-500 text-xs font-bold leading-tight">{error}</p>
+                        </div>
+                    )}
+                </section>
 
                 <Button
                     size="lg"
                     onClick={handleSave}
                     disabled={isValidating}
-                    className="w-full shadow-lg"
+                    className="h-16 rounded-2xl shadow-xl shadow-accent/30 font-bold text-lg transition-transform active:scale-95"
                 >
                     {isValidating ? (
                         <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Проверяем видео…
-                        </>
-                    ) : isNewPlaylistMode ? (
-                        <>
-                            <Plus className="mr-2 h-4 w-4" />
-                            Создать плейлист
+                            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                            Проверка доступности...
                         </>
                     ) : (
-                        'Сохранить'
+                        <>
+                            <Plus className="mr-2 h-6 w-6" />
+                            {isNewPlaylistMode ? 'Создать плейлист' : 'Добавить видео'}
+                        </>
                     )}
                 </Button>
-            </div>
+            </main>
 
-            {/* Hidden container for video validation iframe */}
             <div ref={validationContainerRef} className="absolute -left-[9999px] -top-[9999px] w-px h-px overflow-hidden">
                 <div id="validation-player" />
             </div>

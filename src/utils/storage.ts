@@ -65,6 +65,17 @@ export const storage = {
         storage.savePlaylists(playlists);
     },
 
+    getVideo: (uuid: string): Video | undefined => {
+        return storage.getVideos().find(v => v.uuid === uuid);
+    },
+
+    updateVideo: (uuid: string, updated: Partial<Video>) => {
+        const videos = storage.getVideos().map(v =>
+            v.uuid === uuid ? { ...v, ...updated } : v
+        );
+        storage.saveVideos(videos);
+    },
+
     addVideo: (video: Omit<Video, 'uuid' | 'createdAt'>, playlistUuid: string): Video => {
         const videos = storage.getVideos();
         const newVideo: Video = {
@@ -87,18 +98,31 @@ export const storage = {
         return newVideo;
     },
 
-    deleteVideo: (videoUuid: string, playlistUuid: string) => {
-        const videos = storage.getVideos().filter(v => v.uuid !== videoUuid);
-        storage.saveVideos(videos);
+    deleteVideo: (videoUuid: string, playlistUuid?: string) => {
+        if (playlistUuid) {
+            // Remove video from a specific playlist BUT KEEP IT in storage
+            // Actually, usually in this app "delete video" means delete it entirely if it was deleted from its only playlist.
+            // But for now, let's keep it simple: if playlistUuid is provided, just remove from playlist.
+            const playlists = storage.getPlaylists();
+            const updatedPlaylists = playlists.map(p => {
+                if (p.uuid === playlistUuid) {
+                    return { ...p, videoIds: p.videoIds.filter(id => id !== videoUuid) };
+                }
+                return p;
+            });
+            storage.savePlaylists(updatedPlaylists);
+        } else {
+            // Global delete: remove from all playlists and from VIDEOS_KEY
+            const videos = storage.getVideos().filter(v => v.uuid !== videoUuid);
+            storage.saveVideos(videos);
 
-        const playlists = storage.getPlaylists();
-        const updatedPlaylists = playlists.map(p => {
-            if (p.uuid === playlistUuid) {
-                return { ...p, videoIds: p.videoIds.filter(id => id !== videoUuid) };
-            }
-            return p;
-        });
-        storage.savePlaylists(updatedPlaylists);
+            const playlists = storage.getPlaylists();
+            const updatedPlaylists = playlists.map(p => ({
+                ...p,
+                videoIds: p.videoIds.filter(id => id !== videoUuid)
+            }));
+            storage.savePlaylists(updatedPlaylists);
+        }
     },
 
     addPlaylistWithVideo: (playlistName: string, videoData: Omit<Video, 'uuid' | 'createdAt'>): { playlist: Playlist; video: Video } => {

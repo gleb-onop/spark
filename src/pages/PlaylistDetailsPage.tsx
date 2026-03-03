@@ -1,8 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { storage } from '../utils/storage';
-import type { Playlist, Video } from '../types';
-import { ChevronLeft, MoreVertical, Trash2, FolderOpen, X, Scissors, Edit2 } from 'lucide-react';
+import { MoreVertical, Trash2, FolderOpen, Edit2, Plus, Play } from 'lucide-react';
 import {
     Dialog,
     DialogContent,
@@ -11,232 +9,179 @@ import {
     DialogHeader,
     DialogTitle,
 } from "../components/ui/dialog";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "../components/ui/dropdown-menu";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { storage } from '../utils/storage';
+import { PageHeader } from '@/components/PageHeader';
+import { VideoItem } from '@/components/VideoItem';
+import { usePlaylist } from '@/hooks/usePlaylist';
 
 const PlaylistDetailsPage = () => {
     const { playlistId } = useParams<{ playlistId: string }>();
     const navigate = useNavigate();
-    const [playlist, setPlaylist] = useState<Playlist | null>(null);
-    const [videos, setVideos] = useState<Video[]>([]);
-    const [showMenu, setShowMenu] = useState(false);
-
-    // Modal states
     const [videoToDelete, setVideoToDelete] = useState<string | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeletePlaylistModalOpen, setIsDeletePlaylistModalOpen] = useState(false);
-    const [editName, setEditName] = useState('');
+    const [newName, setNewName] = useState('');
 
-    useEffect(() => {
-        if (!playlistId) return;
-        const allPlaylists = storage.getPlaylists();
-        const current = allPlaylists.find(p => p.uuid === playlistId);
-        if (current) {
-            setPlaylist(current);
-            const allVideos = storage.getVideos();
-            setVideos(allVideos.filter(v => current.videoIds.includes(v.uuid)));
-        } else {
-            navigate('/playlists');
-        }
-    }, [playlistId, navigate]);
+    const { playlist, videos, isLoading, deleteVideo, renamePlaylist } = usePlaylist(playlistId);
 
-    const handleDeletePlaylist = () => {
-        setIsDeletePlaylistModalOpen(true);
-        setShowMenu(false);
-    };
-
-    const confirmDeletePlaylist = () => {
-        if (playlistId) {
-            storage.deletePlaylist(playlistId);
-            navigate('/playlists');
-        }
-    };
-
-    const handleEditPlaylist = () => {
-        if (!playlist) return;
-        setEditName(playlist.name);
-        setIsEditModalOpen(true);
-        setShowMenu(false);
-    };
-
-    const savePlaylistEdit = () => {
-        if (playlist && editName.trim() !== '') {
-            const updated = { ...playlist, name: editName.trim() };
-            storage.updatePlaylist(updated);
-            setPlaylist(updated);
+    const handleRename = () => {
+        if (newName.trim()) {
+            renamePlaylist(newName);
             setIsEditModalOpen(false);
         }
     };
 
-    const confirmDeleteVideo = () => {
-        if (videoToDelete && playlistId) {
-            storage.deleteVideo(videoToDelete, playlistId);
-            // Refresh local state
-            const allPlaylists = storage.getPlaylists();
-            const current = allPlaylists.find(p => p.uuid === playlistId);
-            if (current) {
-                setPlaylist(current);
-                const allVideos = storage.getVideos();
-                setVideos(allVideos.filter(v => current.videoIds.includes(v.uuid)));
-            }
-            setVideoToDelete(null);
-        }
+    const handleDeletePlaylist = () => {
+        if (!playlistId) return;
+        storage.deletePlaylist(playlistId);
+        navigate('/playlists');
     };
 
-    const handleDeleteVideo = (videoUuid: string) => {
-        setVideoToDelete(videoUuid);
-    };
-
-    if (!playlist) return null;
+    if (isLoading) return null;
+    if (!playlist) return <div className="p-8 text-center text-muted-foreground">Плейлист не найден</div>;
 
     return (
-        <div className="pb-20">
-            <header className="px-5 py-4 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-md z-10 border-b border-border">
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => navigate('/playlists')}
-                        className="bg-transparent border-none text-inherit hover:bg-muted p-2 rounded-full transition-colors shrink-0"
-                    >
-                        <ChevronLeft className="h-6 w-6" />
-                    </button>
-                    <h2 className="m-0 text-xl font-bold">{playlist.name}</h2>
-                </div>
+        <div className="flex flex-col min-h-screen bg-background pb-20">
+            <PageHeader
+                title={playlist.name}
+                backPath="/playlists"
+                actions={
+                    <div className="flex items-center gap-2">
+                        <Button size="icon" asChild className="rounded-full shadow-lg shadow-brand/20 bg-brand hover:bg-brand/90 text-white">
+                            <Link to={`/add?playlistId=${playlist.uuid}`}>
+                                <Plus className="h-5 w-5" />
+                            </Link>
+                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="rounded-full">
+                                    <MoreVertical className="h-5 w-5" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48 p-1">
+                                <DropdownMenuItem
+                                    onClick={() => {
+                                        setNewName(playlist.name);
+                                        setIsEditModalOpen(true);
+                                    }}
+                                    className="rounded-lg gap-2"
+                                >
+                                    <Edit2 className="h-4 w-4" />
+                                    <span>Переименовать</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => setIsDeletePlaylistModalOpen(true)}
+                                    className="rounded-lg gap-2 text-red-500 focus:text-red-500"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                    <span>Удалить список</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                }
+            />
 
-                <div className="relative">
-                    <button
-                        onClick={() => setShowMenu(!showMenu)}
-                        className="bg-transparent border-none text-inherit hover:bg-muted p-2 rounded-full transition-colors shrink-0"
-                    >
-                        <MoreVertical className="h-5 w-5" />
-                    </button>
-                    {showMenu && (
-                        <div className="absolute top-[calc(100%+8px)] right-0 bg-white dark:bg-[#1c1c1e] border border-border rounded-xl py-2 min-w-[200px] shadow-2xl z-[100] animate-in fade-in slide-in-from-top-2">
-                            <button
-                                onClick={handleEditPlaylist}
-                                className="w-full px-4 py-3 text-left bg-transparent border-none text-foreground text-sm font-semibold cursor-pointer hover:bg-muted transition-colors flex items-center gap-2"
-                            >
-                                <Edit2 className="h-4 w-4" />
-                                Редактировать
-                            </button>
-                            <div className="h-px bg-border mx-2" />
-                            <button
-                                onClick={handleDeletePlaylist}
-                                className="w-full px-4 py-3 text-left bg-transparent border-none text-red-500 text-sm font-semibold cursor-pointer hover:bg-red-500/10 transition-colors flex items-center gap-2"
-                            >
-                                <Trash2 className="h-4 w-4" />
-                                Удалить плейлист
-                            </button>
+            <main className="flex-1 p-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex items-center justify-between mb-8">
+                    <div className="flex flex-col gap-1">
+                        <div className="text-3xl font-black tracking-tight">{playlist.name}</div>
+                        <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                            <FolderOpen className="h-3 w-3" />
+                            {videos.length} видео
                         </div>
+                    </div>
+                    {videos.length > 0 && (
+                        <Button
+                            asChild
+                            size="icon"
+                            className="rounded-full h-14 w-14 shadow-xl shadow-brand/25 bg-brand text-white hover:bg-brand/90 flex items-center justify-center"
+                        >
+                            <Link to={`/video/${playlist.uuid}/${videos[0].uuid}`}>
+                                <Play className="h-7 w-7 fill-current ml-1" />
+                            </Link>
+                        </Button>
                     )}
                 </div>
-            </header>
 
-            <div className="px-5">
-                {videos.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-24 text-center">
-                        <FolderOpen className="w-16 h-16 mb-4 text-muted-foreground/30" />
-                        <p className="text-muted-foreground">Плейлист пуст</p>
-                        <Link
-                            to={`/add?playlistId=${playlistId}`}
-                            className="mt-4 text-accent no-underline font-semibold hover:underline"
-                        >
-                            Добавить первое видео
-                        </Link>
-                    </div>
-                ) : (
-                    <div className="flex flex-col gap-4 mt-3">
-                        {videos.map(video => (
-                            <div key={video.uuid} className="flex items-center gap-3 group">
-                                <Link to={`/video/${playlistId}/${video.uuid}`} className="flex flex-1 min-w-0 items-center gap-3 no-underline text-inherit">
-                                    <img
-                                        src={`https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg`}
-                                        alt={video.title}
-                                        className="w-[72px] h-12 rounded-lg object-cover bg-black ring-1 ring-black/5 dark:ring-white/10"
-                                    />
-                                    <div className="flex-1 min-w-0 overflow-hidden">
-                                        <div className="text-sm font-semibold truncate group-hover:text-accent transition-colors">
-                                            {video.title}
-                                        </div>
-                                        {video.timeStart && (
-                                            <div className="flex items-center gap-1.5 text-[11px] text-accent font-bold mt-0.5">
-                                                <Scissors className="h-3 w-3" />
-                                                <span>{video.timeStart} {video.timeEnd ? `– ${video.timeEnd}` : ''}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </Link>
-                                <button
-                                    onClick={() => handleDeleteVideo(video.uuid)}
-                                    className="bg-transparent border-none text-muted-foreground hover:bg-red-500/10 hover:text-red-500 p-2 rounded-full transition-colors cursor-pointer"
-                                >
-                                    <X className="h-4 w-4" />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            <div className="fixed bottom-20 left-1/2 -translate-x-1/2 w-full max-w-[390px] px-5 z-10">
-                <Link
-                    to={`/add?playlistId=${playlistId}`}
-                    className="flex items-center justify-center w-full h-14 bg-accent rounded-2xl text-white no-underline text-base font-bold shadow-[0_4px_12px_rgba(255,107,53,0.3)] hover:brightness-110 transition-all"
-                >
-                    Добавить видео
-                </Link>
-            </div>
-
-            {/* Edit Playlist Modal */}
-            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Редактировать плейлист</DialogTitle>
-                        <DialogDescription>
-                            Измените название вашего плейлиста.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4">
-                        <Input
-                            value={editName}
-                            onChange={(e) => setEditName(e.target.value)}
-                            placeholder="Название плейлиста"
-                            autoFocus
+                <div className="flex flex-col gap-5">
+                    {videos.map((video) => (
+                        <VideoItem
+                            key={video.uuid}
+                            video={video}
+                            playlistId={playlist.uuid}
+                            onDelete={(uuid) => setVideoToDelete(uuid)}
                         />
-                    </div>
-                    <DialogFooter className="flex-row gap-2">
-                        <Button variant="outline" className="flex-1" onClick={() => setIsEditModalOpen(false)}>
-                            Отмена
-                        </Button>
-                        <Button className="flex-1" onClick={savePlaylistEdit} disabled={!editName.trim()}>
-                            Сохранить
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                    ))}
+                </div>
+            </main>
 
-            {/* Delete Video Confirmation Modal */}
+            {/* Modals */}
             <Dialog open={!!videoToDelete} onOpenChange={(open) => !open && setVideoToDelete(null)}>
-                <DialogContent>
+                <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
                         <DialogTitle>Удалить видео?</DialogTitle>
                         <DialogDescription>
-                            Это действие нельзя отменить. Видео будет удалено из этого плейлиста.
+                            Это действие нельзя будет отменить. Видео будет удалено из текущего списка.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="flex-row gap-2 mt-4">
-                        <Button variant="outline" className="flex-1" onClick={() => setVideoToDelete(null)}>
+                        <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setVideoToDelete(null)}>
                             Отмена
                         </Button>
-                        <Button variant="destructive" className="flex-1" onClick={confirmDeleteVideo}>
+                        <Button
+                            variant="destructive"
+                            className="flex-1 rounded-xl"
+                            onClick={() => {
+                                if (videoToDelete) {
+                                    deleteVideo(videoToDelete);
+                                    setVideoToDelete(null);
+                                }
+                            }}
+                        >
                             Удалить
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
 
-            {/* Delete Playlist Confirmation Modal */}
+            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                        <DialogTitle>Редактировать название</DialogTitle>
+                        <DialogDescription>
+                            Введите новое название для плейлиста.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Input
+                            value={newName}
+                            onChange={(e) => setNewName(e.target.value)}
+                            placeholder="Название плейлиста"
+                            onKeyDown={(e) => e.key === 'Enter' && handleRename()}
+                        />
+                    </div>
+                    <DialogFooter className="flex-row gap-2">
+                        <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setIsEditModalOpen(false)}>
+                            Отмена
+                        </Button>
+                        <Button className="flex-1 rounded-xl shadow-lg" onClick={handleRename}>
+                            Сохранить
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
             <Dialog open={isDeletePlaylistModalOpen} onOpenChange={setIsDeletePlaylistModalOpen}>
-                <DialogContent>
+                <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
                         <DialogTitle>Удалить плейлист?</DialogTitle>
                         <DialogDescription>
@@ -244,11 +189,11 @@ const PlaylistDetailsPage = () => {
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="flex-row gap-2 mt-4">
-                        <Button variant="outline" className="flex-1" onClick={() => setIsDeletePlaylistModalOpen(false)}>
+                        <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setIsDeletePlaylistModalOpen(false)}>
                             Отмена
                         </Button>
-                        <Button variant="destructive" className="flex-1" onClick={confirmDeletePlaylist}>
-                            Удалить
+                        <Button variant="destructive" className="flex-1 rounded-xl" onClick={handleDeletePlaylist}>
+                            Удалить список
                         </Button>
                     </DialogFooter>
                 </DialogContent>

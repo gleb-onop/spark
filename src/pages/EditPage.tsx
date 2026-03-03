@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { storage } from '../utils/storage';
-import type { Video } from '../types';
-import { ChevronLeft, Trash2 } from 'lucide-react';
+import { Check, Loader2, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { PageHeader } from '@/components/PageHeader';
+import { VideoThumbnail } from '@/components/VideoThumbnail';
 import {
     Dialog,
     DialogContent,
@@ -10,201 +15,213 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from "../components/ui/dialog";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Switch } from "../components/ui/switch";
-import { Label } from "../components/ui/label";
+} from "@/components/ui/dialog";
 
 const EditPage = () => {
-    const { videoId } = useParams<{ videoId: string }>();
+    const { playlistId, videoId } = useParams<{ playlistId: string; videoId: string }>();
     const navigate = useNavigate();
 
-    const [video, setVideo] = useState<Video | null>(null);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [useRange, setUseRange] = useState(false);
     const [timeStart, setTimeStart] = useState('');
     const [timeEnd, setTimeEnd] = useState('');
-    const [error, setError] = useState('');
+    const [youtubeId, setYoutubeId] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+    const [error, setError] = useState('');
 
     useEffect(() => {
         if (!videoId) return;
-        const allVideos = storage.getVideos();
-        const current = allVideos.find(v => v.uuid === videoId);
-        if (current) {
-            setVideo(current);
-            setTitle(current.title);
-            setDescription(current.description);
-            setUseRange(!!current.timeStart);
-            setTimeStart(current.timeStart || '');
-            setTimeEnd(current.timeEnd || '');
-        } else {
-            navigate('/playlists');
+
+        const video = storage.getVideo(videoId);
+        if (video) {
+            setTitle(video.title);
+            setDescription(video.description || '');
+            setYoutubeId(video.youtubeId);
+            if (video.timeStart || video.timeEnd) {
+                setUseRange(true);
+                setTimeStart(video.timeStart || '');
+                setTimeEnd(video.timeEnd || '');
+            }
         }
-    }, [videoId, navigate]);
+        setIsLoading(false);
+    }, [videoId]);
 
     const handleSave = () => {
-        if (!video) return;
-        if (useRange && (!timeStart || !timeEnd)) {
-            setError('Заполните оба поля времени');
-            return;
+        if (!videoId) return;
+        setError('');
+
+        if (useRange) {
+            if (!timeStart || !timeEnd) {
+                setError('Заполните оба поля времени');
+                return;
+            }
+            const parseTime = (str: string) => {
+                if (str.includes(':')) {
+                    const [m, s] = str.split(':').map(Number);
+                    return m * 60 + s;
+                }
+                return Number(str);
+            };
+            if (parseTime(timeEnd) <= parseTime(timeStart)) {
+                setError('Конец должен быть позже начала');
+                return;
+            }
         }
 
-        const videos = storage.getVideos();
-        const updatedVideos = videos.map(v => {
-            if (v.uuid === videoId) {
-                return {
-                    ...v,
-                    title,
-                    description,
-                    timeStart: useRange ? timeStart : null,
-                    timeEnd: useRange ? timeEnd : null,
-                };
-            }
-            return v;
+        storage.updateVideo(videoId, {
+            title,
+            description,
+            timeStart: useRange ? timeStart : null,
+            timeEnd: useRange ? timeEnd : null,
         });
 
-        storage.saveVideos(updatedVideos);
-        navigate(-1);
-    };
-
-    const handleDelete = () => {
-        setIsDeleteModalOpen(true);
+        navigate(playlistId ? `/playlist/${playlistId}` : '/playlists');
     };
 
     const confirmDelete = () => {
-        const allVideos = storage.getVideos();
-        const newVideos = allVideos.filter(v => v.uuid !== videoId);
-        storage.saveVideos(newVideos);
-
-        const allPlaylists = storage.getPlaylists();
-        const newPlaylists = allPlaylists.map(p => ({
-            ...p,
-            videoIds: p.videoIds.filter(id => id !== videoId)
-        }));
-        storage.savePlaylists(newPlaylists);
-
-        navigate('/playlists');
+        if (!videoId) return;
+        storage.deleteVideo(videoId);
+        navigate(playlistId ? `/playlist/${playlistId}` : '/playlists');
     };
 
-    if (!video) return null;
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <Loader2 className="h-8 w-8 animate-spin text-accent" />
+            </div>
+        );
+    }
 
     return (
-        <div className="px-5 pt-5 pb-24 bg-background min-h-screen">
-            <header className="flex items-center gap-4 mb-6 sticky top-0 bg-background/80 backdrop-blur-md z-10 py-2">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigate(-1)}
-                    className="rounded-full"
-                >
-                    <ChevronLeft className="h-6 w-6" />
-                </Button>
-                <h2 className="text-xl font-extrabold m-0">Редактировать</h2>
-            </header>
+        <div className="flex flex-col min-h-screen bg-background pb-24">
+            <PageHeader
+                title="Редактировать"
+                backPath={-1}
+                actions={
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setIsDeleteModalOpen(true)}
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full"
+                    >
+                        <Trash2 className="h-5 w-5" />
+                    </Button>
+                }
+            />
 
-            <div className="flex flex-col gap-5">
-                <div className="w-full aspect-video relative rounded-xl overflow-hidden bg-black">
-                    <img
-                        src={`https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`}
-                        alt="Preview"
-                        className="absolute inset-0 w-full h-full object-cover"
-                    />
-                </div>
-
-                <div>
-                    <Label className="block text-sm mb-2 font-semibold">Название</Label>
-                    <Input
-                        type="text"
-                        value={title}
-                        onChange={(e) => setTitle(e.target.value)}
-                        placeholder="Введите название"
-                    />
-                </div>
-
-                <div>
-                    <Label className="block text-sm mb-2 font-semibold">Описание</Label>
-                    <textarea
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        className="flex w-full rounded-xl border border-input bg-transparent px-4 py-3 text-base transition-all placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:border-accent disabled:cursor-not-allowed disabled:opacity-50 md:text-sm min-h-[120px] resize-none"
-                        placeholder="Добавьте описание..."
-                    />
-                </div>
-
-                <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/30">
-                    <div className="flex flex-col gap-0.5">
-                        <Label htmlFor="range-toggle" className="text-sm font-semibold cursor-pointer">Временной диапазон</Label>
-                        <span className="text-xs text-muted-foreground">Вырезать отрывок из видео</span>
-                    </div>
-                    <Switch
-                        id="range-toggle"
-                        checked={useRange}
-                        onCheckedChange={setUseRange}
-                        className="data-[state=checked]:bg-accent"
-                    />
-                </div>
-
-                {useRange && (
-                    <div className="flex gap-4">
-                        <div className="flex-1">
-                            <Label className="block text-xs mb-2 text-muted-foreground">Начало (m:ss)</Label>
-                            <Input
-                                type="text"
-                                value={timeStart}
-                                onChange={(e) => setTimeStart(e.target.value)}
-                                placeholder="0:00"
+            <main className="p-5 flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <section className="flex flex-col gap-6">
+                    {youtubeId && (
+                        <div className="animate-in zoom-in-95 duration-300">
+                            <VideoThumbnail
+                                youtubeId={youtubeId}
+                                title={title}
+                                className="shadow-2xl ring-4 ring-black/5 dark:ring-white/5"
                             />
                         </div>
-                        <div className="flex-1">
-                            <Label className="block text-xs mb-2 text-muted-foreground">Конец (m:ss)</Label>
-                            <Input
-                                type="text"
-                                value={timeEnd}
-                                onChange={(e) => setTimeEnd(e.target.value)}
-                                placeholder="1:30"
-                            />
-                        </div>
-                    </div>
-                )}
+                    )}
 
-                {error && <div className="text-red-500 text-sm text-center font-medium bg-red-500/10 py-3 rounded-lg border border-red-500/20">{error}</div>}
+                    <div className="space-y-2">
+                        <Label htmlFor="title" className="text-sm font-bold ml-1">Название видео</Label>
+                        <Input
+                            id="title"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            placeholder="Заголовок..."
+                            className="h-14 rounded-2xl bg-muted/30 border-none shadow-inner"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="description" className="text-sm font-bold ml-1">Описание (необязательно)</Label>
+                        <textarea
+                            id="description"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            placeholder="Ваши заметки..."
+                            className="w-full min-h-[140px] p-4 bg-muted/30 border-none rounded-2xl outline-none text-foreground font-medium shadow-inner transition-all focus:ring-2 focus:ring-accent/20 resize-none"
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border border-border/50">
+                        <Label htmlFor="range-toggle" className="text-sm font-bold cursor-pointer">
+                            Использовать фрагмент
+                        </Label>
+                        <Switch
+                            id="range-toggle"
+                            checked={useRange}
+                            onCheckedChange={setUseRange}
+                        />
+                    </div>
+
+                    {useRange && (
+                        <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
+                            <div className="space-y-2">
+                                <Label htmlFor="start" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Старт (м:сс)</Label>
+                                <Input
+                                    id="start"
+                                    value={timeStart}
+                                    onChange={(e) => setTimeStart(e.target.value)}
+                                    placeholder="0:00"
+                                    className="h-12 rounded-xl bg-muted/30 border-none shadow-inner"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="end" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Конец (м:сс)</Label>
+                                <Input
+                                    id="end"
+                                    value={timeEnd}
+                                    onChange={(e) => setTimeEnd(e.target.value)}
+                                    placeholder="1:00"
+                                    className="h-12 rounded-xl bg-muted/30 border-none shadow-inner"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {error && (
+                        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 animate-in shake-1 duration-500">
+                            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                            <p className="text-red-500 text-xs font-bold leading-tight">{error}</p>
+                        </div>
+                    )}
+                </section>
 
                 <Button
                     size="lg"
                     onClick={handleSave}
-                    className="w-full shadow-lg"
+                    className="h-16 rounded-2xl shadow-xl shadow-accent/30 font-bold text-lg transition-transform active:scale-95"
                 >
+                    <Check className="mr-2 h-6 w-6" />
                     Сохранить изменения
                 </Button>
+            </main>
 
-                <Button
-                    variant="ghost"
-                    onClick={handleDelete}
-                    className="w-full text-red-500 hover:text-red-500 hover:bg-red-500/10 font-bold"
-                >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Удалить видео
-                </Button>
-            </div>
-
-            {/* Delete Confirmation Modal */}
             <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
-                <DialogContent>
+                <DialogContent className="rounded-3xl max-w-[90vw]">
                     <DialogHeader>
-                        <DialogTitle>Удалить видео?</DialogTitle>
-                        <DialogDescription>
-                            Это действие полностью удалит видео из всех плейлистов. Его нельзя будет восстановить.
+                        <DialogTitle className="text-2xl font-black">Удалить видео?</DialogTitle>
+                        <DialogDescription className="text-base">
+                            Это видео будет навсегда удалено из всех ваших плейлистов. Это действие нельзя отменить.
                         </DialogDescription>
                     </DialogHeader>
-                    <DialogFooter className="flex-row gap-2 mt-4">
-                        <Button variant="outline" className="flex-1" onClick={() => setIsDeleteModalOpen(false)}>
-                            Отмена
+                    <DialogFooter className="flex flex-col gap-3 mt-4 sm:flex-col">
+                        <Button
+                            variant="destructive"
+                            className="h-14 rounded-2xl font-bold text-base"
+                            onClick={confirmDelete}
+                        >
+                            Да, удалить видео
                         </Button>
-                        <Button variant="destructive" className="flex-1" onClick={confirmDelete}>
-                            Удалить
+                        <Button
+                            variant="ghost"
+                            className="h-14 rounded-2xl font-bold text-base"
+                            onClick={() => setIsDeleteModalOpen(false)}
+                        >
+                            Отмена
                         </Button>
                     </DialogFooter>
                 </DialogContent>
