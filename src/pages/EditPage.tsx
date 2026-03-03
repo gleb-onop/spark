@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { storage } from '../utils/storage';
 import type { Video } from '../types';
+import { ChevronLeft } from 'lucide-react';
 
 const EditPage = () => {
     const { videoId } = useParams<{ videoId: string }>();
@@ -80,9 +81,9 @@ const EditPage = () => {
             <header className="flex items-center gap-4 mb-6">
                 <button
                     onClick={() => navigate(-1)}
-                    className="bg-transparent border-none text-inherit text-2xl p-0 cursor-pointer"
+                    className="bg-transparent border-none text-inherit hover:bg-muted p-2 rounded-full transition-colors shrink-0"
                 >
-                    ←
+                    <ChevronLeft className="h-6 w-6" />
                 </button>
                 <h2 className="text-xl font-extrabold m-0">Редактировать</h2>
             </header>
@@ -102,7 +103,7 @@ const EditPage = () => {
                         type="text"
                         value={title}
                         onChange={(e) => setTitle(e.target.value)}
-                        className="w-full p-4 rounded-xl border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-white/5 text-inherit text-sm outline-none focus:border-accent transition-colors"
+                        className="w-full p-4 rounded-xl border border-border bg-input text-inherit text-sm outline-none focus:border-accent transition-colors shadow-sm"
                     />
                 </div>
 
@@ -111,7 +112,7 @@ const EditPage = () => {
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        className="w-full p-4 rounded-xl border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-white/5 text-inherit text-sm min-h-[100px] outline-none resize-none focus:border-accent transition-colors"
+                        className="w-full p-4 rounded-xl border border-border bg-input text-inherit text-sm min-h-[100px] outline-none resize-none focus:border-accent transition-colors shadow-sm"
                     />
                 </div>
 
@@ -133,7 +134,7 @@ const EditPage = () => {
                                 type="text"
                                 value={timeStart}
                                 onChange={(e) => setTimeStart(e.target.value)}
-                                className="w-full p-3 rounded-lg border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-white/5 text-inherit text-sm outline-none focus:border-accent transition-colors"
+                                className="w-full p-3 rounded-lg border border-border bg-input text-inherit text-sm outline-none focus:border-accent transition-colors shadow-sm"
                             />
                         </div>
                         <div className="flex-1">
@@ -142,7 +143,7 @@ const EditPage = () => {
                                 type="text"
                                 value={timeEnd}
                                 onChange={(e) => setTimeEnd(e.target.value)}
-                                className="w-full p-3 rounded-lg border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-white/5 text-inherit text-sm outline-none focus:border-accent transition-colors"
+                                className="w-full p-3 rounded-lg border border-border bg-input text-inherit text-sm outline-none focus:border-accent transition-colors shadow-sm"
                             />
                         </div>
                     </div>

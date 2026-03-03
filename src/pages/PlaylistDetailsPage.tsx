@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { storage } from '../utils/storage';
 import type { Playlist, Video } from '../types';
+import { ChevronLeft, MoreVertical, Trash2, FolderOpen, X, Scissors } from 'lucide-react';
 
 const PlaylistDetailsPage = () => {
     const { playlistId } = useParams<{ playlistId: string }>();
@@ -52,13 +53,13 @@ const PlaylistDetailsPage = () => {
 
     return (
         <div className="pb-20">
-            <header className="px-5 py-4 flex items-center justify-between sticky top-0 bg-inherit z-10">
+            <header className="px-5 py-4 flex items-center justify-between sticky top-0 bg-background/80 backdrop-blur-md z-10 border-b border-border">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => navigate('/playlists')}
-                        className="bg-transparent border-none text-inherit text-2xl p-0 cursor-pointer"
+                        className="bg-transparent border-none text-inherit hover:bg-muted p-2 rounded-full transition-colors shrink-0"
                     >
-                        ←
+                        <ChevronLeft className="h-6 w-6" />
                     </button>
                     <h2 className="m-0 text-xl font-bold">{playlist.name}</h2>
                 </div>
@@ -66,16 +67,17 @@ const PlaylistDetailsPage = () => {
                 <div className="relative">
                     <button
                         onClick={() => setShowMenu(!showMenu)}
-                        className="bg-transparent border-none text-inherit text-xl p-0 cursor-pointer"
+                        className="bg-transparent border-none text-inherit hover:bg-muted p-2 rounded-full transition-colors shrink-0"
                     >
-                        ⋯
+                        <MoreVertical className="h-5 w-5" />
                     </button>
                     {showMenu && (
-                        <div className="absolute top-full right-0 bg-bg-light dark:bg-bg-dark border border-gray-200 dark:border-white/10 rounded-lg py-2 min-w-[150px] shadow-lg z-[100]">
+                        <div className="absolute top-[calc(100%+8px)] right-0 bg-white dark:bg-[#1c1c1e] border border-border rounded-xl py-2 min-w-[200px] shadow-2xl z-[100] animate-in fade-in slide-in-from-top-2">
                             <button
                                 onClick={handleDeletePlaylist}
-                                className="w-full px-4 py-3 text-left bg-transparent border-none text-red-500 text-sm font-semibold cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                                className="w-full px-4 py-3 text-left bg-transparent border-none text-red-500 text-sm font-semibold cursor-pointer hover:bg-red-500/10 transition-colors flex items-center gap-2"
                             >
+                                <Trash2 className="h-4 w-4" />
                                 Удалить плейлист
                             </button>
                         </div>
@@ -85,12 +87,12 @@ const PlaylistDetailsPage = () => {
 
             <div className="px-5">
                 {videos.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-24 text-center text-inactive">
-                        <span className="text-5xl mb-4">📁</span>
-                        <p>Плейлист пуст</p>
+                    <div className="flex flex-col items-center justify-center py-24 text-center">
+                        <FolderOpen className="w-16 h-16 mb-4 text-muted-foreground/30" />
+                        <p className="text-muted-foreground">Плейлист пуст</p>
                         <Link
                             to={`/add?playlistId=${playlistId}`}
-                            className="mt-4 text-accent no-underline font-semibold"
+                            className="mt-4 text-accent no-underline font-semibold hover:underline"
                         >
                             Добавить первое видео
                         </Link>
@@ -103,22 +105,25 @@ const PlaylistDetailsPage = () => {
                                     <img
                                         src={`https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg`}
                                         alt={video.title}
-                                        className="w-[72px] h-12 rounded-md object-cover bg-black ring-1 ring-black/5 dark:ring-white/10"
+                                        className="w-[72px] h-12 rounded-lg object-cover bg-black ring-1 ring-black/5 dark:ring-white/10"
                                     />
                                     <div className="flex-1 min-w-0 overflow-hidden">
-                                        <div className="text-sm font-medium truncate group-hover:text-accent transition-colors">
+                                        <div className="text-sm font-semibold truncate group-hover:text-accent transition-colors">
                                             {video.title}
                                         </div>
                                         {video.timeStart && (
-                                            <span className="text-xs text-accent">✂</span>
+                                            <div className="flex items-center gap-1.5 text-[11px] text-accent font-bold mt-0.5">
+                                                <Scissors className="h-3 w-3" />
+                                                <span>{video.timeStart} {video.timeEnd ? `– ${video.timeEnd}` : ''}</span>
+                                            </div>
                                         )}
                                     </div>
                                 </Link>
                                 <button
                                     onClick={() => handleDeleteVideo(video.uuid)}
-                                    className="bg-transparent border-none text-inactive text-lg p-2 cursor-pointer hover:text-red-500 transition-colors"
+                                    className="bg-transparent border-none text-muted-foreground hover:bg-red-500/10 hover:text-red-500 p-2 rounded-full transition-colors cursor-pointer"
                                 >
-                                    ✕
+                                    <X className="h-4 w-4" />
                                 </button>
                             </div>
                         ))}

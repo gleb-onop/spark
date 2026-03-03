@@ -3,6 +3,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { storage } from '../utils/storage';
 import { fetchVideoTitle } from '../utils/youtube';
 import type { Playlist } from '../types';
+import { ChevronLeft } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 declare global {
     interface Window {
@@ -217,9 +220,17 @@ const AddPage = () => {
 
     return (
         <div className="px-5 pt-5 pb-24">
-            <h2 className="text-2xl mb-6 font-extrabold">
-                {isNewPlaylistMode ? 'Новый плейлист' : 'Добавить видео'}
-            </h2>
+            <header className="flex items-center gap-4 mb-6">
+                <button
+                    onClick={() => navigate(-1)}
+                    className="bg-transparent border-none text-inherit hover:bg-muted p-2 rounded-full transition-colors shrink-0"
+                >
+                    <ChevronLeft className="h-6 w-6" />
+                </button>
+                <h2 className="text-2xl font-extrabold m-0">
+                    {isNewPlaylistMode ? 'Новый плейлист' : 'Добавить видео'}
+                </h2>
+            </header>
 
             <div className="flex flex-col gap-5">
                 {/* Playlist name (new playlist mode) */}
@@ -232,7 +243,7 @@ const AddPage = () => {
                             onChange={(e) => setPlaylistName(e.target.value)}
                             placeholder="Мой плейлист"
                             autoFocus
-                            className="w-full p-4 rounded-xl border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-white/5 text-inherit text-base outline-none focus:border-accent transition-colors"
+                            className="w-full p-4 rounded-xl border border-border bg-input text-inherit text-base outline-none focus:border-accent transition-colors shadow-sm"
                         />
                     </div>
                 )}
@@ -240,9 +251,9 @@ const AddPage = () => {
                 {/* Divider between playlist and video sections */}
                 {isNewPlaylistMode && (
                     <div className="flex items-center gap-3 my-1">
-                        <div className="flex-1 h-px bg-gray-200 dark:bg-white/10" />
-                        <span className="text-xs text-inactive font-medium uppercase tracking-wider">Первое видео</span>
-                        <div className="flex-1 h-px bg-gray-200 dark:bg-white/10" />
+                        <div className="flex-1 h-px bg-border" />
+                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Первое видео</span>
+                        <div className="flex-1 h-px bg-border" />
                     </div>
                 )}
 
@@ -254,7 +265,7 @@ const AddPage = () => {
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                         placeholder="https://youtube.com/watch?v=..."
-                        className={`w-full p-4 rounded-xl border bg-gray-50 dark:bg-white/5 text-inherit text-sm outline-none focus:border-accent transition-colors ${urlError ? 'border-red-500' : 'border-gray-300 dark:border-white/20'}`}
+                        className={`w-full p-4 rounded-xl border bg-input text-inherit text-sm outline-none focus:border-accent transition-colors shadow-sm ${urlError ? 'border-red-500' : 'border-border'}`}
                     />
                     {urlError && <div className="text-red-500 text-xs mt-1">{urlError}</div>}
                 </div>
@@ -280,7 +291,7 @@ const AddPage = () => {
                                 value={title}
                                 onChange={(e) => setTitle(e.target.value)}
                                 placeholder={isFetchingTitle ? 'Загрузка...' : 'Название видео'}
-                                className="w-full p-4 rounded-xl border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-white/5 text-inherit text-sm outline-none focus:border-accent transition-colors"
+                                className="w-full p-4 rounded-xl border border-border bg-input text-inherit text-sm outline-none focus:border-accent transition-colors shadow-sm"
                             />
                             {isFetchingTitle && (
                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
@@ -297,14 +308,14 @@ const AddPage = () => {
                             <select
                                 value={playlistId}
                                 onChange={(e) => setPlaylistId(e.target.value)}
-                                className="w-full p-4 pr-10 rounded-xl border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-white/5 text-inherit text-sm outline-none appearance-none cursor-pointer focus:border-accent transition-colors"
+                                className="w-full p-4 pr-10 rounded-xl border border-border bg-input text-inherit text-sm outline-none appearance-none cursor-pointer focus:border-accent transition-colors shadow-sm"
                             >
-                                <option value="" className="bg-bg-light dark:bg-bg-dark">Выберите плейлист</option>
+                                <option value="" className="bg-background">Выберите плейлист</option>
                                 {playlists.map(p => (
-                                    <option key={p.uuid} value={p.uuid} className="bg-bg-light dark:bg-bg-dark">{p.name}</option>
+                                    <option key={p.uuid} value={p.uuid} className="bg-background">{p.name}</option>
                                 ))}
                             </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-xs text-inactive">
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-xs text-muted-foreground">
                                 ▼
                             </div>
                         </div>
@@ -318,19 +329,19 @@ const AddPage = () => {
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="О чем это видео..."
-                        className="w-full p-4 rounded-xl border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-white/5 text-inherit text-sm min-h-[100px] outline-none resize-none focus:border-accent transition-colors"
+                        className="w-full p-4 rounded-xl border border-border bg-input text-inherit text-sm min-h-[100px] outline-none resize-none focus:border-accent transition-colors shadow-sm"
                     />
                 </div>
 
                 {/* Time range toggle */}
                 <div className="flex items-center justify-between mt-2">
-                    <span className="text-sm font-semibold">Временной диапазон</span>
-                    <button
-                        onClick={() => setUseRange(!useRange)}
-                        className={`w-11 h-6 rounded-full border-none relative transition-colors cursor-pointer p-0 ${useRange ? 'bg-accent' : 'bg-inactive'}`}
-                    >
-                        <div className={`w-5 h-5 rounded-full bg-white absolute top-[2px] transition-all ${useRange ? 'left-[22px]' : 'left-[2px]'}`} />
-                    </button>
+                    <Label htmlFor="use-range" className="text-sm font-semibold cursor-pointer">Временной диапазон</Label>
+                    <Switch
+                        id="use-range"
+                        checked={useRange}
+                        onCheckedChange={setUseRange}
+                        className="data-[state=checked]:bg-accent"
+                    />
                 </div>
 
                 {useRange && (
@@ -342,7 +353,7 @@ const AddPage = () => {
                                 value={timeStart}
                                 onChange={(e) => setTimeStart(e.target.value)}
                                 placeholder="0:30"
-                                className="w-full p-3 rounded-lg border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-white/5 text-inherit text-sm outline-none focus:border-accent transition-colors"
+                                className="w-full p-3 rounded-lg border border-border bg-input text-inherit text-sm outline-none focus:border-accent transition-colors shadow-sm"
                             />
                         </div>
                         <div className="flex-1">
@@ -364,8 +375,8 @@ const AddPage = () => {
                     onClick={handleSave}
                     disabled={isValidating}
                     className={`w-full h-14 rounded-2xl text-white border-none text-base font-bold mt-2 shadow-[0_4px_12px_rgba(255,107,53,0.3)] transition-all ${isValidating
-                            ? 'bg-inactive cursor-wait'
-                            : 'bg-accent cursor-pointer hover:brightness-110'
+                        ? 'bg-muted-foreground/50 cursor-wait'
+                        : 'bg-accent cursor-pointer hover:brightness-110'
                         }`}
                 >
                     {isValidating ? (

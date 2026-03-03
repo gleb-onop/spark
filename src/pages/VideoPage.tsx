@@ -4,7 +4,7 @@ import { storage } from '../utils/storage';
 import type { Video } from '../types';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, Scissors } from "lucide-react";
 
 declare global {
     interface Window {
@@ -181,14 +181,15 @@ const VideoPage = () => {
                 <h1 className="text-xl m-0 mb-3 font-bold">{video.title}</h1>
 
                 {video.timeStart && video.timeEnd && (
-                    <div className="inline-flex items-center gap-2 bg-accent px-3 py-1 rounded-full text-xs font-bold text-white mb-4">
-                        ✂ {video.timeStart} – {video.timeEnd}
+                    <div className="inline-flex items-center gap-1.5 bg-accent px-3 py-1.5 rounded-full text-xs font-bold text-white mb-4 shadow-sm">
+                        <Scissors className="h-3.5 w-3.5" />
+                        <span>{video.timeStart} – {video.timeEnd}</span>
                     </div>
                 )}
 
-                <div className="flex items-center justify-between mb-6 p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/10">
+                <div className="flex items-center justify-between mb-6 p-4 rounded-xl bg-muted dark:bg-muted/50 border border-border">
                     <div className="flex-1 mr-4">
-                        <p className={`text-sm leading-relaxed m-0 text-gray-700 dark:text-gray-300 ${isExpanded ? 'block' : 'line-clamp-3 overflow-hidden'}`}>
+                        <p className={`text-sm leading-relaxed m-0 text-foreground/90 ${isExpanded ? 'block' : 'line-clamp-3 overflow-hidden'}`}>
                             {video.description || 'Нет описания'}
                         </p>
                         {video.description && video.description.length > 110 && (
@@ -219,7 +220,7 @@ const VideoPage = () => {
 
                 <Link
                     to={`/edit/${video.uuid}`}
-                    className="flex items-center justify-center w-full h-12 border border-gray-300 dark:border-white/20 rounded-xl text-inherit no-underline text-sm font-semibold hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                    className="flex items-center justify-center w-full h-12 border border-border rounded-xl text-inherit no-underline text-sm font-semibold hover:bg-muted transition-colors shadow-sm"
                 >
                     Редактировать
                 </Link>
