@@ -45,11 +45,24 @@ export const storage = {
     },
 
     deletePlaylist: (uuid: string) => {
-        const playlists = storage.getPlaylists().filter(p => p.uuid !== uuid);
-        storage.savePlaylists(playlists);
+        const allPlaylists = storage.getPlaylists();
+        const playlistToDelete = allPlaylists.find(p => p.uuid === uuid);
 
-        // Also cleanup orphaned videos if needed, though spec says "all videos of all playlists" are in spark_videos
-        // For now just removing the playlist reference is enough as per spec structure
+        if (playlistToDelete) {
+            const allVideos = storage.getVideos();
+            const remainingVideos = allVideos.filter(v => !playlistToDelete.videoIds.includes(v.uuid));
+            storage.saveVideos(remainingVideos);
+        }
+
+        const remainingPlaylists = allPlaylists.filter(p => p.uuid !== uuid);
+        storage.savePlaylists(remainingPlaylists);
+    },
+
+    updatePlaylist: (updated: Playlist) => {
+        const playlists = storage.getPlaylists().map(p =>
+            p.uuid === updated.uuid ? updated : p
+        );
+        storage.savePlaylists(playlists);
     },
 
     addVideo: (video: Omit<Video, 'uuid' | 'createdAt'>, playlistUuid: string): Video => {

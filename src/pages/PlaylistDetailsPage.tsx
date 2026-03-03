@@ -2,7 +2,17 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { storage } from '../utils/storage';
 import type { Playlist, Video } from '../types';
-import { ChevronLeft, MoreVertical, Trash2, FolderOpen, X, Scissors } from 'lucide-react';
+import { ChevronLeft, MoreVertical, Trash2, FolderOpen, X, Scissors, Edit2 } from 'lucide-react';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "../components/ui/dialog";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
 
 const PlaylistDetailsPage = () => {
     const { playlistId } = useParams<{ playlistId: string }>();
@@ -10,6 +20,12 @@ const PlaylistDetailsPage = () => {
     const [playlist, setPlaylist] = useState<Playlist | null>(null);
     const [videos, setVideos] = useState<Video[]>([]);
     const [showMenu, setShowMenu] = useState(false);
+
+    // Modal states
+    const [videoToDelete, setVideoToDelete] = useState<string | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isDeletePlaylistModalOpen, setIsDeletePlaylistModalOpen] = useState(false);
+    const [editName, setEditName] = useState('');
 
     useEffect(() => {
         if (!playlistId) return;
@@ -25,28 +41,50 @@ const PlaylistDetailsPage = () => {
     }, [playlistId, navigate]);
 
     const handleDeletePlaylist = () => {
-        if (window.confirm('Удалить плейлист?')) {
-            if (playlistId) {
-                storage.deletePlaylist(playlistId);
-                navigate('/playlists');
+        setIsDeletePlaylistModalOpen(true);
+        setShowMenu(false);
+    };
+
+    const confirmDeletePlaylist = () => {
+        if (playlistId) {
+            storage.deletePlaylist(playlistId);
+            navigate('/playlists');
+        }
+    };
+
+    const handleEditPlaylist = () => {
+        if (!playlist) return;
+        setEditName(playlist.name);
+        setIsEditModalOpen(true);
+        setShowMenu(false);
+    };
+
+    const savePlaylistEdit = () => {
+        if (playlist && editName.trim() !== '') {
+            const updated = { ...playlist, name: editName.trim() };
+            storage.updatePlaylist(updated);
+            setPlaylist(updated);
+            setIsEditModalOpen(false);
+        }
+    };
+
+    const confirmDeleteVideo = () => {
+        if (videoToDelete && playlistId) {
+            storage.deleteVideo(videoToDelete, playlistId);
+            // Refresh local state
+            const allPlaylists = storage.getPlaylists();
+            const current = allPlaylists.find(p => p.uuid === playlistId);
+            if (current) {
+                setPlaylist(current);
+                const allVideos = storage.getVideos();
+                setVideos(allVideos.filter(v => current.videoIds.includes(v.uuid)));
             }
+            setVideoToDelete(null);
         }
     };
 
     const handleDeleteVideo = (videoUuid: string) => {
-        if (window.confirm('Удалить видео из плейлиста?')) {
-            if (playlistId) {
-                storage.deleteVideo(videoUuid, playlistId);
-                // Refresh local state
-                const allPlaylists = storage.getPlaylists();
-                const current = allPlaylists.find(p => p.uuid === playlistId);
-                if (current) {
-                    setPlaylist(current);
-                    const allVideos = storage.getVideos();
-                    setVideos(allVideos.filter(v => current.videoIds.includes(v.uuid)));
-                }
-            }
-        }
+        setVideoToDelete(videoUuid);
     };
 
     if (!playlist) return null;
@@ -73,6 +111,14 @@ const PlaylistDetailsPage = () => {
                     </button>
                     {showMenu && (
                         <div className="absolute top-[calc(100%+8px)] right-0 bg-white dark:bg-[#1c1c1e] border border-border rounded-xl py-2 min-w-[200px] shadow-2xl z-[100] animate-in fade-in slide-in-from-top-2">
+                            <button
+                                onClick={handleEditPlaylist}
+                                className="w-full px-4 py-3 text-left bg-transparent border-none text-foreground text-sm font-semibold cursor-pointer hover:bg-muted transition-colors flex items-center gap-2"
+                            >
+                                <Edit2 className="h-4 w-4" />
+                                Редактировать
+                            </button>
+                            <div className="h-px bg-border mx-2" />
                             <button
                                 onClick={handleDeletePlaylist}
                                 className="w-full px-4 py-3 text-left bg-transparent border-none text-red-500 text-sm font-semibold cursor-pointer hover:bg-red-500/10 transition-colors flex items-center gap-2"
@@ -139,6 +185,74 @@ const PlaylistDetailsPage = () => {
                     Добавить видео
                 </Link>
             </div>
+
+            {/* Edit Playlist Modal */}
+            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Редактировать плейлист</DialogTitle>
+                        <DialogDescription>
+                            Измените название вашего плейлиста.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Input
+                            value={editName}
+                            onChange={(e) => setEditName(e.target.value)}
+                            placeholder="Название плейлиста"
+                            autoFocus
+                        />
+                    </div>
+                    <DialogFooter className="flex-row gap-2">
+                        <Button variant="outline" className="flex-1" onClick={() => setIsEditModalOpen(false)}>
+                            Отмена
+                        </Button>
+                        <Button className="flex-1" onClick={savePlaylistEdit} disabled={!editName.trim()}>
+                            Сохранить
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Video Confirmation Modal */}
+            <Dialog open={!!videoToDelete} onOpenChange={(open) => !open && setVideoToDelete(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Удалить видео?</DialogTitle>
+                        <DialogDescription>
+                            Это действие нельзя отменить. Видео будет удалено из этого плейлиста.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="flex-row gap-2 mt-4">
+                        <Button variant="outline" className="flex-1" onClick={() => setVideoToDelete(null)}>
+                            Отмена
+                        </Button>
+                        <Button variant="destructive" className="flex-1" onClick={confirmDeleteVideo}>
+                            Удалить
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Playlist Confirmation Modal */}
+            <Dialog open={isDeletePlaylistModalOpen} onOpenChange={setIsDeletePlaylistModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Удалить плейлист?</DialogTitle>
+                        <DialogDescription>
+                            Вы уверены, что хотите удалить плейлист "{playlist.name}"? Это также удалит все видео, которые в нем находятся.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="flex-row gap-2 mt-4">
+                        <Button variant="outline" className="flex-1" onClick={() => setIsDeletePlaylistModalOpen(false)}>
+                            Отмена
+                        </Button>
+                        <Button variant="destructive" className="flex-1" onClick={confirmDeletePlaylist}>
+                            Удалить
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

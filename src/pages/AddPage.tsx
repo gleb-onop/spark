@@ -3,9 +3,11 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { storage } from '../utils/storage';
 import { fetchVideoTitle } from '../utils/youtube';
 import type { Playlist } from '../types';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, Plus, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 declare global {
     interface Window {
@@ -219,14 +221,16 @@ const AddPage = () => {
     }, []);
 
     return (
-        <div className="px-5 pt-5 pb-24">
-            <header className="flex items-center gap-4 mb-6">
-                <button
+        <div className="px-5 pt-5 pb-24 bg-background min-h-screen">
+            <header className="flex items-center gap-4 mb-6 sticky top-0 bg-background/80 backdrop-blur-md z-10 py-2">
+                <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={() => navigate(-1)}
-                    className="bg-transparent border-none text-inherit hover:bg-muted p-2 rounded-full transition-colors shrink-0"
+                    className="rounded-full"
                 >
                     <ChevronLeft className="h-6 w-6" />
-                </button>
+                </Button>
                 <h2 className="text-2xl font-extrabold m-0">
                     {isNewPlaylistMode ? 'Новый плейлист' : 'Добавить видео'}
                 </h2>
@@ -236,14 +240,13 @@ const AddPage = () => {
                 {/* Playlist name (new playlist mode) */}
                 {isNewPlaylistMode && (
                     <div>
-                        <label className="block text-sm mb-2 font-semibold">Название плейлиста</label>
-                        <input
+                        <Label className="block text-sm mb-2 font-semibold">Название плейлиста</Label>
+                        <Input
                             type="text"
                             value={playlistName}
                             onChange={(e) => setPlaylistName(e.target.value)}
                             placeholder="Мой плейлист"
                             autoFocus
-                            className="w-full p-4 rounded-xl border border-border bg-input text-inherit text-base outline-none focus:border-accent transition-colors shadow-sm"
                         />
                     </div>
                 )}
@@ -259,15 +262,15 @@ const AddPage = () => {
 
                 {/* YouTube URL */}
                 <div>
-                    <label className="block text-sm mb-2 font-semibold">YouTube URL</label>
-                    <input
+                    <Label className="block text-sm mb-2 font-semibold">YouTube URL</Label>
+                    <Input
                         type="text"
                         value={url}
                         onChange={(e) => setUrl(e.target.value)}
                         placeholder="https://youtube.com/watch?v=..."
-                        className={`w-full p-4 rounded-xl border bg-input text-inherit text-sm outline-none focus:border-accent transition-colors shadow-sm ${urlError ? 'border-red-500' : 'border-border'}`}
+                        className={urlError ? 'border-red-500 focus-visible:ring-red-500' : ''}
                     />
-                    {urlError && <div className="text-red-500 text-xs mt-1">{urlError}</div>}
+                    {urlError && <div className="text-red-500 text-xs mt-1 font-medium">{urlError}</div>}
                 </div>
 
                 {/* Preview */}
@@ -303,12 +306,12 @@ const AddPage = () => {
                 {/* Playlist selector (add to existing mode) */}
                 {!isNewPlaylistMode && (
                     <div className="relative">
-                        <label className="block text-sm mb-2 font-semibold">Плейлист</label>
+                        <Label className="block text-sm mb-2 font-semibold">Плейлист</Label>
                         <div className="relative">
                             <select
                                 value={playlistId}
                                 onChange={(e) => setPlaylistId(e.target.value)}
-                                className="w-full p-4 pr-10 rounded-xl border border-border bg-input text-inherit text-sm outline-none appearance-none cursor-pointer focus:border-accent transition-colors shadow-sm"
+                                className="flex h-11 w-full rounded-xl border border-input bg-background px-4 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm appearance-none cursor-pointer"
                             >
                                 <option value="" className="bg-background">Выберите плейлист</option>
                                 {playlists.map(p => (
@@ -324,12 +327,12 @@ const AddPage = () => {
 
                 {/* Description */}
                 <div>
-                    <label className="block text-sm mb-2 font-semibold">Описание (необязательно)</label>
+                    <Label className="block text-sm mb-2 font-semibold">Описание (необязательно)</Label>
                     <textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="О чем это видео..."
-                        className="w-full p-4 rounded-xl border border-border bg-input text-inherit text-sm min-h-[100px] outline-none resize-none focus:border-accent transition-colors shadow-sm"
+                        className="flex w-full rounded-xl border border-input bg-background px-4 py-3 text-base ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm min-h-[100px] resize-none"
                     />
                 </div>
 
@@ -345,51 +348,50 @@ const AddPage = () => {
                 </div>
 
                 {useRange && (
-                    <div className="flex gap-4">
+                    <div className="flex gap-4 animate-in fade-in slide-in-from-top-2">
                         <div className="flex-1">
-                            <label className="block text-xs mb-1 text-inactive">Начало (m:ss)</label>
-                            <input
+                            <Label className="block text-xs mb-2 text-muted-foreground">Начало (m:ss)</Label>
+                            <Input
                                 type="text"
                                 value={timeStart}
                                 onChange={(e) => setTimeStart(e.target.value)}
                                 placeholder="0:30"
-                                className="w-full p-3 rounded-lg border border-border bg-input text-inherit text-sm outline-none focus:border-accent transition-colors shadow-sm"
                             />
                         </div>
                         <div className="flex-1">
-                            <label className="block text-xs mb-1 text-inactive">Конец (m:ss)</label>
-                            <input
+                            <Label className="block text-xs mb-2 text-muted-foreground">Конец (m:ss)</Label>
+                            <Input
                                 type="text"
                                 value={timeEnd}
                                 onChange={(e) => setTimeEnd(e.target.value)}
                                 placeholder="1:45"
-                                className="w-full p-3 rounded-lg border border-gray-300 dark:border-white/20 bg-gray-50 dark:bg-white/5 text-inherit text-sm outline-none focus:border-accent transition-colors"
                             />
                         </div>
                     </div>
                 )}
 
-                {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+                {error && <div className="text-red-500 text-sm text-center font-medium bg-red-500/10 py-3 rounded-lg border border-red-500/20">{error}</div>}
 
-                <button
+                <Button
+                    size="lg"
                     onClick={handleSave}
                     disabled={isValidating}
-                    className={`w-full h-14 rounded-2xl text-white border-none text-base font-bold mt-2 shadow-[0_4px_12px_rgba(255,107,53,0.3)] transition-all ${isValidating
-                        ? 'bg-muted-foreground/50 cursor-wait'
-                        : 'bg-accent cursor-pointer hover:brightness-110'
-                        }`}
+                    className="w-full shadow-lg"
                 >
                     {isValidating ? (
-                        <span className="flex items-center justify-center gap-2">
-                            <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Проверяем видео…
-                        </span>
+                        </>
                     ) : isNewPlaylistMode ? (
-                        'Создать плейлист'
+                        <>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Создать плейлист
+                        </>
                     ) : (
                         'Сохранить'
                     )}
-                </button>
+                </Button>
             </div>
 
             {/* Hidden container for video validation iframe */}
