@@ -7,7 +7,7 @@
 
 ## 1. Обзор продукта
 
-**Spark** — мобильное веб-приложение для изучения английского через YouTube-видео. Пользователь создаёт плейлисты, добавляет в них видео с YouTube, задаёт временной фрагмент для зацикленного воспроизведения и описание . Главный экран — горизонтальные полочки плейлистов в стиле Netflix.
+**Spark** — мобильное веб-приложение для изучения английского через YouTube-видео. Пользователь создаёт плейлисты, добавляет в них видео с YouTube, задаёт временной фрагмент и описание. Видео в плейлисте воспроизводятся последовательно — по окончании одного автоматически запускается следующее. Главный экран — горизонтальные полочки плейлистов в стиле Netflix.
 
 **Целевая аудитория:** люди которые самостоятельно учат английский и хотят организовать видео-материалы по своим темам.
 
@@ -164,43 +164,43 @@
 
 **Инициализация:**
 
-`YT.Player` создаётся после готовности `window.YT` (проверка через `setInterval` 100ms). Параметры:
+`YT.Player` создаётся после готовности `window.YT`. Параметры:
 
 ```
 autoplay: 1
-controls: 0
+controls: 1
 modestbranding: 1
 rel: 0
 showinfo: 0
 iv_load_policy: 3
 mute: 1  // обязательно для autoplay в браузере
+start: timeStart (если задан)
 ```
 
-При `onReady`:
-- Если задан `timeStart` → `seekTo(parseTime(timeStart), true)` → `playVideo()`
-- Если не задан → `playVideo()` от начала
+При `onReady` → `playVideo()`.
 
-**Зацикливание фрагмента:**
+**Автовоспроизведение следующего видео в плейлисте:**
 
-Если заданы `timeStart` и `timeEnd` — используется `requestAnimationFrame` для отслеживания позиции воспроизведения. Цикл автоматически управляется через `onStateChange`:
+Маршрут `/video/:playlistId/:videoId` передаёт контекст плейлиста в `VideoPage`. При открытии плеер загружает упорядоченный список видео плейлиста.
 
-- `PLAYING` → запускается `requestAnimationFrame`-loop
-- `PAUSED / BUFFERING / ENDED` → loop останавливается через `cancelAnimationFrame`
+Переход к следующему видео (`goToNext`) происходит в двух случаях:
+
+- **`onStateChange: ENDED`** — видео досмотрено до конца (для видео без фрагмента или если пользователь досмотрел дальше `timeEnd`)
+- **Достижение `timeEnd`** — если задан временной фрагмент, `setInterval` (каждые 100ms) проверяет позицию воспроизведения; при `currentTime >= timeEnd - 0.15` вызывается `goToNext`
 
 ```
-function tick():
-  current = player.getCurrentTime()
-  if current >= endSec - 0.1:
-    player.seekTo(startSec, true)
-  rafId = requestAnimationFrame(tick)
+function goToNext():
+  currentIndex = playlistVideos.indexOf(currentVideo)
+  nextVideo = playlistVideos[currentIndex + 1]
+  if nextVideo:
+    navigate(/video/{playlistId}/{nextVideo.uuid})
+  else:
+    navigate(/playlist/{playlistId})
 ```
 
-Преимущества перед `setInterval`:
-- Не тратит ресурсы когда видео на паузе
-- Работает на частоте обновления экрана (~60fps) для точного определения границы
-- Корректно очищается через `cancelAnimationFrame`
+Интервал запускается при `PLAYING` и очищается при `PAUSED / BUFFERING / ENDED` и при анмаунте компонента.
 
-Если `timeStart`/`timeEnd` не заданы — зацикливание через `onStateChange: ENDED → playVideo()`.
+Если текущее видео последнее в плейлисте — происходит возврат на страницу плейлиста.
 
 **Очистка:**
 

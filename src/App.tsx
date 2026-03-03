@@ -18,7 +18,7 @@ function App() {
             <Route path="/" element={<Navigate to="/playlists" replace />} />
             <Route path="/playlists" element={<PlaylistsPage />} />
             <Route path="/playlist/:playlistId" element={<PlaylistDetailsPage />} />
-            <Route path="/video/:videoId" element={<VideoPage />} />
+            <Route path="/video/:playlistId/:videoId" element={<VideoPage />} />
             <Route path="/add" element={<AddPage />} />
             <Route path="/edit/:videoId" element={<EditPage />} />
           </Routes>

@@ -99,7 +99,7 @@ const PlaylistDetailsPage = () => {
                     <div className="flex flex-col gap-4 mt-3">
                         {videos.map(video => (
                             <div key={video.uuid} className="flex items-center gap-3 group">
-                                <Link to={`/video/${video.uuid}`} className="flex flex-1 min-w-0 items-center gap-3 no-underline text-inherit">
+                                <Link to={`/video/${playlistId}/${video.uuid}`} className="flex flex-1 min-w-0 items-center gap-3 no-underline text-inherit">
                                     <img
                                         src={`https://img.youtube.com/vi/${video.youtubeId}/mqdefault.jpg`}
                                         alt={video.title}

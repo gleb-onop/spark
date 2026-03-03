@@ -11,25 +11,38 @@ declare global {
 }
 
 const VideoPage = () => {
-    const { videoId } = useParams<{ videoId: string }>();
+    const { playlistId, videoId } = useParams<{ playlistId: string; videoId: string }>();
     const navigate = useNavigate();
     const [video, setVideo] = useState<Video | null>(null);
+    const [playlistVideos, setPlaylistVideos] = useState<Video[]>([]);
     const [isExpanded, setIsExpanded] = useState(false);
     const playerRef = useRef<any>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const rafIdRef = useRef<number | null>(null);
+    const intervalRef = useRef<number | null>(null);
 
+    // Load current video and playlist context
     useEffect(() => {
-        if (!videoId) return;
+        if (!videoId || !playlistId) return;
+
         const allVideos = storage.getVideos();
         const current = allVideos.find(v => v.uuid === videoId);
-        if (current) {
-            setVideo(current);
-        } else {
+        if (!current) {
             navigate('/playlists');
+            return;
         }
-    }, [videoId, navigate]);
+        setVideo(current);
 
+        const allPlaylists = storage.getPlaylists();
+        const playlist = allPlaylists.find(p => p.uuid === playlistId);
+        if (playlist) {
+            // Preserve playlist order
+            const ordered = playlist.videoIds
+                .map(id => allVideos.find(v => v.uuid === id))
+                .filter(Boolean) as Video[];
+            setPlaylistVideos(ordered);
+        }
+    }, [videoId, playlistId, navigate]);
+
+    // Player setup
     useEffect(() => {
         if (!video) return;
 
@@ -43,23 +56,26 @@ const VideoPage = () => {
         const endSec = parseTime(video.timeEnd);
         const hasFragment = !!(video.timeStart && video.timeEnd);
 
-        const stopLoop = () => {
-            if (rafIdRef.current !== null) {
-                cancelAnimationFrame(rafIdRef.current);
-                rafIdRef.current = null;
+        const stopInterval = () => {
+            if (intervalRef.current !== null) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
             }
         };
 
-        const startLoop = (player: any) => {
-            stopLoop();
-            const tick = () => {
-                const currentTime = player.getCurrentTime();
-                if (currentTime >= endSec - 0.1) {
-                    player.seekTo(startSec, true);
-                }
-                rafIdRef.current = requestAnimationFrame(tick);
-            };
-            rafIdRef.current = requestAnimationFrame(tick);
+        const goToNext = () => {
+            stopInterval();
+            // Persist mute state so next video respects user's choice
+            if (playerRef.current) {
+                sessionStorage.setItem('spark_muted', playerRef.current.isMuted() ? '1' : '0');
+            }
+            const currentIndex = playlistVideos.findIndex(v => v.uuid === video.uuid);
+            const nextVideo = playlistVideos[currentIndex + 1];
+            if (nextVideo) {
+                navigate(`/video/${playlistId}/${nextVideo.uuid}`);
+            } else {
+                navigate(`/playlist/${playlistId}`);
+            }
         };
 
         const loadVideo = () => {
@@ -81,22 +97,29 @@ const VideoPage = () => {
                 },
                 events: {
                     onReady: (event: any) => {
-                        event.target.playVideo();
-                        if (hasFragment) {
-                            startLoop(event.target);
+                        // Restore mute preference from previous video
+                        if (sessionStorage.getItem('spark_muted') === '0') {
+                            event.target.unMute();
                         }
+                        event.target.playVideo();
                     },
                     onStateChange: (event: any) => {
+                        if (event.data === window.YT.PlayerState.ENDED) {
+                            goToNext();
+                        }
+
                         if (hasFragment) {
                             if (event.data === window.YT.PlayerState.PLAYING) {
-                                startLoop(event.target);
+                                stopInterval();
+                                intervalRef.current = window.setInterval(() => {
+                                    const currentTime = event.target.getCurrentTime();
+                                    if (currentTime >= endSec - 0.15) {
+                                        goToNext();
+                                    }
+                                }, 100);
                             } else {
-                                stopLoop();
+                                stopInterval();
                             }
-                        }
-                        // Standard loop for videos without a fragment
-                        if (event.data === window.YT.PlayerState.ENDED && !hasFragment) {
-                            event.target.playVideo();
                         }
                     }
                 }
@@ -114,10 +137,10 @@ const VideoPage = () => {
         }
 
         return () => {
-            stopLoop();
+            stopInterval();
             if (playerRef.current) playerRef.current.destroy();
         };
-    }, [video]);
+    }, [video, playlistVideos, playlistId, navigate]);
 
     if (!video) return null;
 
@@ -125,7 +148,7 @@ const VideoPage = () => {
         <div className="bg-inherit min-h-screen">
             <header className="px-5 py-4 flex items-center gap-4 sticky top-0 bg-inherit z-10 border-b border-gray-200 dark:border-gray-800">
                 <button
-                    onClick={() => navigate(-1)}
+                    onClick={() => navigate(`/playlist/${playlistId}`)}
                     className="bg-transparent border-none text-inherit text-2xl p-0 cursor-pointer"
                 >
                     ←
@@ -135,7 +158,7 @@ const VideoPage = () => {
                 </h2>
             </header>
 
-            <div ref={containerRef} className="w-full relative bg-black" style={{
+            <div className="w-full relative bg-black" style={{
                 paddingTop: video.isVertical ? '100%' : '56.25%',
             }}>
                 <div id="youtube-player" className="absolute top-0 left-0 w-full h-full" />

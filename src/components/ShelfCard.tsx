@@ -24,7 +24,7 @@ const ShelfCard = ({ video, playlistId, isPlaceholder }: ShelfCardProps) => {
 
     return (
         <Link
-            to={`/video/${video.uuid}`}
+            to={`/video/${playlistId}/${video.uuid}`}
             className="min-w-[110px] w-[110px] flex flex-col no-underline text-inherit snap-start group"
         >
             <div className="w-full aspect-video relative rounded-lg overflow-hidden bg-black mb-2 ring-1 ring-black/5 dark:ring-white/10 group-hover:ring-accent/50 transition-all">
