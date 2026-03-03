@@ -187,9 +187,9 @@ const VideoPage = () => {
                     </div>
                 )}
 
-                <div className="flex items-center justify-between mb-6 p-4 rounded-xl bg-muted dark:bg-muted/50 border border-border">
-                    <div className="flex-1 mr-4">
-                        <p className={`text-sm leading-relaxed m-0 text-foreground/90 ${isExpanded ? 'block' : 'line-clamp-3 overflow-hidden'}`}>
+                <div className="flex mb-6 p-4 rounded-xl bg-muted dark:bg-muted/50 border border-border overflow-hidden">
+                    <div className="min-w-0 flex-1">
+                        <p className={`text-sm leading-relaxed m-0 text-foreground/90 break-words whitespace-pre-wrap ${isExpanded ? 'block' : 'line-clamp-3 overflow-hidden'}`}>
                             {video.description || 'Нет описания'}
                         </p>
                         {video.description && video.description.length > 110 && (
