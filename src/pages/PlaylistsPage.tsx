@@ -70,11 +70,6 @@ const PlaylistsPage = () => {
                                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{playlistFragments.length} фрагментов</span>
                                 </div>
                                 <div className="flex items-center gap-1 shrink-0">
-                                    <Button size="icon" asChild className="h-8 w-8 rounded-full bg-brand hover:bg-brand/90 text-white shadow-md shadow-brand/20">
-                                        <Link to={`/add?playlistId=${playlist.uuid}`}>
-                                            <Plus className="h-4 w-4" />
-                                        </Link>
-                                    </Button>
                                     <Button variant="ghost" asChild size="sm" className="text-brand font-bold h-8 hover:bg-brand/10 px-2 min-w-0">
                                         <Link to={`/playlist/${playlist.uuid}`} className="flex items-center gap-0.5">
                                             <span className="text-xs">все</span>

@@ -59,9 +59,16 @@ const AddPage = () => {
     // Parse youtubeId from URL with debounce
     useEffect(() => {
         const timer = setTimeout(() => {
-            const match = url.match(/(?:v=|youtu\.be\/|shorts\/)([a-zA-Z0-9_-]{11})/);
-            if (match) {
-                const newId = match[1];
+            // Robust regex covering watch, shorts, embed, live and youtu.be
+            const match = url.match(/(?:v=|youtu\.be\/|shorts\/|embed\/|live\/)([a-zA-Z0-9_-]{11})/);
+            let newId = match ? match[1] : '';
+
+            // Fallback for plain ID if it's exactly 11 chars
+            if (!newId && url.trim().length === 11 && /^[a-zA-Z0-9_-]{11}$/.test(url.trim())) {
+                newId = url.trim();
+            }
+
+            if (newId) {
                 setYoutubeId(newId);
                 setUrlError('');
                 setIsFetchingTitle(true);
@@ -246,8 +253,7 @@ const AddPage = () => {
                         <div className="animate-in zoom-in-95 duration-300">
                             <div className="w-full aspect-video relative rounded-2xl overflow-hidden shadow-2xl ring-4 ring-black/5 dark:ring-white/5">
                                 <img
-                                    src={`https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`}
-                                    onError={(e) => (e.currentTarget.src = `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`)}
+                                    src={`https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`}
                                     alt="Превью"
                                     className="absolute inset-0 w-full h-full object-cover"
                                 />

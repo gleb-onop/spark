@@ -29,7 +29,7 @@ export const FragmentThumbnail = ({
     return (
         <div className={cn("relative overflow-hidden bg-black ring-1 ring-black/5 dark:ring-white/10", sizeClasses[size], className)}>
             <img
-                src={`https://img.youtube.com/vi/${youtubeId}/${size === 'sm' ? 'mqdefault' : 'hqdefault'}.jpg`}
+                src={`https://i.ytimg.com/vi/${youtubeId}/mqdefault.jpg`}
                 alt={title}
                 className="absolute inset-0 w-full h-full object-cover"
             />
