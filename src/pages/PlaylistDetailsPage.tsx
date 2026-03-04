@@ -19,18 +19,18 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { storage } from '../utils/storage';
 import { PageHeader } from '@/components/PageHeader';
-import { VideoItem } from '@/components/VideoItem';
+import { FragmentItem } from '@/components/FragmentItem';
 import { usePlaylist } from '@/hooks/usePlaylist';
 
 const PlaylistDetailsPage = () => {
     const { playlistId } = useParams<{ playlistId: string }>();
     const navigate = useNavigate();
-    const [videoToDelete, setVideoToDelete] = useState<string | null>(null);
+    const [fragmentToDelete, setFragmentToDelete] = useState<string | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeletePlaylistModalOpen, setIsDeletePlaylistModalOpen] = useState(false);
     const [newName, setNewName] = useState('');
 
-    const { playlist, videos, isLoading, deleteVideo, renamePlaylist } = usePlaylist(playlistId);
+    const { playlist, fragments, isLoading, deleteFragment, renamePlaylist } = usePlaylist(playlistId);
 
     const handleRename = () => {
         if (newName.trim()) {
@@ -96,16 +96,16 @@ const PlaylistDetailsPage = () => {
                         <div className="text-3xl font-black tracking-tight">{playlist.name}</div>
                         <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
                             <FolderOpen className="h-3 w-3" />
-                            {videos.length} видео
+                            {fragments.length} фрагментов
                         </div>
                     </div>
-                    {videos.length > 0 && (
+                    {fragments.length > 0 && (
                         <Button
                             asChild
                             size="icon"
                             className="rounded-full h-14 w-14 shadow-xl shadow-brand/25 bg-brand text-white hover:bg-brand/90 flex items-center justify-center"
                         >
-                            <Link to={`/video/${playlist.uuid}/${videos[0].uuid}`}>
+                            <Link to={`/fragment/${playlist.uuid}/${fragments[0].uuid}`}>
                                 <Play className="h-7 w-7 fill-current ml-1" />
                             </Link>
                         </Button>
@@ -113,37 +113,37 @@ const PlaylistDetailsPage = () => {
                 </div>
 
                 <div className="flex flex-col gap-5">
-                    {videos.map((video) => (
-                        <VideoItem
-                            key={video.uuid}
-                            video={video}
+                    {fragments.map((fragment) => (
+                        <FragmentItem
+                            key={fragment.uuid}
+                            fragment={fragment}
                             playlistId={playlist.uuid}
-                            onDelete={(uuid) => setVideoToDelete(uuid)}
+                            onDelete={(uuid) => setFragmentToDelete(uuid)}
                         />
                     ))}
                 </div>
             </main>
 
             {/* Modals */}
-            <Dialog open={!!videoToDelete} onOpenChange={(open) => !open && setVideoToDelete(null)}>
+            <Dialog open={!!fragmentToDelete} onOpenChange={(open) => !open && setFragmentToDelete(null)}>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                        <DialogTitle>Удалить видео?</DialogTitle>
+                        <DialogTitle>Удалить фрагмент?</DialogTitle>
                         <DialogDescription>
-                            Это действие нельзя будет отменить. Видео будет удалено из текущего списка.
+                            Это действие нельзя будет отменить. Фрагмент будет удален из текущего списка.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="flex-row gap-2 mt-4">
-                        <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setVideoToDelete(null)}>
+                        <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setFragmentToDelete(null)}>
                             Отмена
                         </Button>
                         <Button
                             variant="destructive"
                             className="flex-1 rounded-xl"
                             onClick={() => {
-                                if (videoToDelete) {
-                                    deleteVideo(videoToDelete);
-                                    setVideoToDelete(null);
+                                if (fragmentToDelete) {
+                                    deleteFragment(fragmentToDelete);
+                                    setFragmentToDelete(null);
                                 }
                             }}
                         >
@@ -185,7 +185,7 @@ const PlaylistDetailsPage = () => {
                     <DialogHeader>
                         <DialogTitle>Удалить плейлист?</DialogTitle>
                         <DialogDescription>
-                            Вы уверены, что хотите удалить плейлист "{playlist.name}"? Это также удалит все видео, которые в нем находятся.
+                            Вы уверены, что хотите удалить плейлист "{playlist.name}"? Это также удалит все фрагменты, которые в нем находятся.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="flex-row gap-2 mt-4">

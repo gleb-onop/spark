@@ -8,37 +8,34 @@ import { PageHeader } from '@/components/PageHeader';
 import { usePlaylist } from '@/hooks/usePlaylist';
 import { useYouTubePlayer } from '@/hooks/useYouTubePlayer';
 
-const VideoPage = () => {
-    const { playlistId, videoId } = useParams<{ playlistId: string; videoId: string }>();
+const FragmentPage = () => {
+    const { playlistId, fragmentId } = useParams<{ playlistId: string; fragmentId: string }>();
     const navigate = useNavigate();
     const [isExpanded, setIsExpanded] = useState(false);
     const [isLooping, setIsLooping] = useState(() => localStorage.getItem('spark_looping') === 'true');
 
-    const { playlist, videos } = usePlaylist(playlistId);
-    const video = videos.find(v => v.uuid === videoId);
+    const { playlist, fragments } = usePlaylist(playlistId);
+    const fragment = fragments.find(f => f.uuid === fragmentId);
 
-    const onVideoEnded = useCallback(() => {
-        if (!playlist || !video) return;
-        const currentIndex = playlist.videoIds.indexOf(video.uuid);
-        if (currentIndex < playlist.videoIds.length - 1) {
-            navigate(`/video/${playlistId}/${playlist.videoIds[currentIndex + 1]}`);
+    const onComplete = useCallback(() => {
+        if (!playlist || !fragment) return;
+        const currentIndex = playlist.fragmentIds.indexOf(fragment.uuid);
+        if (currentIndex < playlist.fragmentIds.length - 1) {
+            navigate(`/fragment/${playlistId}/${playlist.fragmentIds[currentIndex + 1]}`);
         } else if (isLooping) {
-            navigate(`/video/${playlistId}/${playlist.videoIds[0]}`);
+            navigate(`/fragment/${playlistId}/${playlist.fragmentIds[0]}`);
         } else {
             navigate(`/playlist/${playlistId}`);
         }
-    }, [playlist, video, playlistId, navigate, isLooping]);
+    }, [playlist, fragment, playlistId, navigate, isLooping]);
 
-    const onFragmentEnded = useCallback(() => {
-        onVideoEnded();
-    }, [onVideoEnded]);
 
     useYouTubePlayer({
-        youtubeId: video?.youtubeId || '',
-        timeStart: video?.timeStart || null,
-        timeEnd: video?.timeEnd || null,
-        onVideoEnded,
-        onFragmentEnded,
+        youtubeId: fragment?.youtubeId || '',
+        timeStart: fragment?.timeStart || null,
+        timeEnd: fragment?.timeEnd || null,
+        onComplete,
+        onFragmentEnded: onComplete,
     });
 
     const toggleLoop = (checked: boolean) => {
@@ -46,7 +43,7 @@ const VideoPage = () => {
         localStorage.setItem('spark_looping', String(checked));
     };
 
-    if (!video || !playlist) return null;
+    if (!fragment || !playlist) return null;
 
     return (
         <div className="flex flex-col min-h-screen bg-background pb-24">
@@ -55,7 +52,7 @@ const VideoPage = () => {
                 backPath={`/playlist/${playlistId}`}
                 actions={
                     <Button variant="ghost" size="icon" asChild className="rounded-full">
-                        <Link to={`/edit/${video.uuid}`}>
+                        <Link to={`/edit/${fragment.uuid}/${playlistId}`}>
                             <Edit2 className="h-4 w-4" />
                         </Link>
                     </Button>
@@ -63,28 +60,28 @@ const VideoPage = () => {
             />
 
             <div className="w-full bg-black aspect-video sticky top-[61px] z-20 shadow-xl overflow-hidden" style={{
-                paddingTop: video.isVertical ? '100%' : '56.25%',
+                paddingTop: fragment.isVertical ? '100%' : '56.25%',
             }}>
                 <div id="youtube-player" className="absolute top-0 left-0 w-full h-full" />
             </div>
 
             <main className="p-5 flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <section>
-                    <h1 className="text-2xl font-black m-0 mb-2 tracking-tight leading-tight">{video.title}</h1>
+                    <h1 className="text-2xl font-black m-0 mb-2 tracking-tight leading-tight">{fragment.title}</h1>
 
-                    {video.timeStart && (
+                    {fragment.timeStart && (
                         <div className="flex items-center gap-2 text-sm text-brand font-black mb-4 bg-brand/10 w-fit px-3 py-1 rounded-xl border border-brand/20 shadow-sm animate-in fade-in slide-in-from-left-4 duration-500 delay-100">
                             <Scissors className="h-4 w-4" />
-                            <span>{video.timeStart} {video.timeEnd ? `– ${video.timeEnd}` : ''}</span>
+                            <span>{fragment.timeStart} {fragment.timeEnd ? `– ${fragment.timeEnd}` : ''}</span>
                         </div>
                     )}
 
                     <div className="bg-muted/50 dark:bg-muted/20 border border-border p-4 rounded-2xl overflow-hidden relative">
                         <div className="min-w-0">
                             <p className={`text-sm leading-relaxed m-0 text-foreground/80 break-words whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-3'}`}>
-                                {video.description || 'Нет описания'}
+                                {fragment.description || 'Нет описания'}
                             </p>
-                            {video.description && video.description.length > 110 && (
+                            {fragment.description && fragment.description.length > 110 && (
                                 <button
                                     onClick={() => setIsExpanded(!isExpanded)}
                                     className="text-accent font-bold text-xs mt-3 uppercase tracking-wider hover:underline"
@@ -121,4 +118,4 @@ const VideoPage = () => {
     );
 };
 
-export default VideoPage;
+export default FragmentPage;

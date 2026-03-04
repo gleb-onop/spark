@@ -1,24 +1,37 @@
 import { useState, useEffect, useCallback } from 'react';
 import { storage } from '../utils/storage';
-import type { Playlist, Video } from '../types';
+import type { Playlist, Fragment } from '../types';
 
-export const usePlaylist = (playlistId: string | undefined) => {
+export function usePlaylist(playlistId: string | undefined) {
     const [playlist, setPlaylist] = useState<Playlist | null>(null);
-    const [videos, setVideos] = useState<Video[]>([]);
+    const [fragments, setFragments] = useState<Fragment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     const loadPlaylist = useCallback(() => {
         if (!playlistId) {
+            setPlaylist(null);
+            setFragments([]);
             setIsLoading(false);
             return;
         }
 
+        setIsLoading(true);
         const allPlaylists = storage.getPlaylists();
-        const current = allPlaylists.find(p => p.uuid === playlistId);
-        if (current) {
-            setPlaylist(current);
-            const allVideos = storage.getVideos();
-            setVideos(allVideos.filter(v => current.videoIds.includes(v.uuid)));
+        const found = allPlaylists.find(p => p.uuid === playlistId);
+
+        if (found) {
+            setPlaylist(found);
+            const allFragments = storage.getFragments();
+            // Filter fragments that belong to this playlist using fragmentIds array
+            const playlistFragments = allFragments.filter(v => found.fragmentIds.includes(v.uuid));
+            // Sort fragments by createdAt timestamp
+            const sortedFragments = [...playlistFragments].sort((a, b) =>
+                a.createdAt.localeCompare(b.createdAt)
+            );
+            setFragments(sortedFragments);
+        } else {
+            setPlaylist(null);
+            setFragments([]);
         }
         setIsLoading(false);
     }, [playlistId]);
@@ -27,10 +40,11 @@ export const usePlaylist = (playlistId: string | undefined) => {
         loadPlaylist();
     }, [loadPlaylist]);
 
-    const deleteVideo = (videoUuid: string) => {
-        if (!playlistId) return;
-        storage.deleteVideo(videoUuid, playlistId);
-        loadPlaylist();
+    const deleteFragment = (fragmentUuid: string) => {
+        if (playlistId) {
+            storage.deleteFragment(fragmentUuid, playlistId);
+            loadPlaylist();
+        }
     };
 
     const renamePlaylist = (newName: string) => {
@@ -42,10 +56,10 @@ export const usePlaylist = (playlistId: string | undefined) => {
 
     return {
         playlist,
-        videos,
+        fragments,
         isLoading,
-        refresh: loadPlaylist,
-        deleteVideo,
+        refreshPlaylist: loadPlaylist,
+        deleteFragment,
         renamePlaylist
     };
-};
+}

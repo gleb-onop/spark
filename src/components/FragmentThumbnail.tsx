@@ -1,7 +1,7 @@
 import { Scissors } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface VideoThumbnailProps {
+interface FragmentThumbnailProps {
     youtubeId: string;
     title: string;
     timeStart?: string | null;
@@ -10,14 +10,14 @@ interface VideoThumbnailProps {
     size?: 'sm' | 'md' | 'lg';
 }
 
-export const VideoThumbnail = ({
+export const FragmentThumbnail = ({
     youtubeId,
     title,
     timeStart,
     timeEnd,
     className,
     size = 'md'
-}: VideoThumbnailProps) => {
+}: FragmentThumbnailProps) => {
     const isShowingFragment = !!timeStart;
 
     const sizeClasses = {

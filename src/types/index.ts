@@ -2,10 +2,10 @@ export interface Playlist {
     uuid: string;
     name: string;
     createdAt: number;
-    videoIds: string[];
+    fragmentIds: string[];
 }
 
-export interface Video {
+export interface Fragment {
     uuid: string;
     youtubeId: string;
     title: string;
@@ -13,5 +13,5 @@ export interface Video {
     isVertical: boolean;
     timeStart: string | null;
     timeEnd: string | null;
-    createdAt: number;
+    createdAt: string; // ISO timestamp string
 }

@@ -1,7 +1,7 @@
-import type { Playlist, Video } from '../types';
+import type { Playlist, Fragment } from '../types';
 
 const PLAYLISTS_KEY = 'spark_playlists';
-const VIDEOS_KEY = 'spark_videos';
+const FRAGMENTS_KEY = 'spark_fragments';
 
 export const storage = {
     getPlaylists: (): Playlist[] => {
@@ -18,18 +18,18 @@ export const storage = {
         localStorage.setItem(PLAYLISTS_KEY, JSON.stringify(playlists));
     },
 
-    getVideos: (): Video[] => {
+    getFragments: (): Fragment[] => {
         try {
-            const data = localStorage.getItem(VIDEOS_KEY);
+            const data = localStorage.getItem(FRAGMENTS_KEY);
             return data ? JSON.parse(data) : [];
         } catch (e) {
-            console.error('Error parsing videos:', e);
+            console.error('Error parsing fragments:', e);
             return [];
         }
     },
 
-    saveVideos: (videos: Video[]) => {
-        localStorage.setItem(VIDEOS_KEY, JSON.stringify(videos));
+    saveFragments: (fragments: Fragment[]) => {
+        localStorage.setItem(FRAGMENTS_KEY, JSON.stringify(fragments));
     },
 
     addPlaylist: (name: string): Playlist => {
@@ -38,7 +38,7 @@ export const storage = {
             uuid: crypto.randomUUID(),
             name,
             createdAt: Date.now(),
-            videoIds: [],
+            fragmentIds: [],
         };
         storage.savePlaylists([newPlaylist, ...playlists]);
         return newPlaylist;
@@ -49,9 +49,9 @@ export const storage = {
         const playlistToDelete = allPlaylists.find(p => p.uuid === uuid);
 
         if (playlistToDelete) {
-            const allVideos = storage.getVideos();
-            const remainingVideos = allVideos.filter(v => !playlistToDelete.videoIds.includes(v.uuid));
-            storage.saveVideos(remainingVideos);
+            const allFragments = storage.getFragments();
+            const remainingFragments = allFragments.filter(v => !playlistToDelete.fragmentIds.includes(v.uuid));
+            storage.saveFragments(remainingFragments);
         }
 
         const remainingPlaylists = allPlaylists.filter(p => p.uuid !== uuid);
@@ -65,86 +65,82 @@ export const storage = {
         storage.savePlaylists(playlists);
     },
 
-    getVideo: (uuid: string): Video | undefined => {
-        return storage.getVideos().find(v => v.uuid === uuid);
+    getFragment: (uuid: string): Fragment | undefined => {
+        return storage.getFragments().find(v => v.uuid === uuid);
     },
 
-    updateVideo: (uuid: string, updated: Partial<Video>) => {
-        const videos = storage.getVideos().map(v =>
+    updateFragment: (uuid: string, updated: Partial<Fragment>) => {
+        const fragments = storage.getFragments().map(v =>
             v.uuid === uuid ? { ...v, ...updated } : v
         );
-        storage.saveVideos(videos);
+        storage.saveFragments(fragments);
     },
 
-    addVideo: (video: Omit<Video, 'uuid' | 'createdAt'>, playlistUuid: string): Video => {
-        const videos = storage.getVideos();
-        const newVideo: Video = {
-            ...video,
+    addFragment: (fragment: Omit<Fragment, 'uuid' | 'createdAt'>, playlistUuid: string): Fragment => {
+        const fragments = storage.getFragments();
+        const newFragment: Fragment = {
+            ...fragment,
             uuid: crypto.randomUUID(),
-            createdAt: Date.now(),
+            createdAt: new Date().toISOString(),
         };
 
-        storage.saveVideos([...videos, newVideo]);
+        storage.saveFragments([...fragments, newFragment]);
 
         const playlists = storage.getPlaylists();
         const updatedPlaylists = playlists.map(p => {
             if (p.uuid === playlistUuid) {
-                return { ...p, videoIds: [...p.videoIds, newVideo.uuid] };
+                return { ...p, fragmentIds: [...p.fragmentIds, newFragment.uuid] };
             }
             return p;
         });
         storage.savePlaylists(updatedPlaylists);
 
-        return newVideo;
+        return newFragment;
     },
 
-    deleteVideo: (videoUuid: string, playlistUuid?: string) => {
+    deleteFragment: (fragmentUuid: string, playlistUuid?: string) => {
         if (playlistUuid) {
-            // Remove video from a specific playlist BUT KEEP IT in storage
-            // Actually, usually in this app "delete video" means delete it entirely if it was deleted from its only playlist.
-            // But for now, let's keep it simple: if playlistUuid is provided, just remove from playlist.
             const playlists = storage.getPlaylists();
             const updatedPlaylists = playlists.map(p => {
                 if (p.uuid === playlistUuid) {
-                    return { ...p, videoIds: p.videoIds.filter(id => id !== videoUuid) };
+                    return { ...p, fragmentIds: p.fragmentIds.filter(id => id !== fragmentUuid) };
                 }
                 return p;
             });
             storage.savePlaylists(updatedPlaylists);
         } else {
-            // Global delete: remove from all playlists and from VIDEOS_KEY
-            const videos = storage.getVideos().filter(v => v.uuid !== videoUuid);
-            storage.saveVideos(videos);
+            const fragments = storage.getFragments().filter(v => v.uuid !== fragmentUuid);
+            storage.saveFragments(fragments);
 
             const playlists = storage.getPlaylists();
             const updatedPlaylists = playlists.map(p => ({
                 ...p,
-                videoIds: p.videoIds.filter(id => id !== videoUuid)
+                fragmentIds: p.fragmentIds.filter(id => id !== fragmentUuid)
             }));
             storage.savePlaylists(updatedPlaylists);
         }
     },
 
-    addPlaylistWithVideo: (playlistName: string, videoData: Omit<Video, 'uuid' | 'createdAt'>): { playlist: Playlist; video: Video } => {
+    addPlaylistWithFragment: (playlistName: string, fragmentData: Omit<Fragment, 'uuid' | 'createdAt'>): { playlist: Playlist; fragment: Fragment } => {
         const newPlaylist = storage.addPlaylist(playlistName);
 
-        const videos = storage.getVideos();
-        const newVideo: Video = {
-            ...videoData,
+        const fragments = storage.getFragments();
+        const newFragment: Fragment = {
+            ...fragmentData,
             uuid: crypto.randomUUID(),
-            createdAt: Date.now(),
+            createdAt: new Date().toISOString(),
         };
-        storage.saveVideos([...videos, newVideo]);
+        storage.saveFragments([...fragments, newFragment]);
 
         const playlists = storage.getPlaylists();
         const updatedPlaylists = playlists.map(p => {
             if (p.uuid === newPlaylist.uuid) {
-                return { ...p, videoIds: [newVideo.uuid] };
+                return { ...p, fragmentIds: [newFragment.uuid] };
             }
             return p;
         });
         storage.savePlaylists(updatedPlaylists);
 
-        return { playlist: newPlaylist, video: newVideo };
+        return { playlist: newPlaylist, fragment: newFragment };
     }
 };

@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
+import { parseTime } from '../utils/time';
+import { ensureYouTubeIframeAPIReady } from '../utils/youtube';
 
 interface UseYouTubePlayerProps {
     youtubeId: string;
     timeStart: string | null;
     timeEnd: string | null;
-    onVideoEnded: () => void;
+    onComplete: () => void;
     onFragmentEnded: () => void;
 }
 
@@ -12,17 +14,20 @@ export const useYouTubePlayer = ({
     youtubeId,
     timeStart,
     timeEnd,
-    onVideoEnded,
+    onComplete,
     onFragmentEnded,
 }: UseYouTubePlayerProps) => {
     const playerRef = useRef<any>(null);
     const intervalRef = useRef<number | null>(null);
 
-    const parseTime = (str: string | null) => {
-        if (!str) return 0;
-        const [m, s] = str.split(':').map(Number);
-        return m * 60 + s;
-    };
+    // Use refs for callbacks to avoid re-initializing the player when callbacks change
+    const onCompleteRef = useRef(onComplete);
+    const onFragmentEndedRef = useRef(onFragmentEnded);
+
+    useEffect(() => {
+        onCompleteRef.current = onComplete;
+        onFragmentEndedRef.current = onFragmentEnded;
+    }, [onComplete, onFragmentEnded]);
 
     const stopInterval = () => {
         if (intervalRef.current !== null) {
@@ -35,10 +40,14 @@ export const useYouTubePlayer = ({
         const startSec = parseTime(timeStart);
         const endSec = parseTime(timeEnd);
         const hasFragment = !!timeEnd;
+        let isMounted = true;
 
-        const loadVideo = () => {
+        const initializePlayer = () => {
+            if (!isMounted) return;
+
             if (playerRef.current) {
                 playerRef.current.destroy();
+                playerRef.current = null;
             }
 
             playerRef.current = new window.YT.Player('youtube-player', {
@@ -55,27 +64,27 @@ export const useYouTubePlayer = ({
                 },
                 events: {
                     onReady: (event: any) => {
+                        if (!isMounted) return;
                         if (sessionStorage.getItem('spark_muted') === '0') {
                             event.target.unMute();
                         }
                         event.target.playVideo();
                     },
                     onStateChange: (event: any) => {
+                        if (!isMounted) return;
                         if (event.data === window.YT.PlayerState.ENDED) {
-                            onVideoEnded();
+                            onCompleteRef.current();
                         }
 
                         if (hasFragment) {
+                            stopInterval();
                             if (event.data === window.YT.PlayerState.PLAYING) {
-                                stopInterval();
                                 intervalRef.current = window.setInterval(() => {
                                     const currentTime = event.target.getCurrentTime();
                                     if (currentTime >= endSec - 0.15) {
-                                        onFragmentEnded();
+                                        onFragmentEndedRef.current();
                                     }
                                 }, 100);
-                            } else {
-                                stopInterval();
                             }
                         }
                     }
@@ -83,21 +92,23 @@ export const useYouTubePlayer = ({
             });
         };
 
-        if (!window.YT) {
-            const tag = document.createElement('script');
-            tag.src = "https://www.youtube.com/iframe_api";
-            const firstScriptTag = document.getElementsByTagName('script')[0];
-            firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-            window.onYouTubeIframeAPIReady = loadVideo;
+        if (window.YT && window.YT.Player) {
+            initializePlayer();
         } else {
-            loadVideo();
+            ensureYouTubeIframeAPIReady().then(() => {
+                if (isMounted) initializePlayer();
+            });
         }
 
         return () => {
+            isMounted = false;
             stopInterval();
-            if (playerRef.current) playerRef.current.destroy();
+            if (playerRef.current) {
+                playerRef.current.destroy();
+                playerRef.current = null;
+            }
         };
-    }, [youtubeId, timeStart, timeEnd, onVideoEnded, onFragmentEnded]);
+    }, [youtubeId, timeStart, timeEnd]);
 
     return {
         player: playerRef.current,

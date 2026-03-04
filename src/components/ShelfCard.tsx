@@ -1,15 +1,15 @@
 import { Link } from 'react-router-dom';
-import type { Video } from '../types';
+import type { Fragment } from '../types';
 import { Plus } from 'lucide-react';
-import { VideoThumbnail } from './VideoThumbnail';
+import { FragmentThumbnail } from './FragmentThumbnail';
 
 interface ShelfCardProps {
-    video?: Video;
+    fragment?: Fragment;
     playlistId: string;
     isPlaceholder?: boolean;
 }
 
-const ShelfCard = ({ video, playlistId, isPlaceholder }: ShelfCardProps) => {
+const ShelfCard = ({ fragment, playlistId, isPlaceholder }: ShelfCardProps) => {
     if (isPlaceholder) {
         return (
             <Link
@@ -24,20 +24,20 @@ const ShelfCard = ({ video, playlistId, isPlaceholder }: ShelfCardProps) => {
         );
     }
 
-    if (!video) return null;
+    if (!fragment) return null;
 
     return (
         <Link
-            to={`/video/${playlistId}/${video.uuid}`}
+            to={`/fragment/${playlistId}/${fragment.uuid}`}
             className="min-w-[140px] w-36 flex flex-col no-underline text-inherit snap-start group"
         >
-            <VideoThumbnail
-                youtubeId={video.youtubeId}
-                title={video.title}
+            <FragmentThumbnail
+                youtubeId={fragment.youtubeId}
+                title={fragment.title}
                 className="mb-2 group-hover:ring-accent/50 group-hover:scale-[1.02] transition-all duration-300 shadow-md"
             />
             <div className="text-xs leading-snug line-clamp-2 overflow-hidden font-semibold group-hover:text-accent transition-colors px-1">
-                {video.title}
+                {fragment.title}
             </div>
         </Link>
     );

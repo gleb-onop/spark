@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { storage } from '../utils/storage';
-import type { Playlist, Video } from '../types';
+import type { Playlist, Fragment } from '../types';
 import ShelfCard from '../components/ShelfCard.tsx';
 import { Plus, Sparkles, ChevronRight } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
@@ -9,11 +9,11 @@ import { Button } from '@/components/ui/button';
 
 const PlaylistsPage = () => {
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
-    const [videos, setVideos] = useState<Video[]>([]);
+    const [fragments, setFragments] = useState<Fragment[]>([]);
 
     useEffect(() => {
         setPlaylists(storage.getPlaylists());
-        setVideos(storage.getVideos());
+        setFragments(storage.getFragments());
     }, []);
 
     if (playlists.length === 0) {
@@ -26,7 +26,7 @@ const PlaylistsPage = () => {
                     </div>
                     <h2 className="text-3xl font-black tracking-tight mb-2">Начнем обучение?</h2>
                     <p className="text-muted-foreground text-sm mb-10 max-w-[280px] leading-relaxed">
-                        Создайте свой первый плейлист и добавляйте видео для изучения английского.
+                        Создайте свой первый плейлист и добавляйте фрагменты для изучения английского.
                     </p>
                     <Button asChild size="lg" className="w-full h-16 rounded-2xl shadow-xl shadow-brand/20 bg-brand hover:bg-brand/90 text-white font-bold text-lg">
                         <Link to="/add">
@@ -54,7 +54,7 @@ const PlaylistsPage = () => {
 
             <main className="flex-1 px-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {playlists.map(playlist => {
-                    const playlistVideos = videos.filter(v => playlist.videoIds.includes(v.uuid));
+                    const playlistFragments = fragments.filter(v => playlist.fragmentIds.includes(v.uuid));
                     return (
                         <section key={playlist.uuid} className="mt-8">
                             <div className="flex justify-between items-end mb-4 px-1">
@@ -67,7 +67,7 @@ const PlaylistsPage = () => {
                                             {playlist.name}
                                         </Link>
                                     </h2>
-                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{playlistVideos.length} видео</span>
+                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">{playlistFragments.length} фрагментов</span>
                                 </div>
                                 <div className="flex items-center gap-1 shrink-0">
                                     <Button size="icon" asChild className="h-8 w-8 rounded-full bg-brand hover:bg-brand/90 text-white shadow-md shadow-brand/20">
@@ -85,8 +85,8 @@ const PlaylistsPage = () => {
                             </div>
 
                             <div className="no-scrollbar flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 -mx-1 px-1">
-                                {playlistVideos.map(video => (
-                                    <ShelfCard key={video.uuid} video={video} playlistId={playlist.uuid} />
+                                {playlistFragments.map(fragment => (
+                                    <ShelfCard key={fragment.uuid} fragment={fragment} playlistId={playlist.uuid} />
                                 )) || null}
                             </div>
                         </section>

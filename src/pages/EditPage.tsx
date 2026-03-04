@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { storage } from '../utils/storage';
 import { Check, Loader2, Trash2 } from 'lucide-react';
+import { parseTime } from '../utils/time';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { PageHeader } from '@/components/PageHeader';
-import { VideoThumbnail } from '@/components/VideoThumbnail';
+import { FragmentThumbnail } from '@/components/FragmentThumbnail';
 import {
     Dialog,
     DialogContent,
@@ -18,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 
 const EditPage = () => {
-    const { playlistId, videoId } = useParams<{ playlistId: string; videoId: string }>();
+    const { playlistId, fragmentId } = useParams<{ playlistId: string; fragmentId: string }>();
     const navigate = useNavigate();
 
     const [title, setTitle] = useState('');
@@ -33,24 +34,24 @@ const EditPage = () => {
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (!videoId) return;
+        if (!fragmentId) return;
 
-        const video = storage.getVideo(videoId);
-        if (video) {
-            setTitle(video.title);
-            setDescription(video.description || '');
-            setYoutubeId(video.youtubeId);
-            if (video.timeStart || video.timeEnd) {
+        const fragment = storage.getFragment(fragmentId);
+        if (fragment) {
+            setTitle(fragment.title);
+            setDescription(fragment.description || '');
+            setYoutubeId(fragment.youtubeId);
+            if (fragment.timeStart || fragment.timeEnd) {
                 setUseRange(true);
-                setTimeStart(video.timeStart || '');
-                setTimeEnd(video.timeEnd || '');
+                setTimeStart(fragment.timeStart || '');
+                setTimeEnd(fragment.timeEnd || '');
             }
         }
         setIsLoading(false);
-    }, [videoId]);
+    }, [fragmentId]);
 
     const handleSave = () => {
-        if (!videoId) return;
+        if (!fragmentId) return;
         setError('');
 
         if (useRange) {
@@ -58,20 +59,13 @@ const EditPage = () => {
                 setError('Заполните оба поля времени');
                 return;
             }
-            const parseTime = (str: string) => {
-                if (str.includes(':')) {
-                    const [m, s] = str.split(':').map(Number);
-                    return m * 60 + s;
-                }
-                return Number(str);
-            };
             if (parseTime(timeEnd) <= parseTime(timeStart)) {
                 setError('Конец должен быть позже начала');
                 return;
             }
         }
 
-        storage.updateVideo(videoId, {
+        storage.updateFragment(fragmentId, {
             title,
             description,
             timeStart: useRange ? timeStart : null,
@@ -82,8 +76,8 @@ const EditPage = () => {
     };
 
     const confirmDelete = () => {
-        if (!videoId) return;
-        storage.deleteVideo(videoId);
+        if (!fragmentId) return;
+        storage.deleteFragment(fragmentId);
         navigate(playlistId ? `/playlist/${playlistId}` : '/playlists');
     };
 
@@ -116,7 +110,7 @@ const EditPage = () => {
                 <section className="flex flex-col gap-6">
                     {youtubeId && (
                         <div className="animate-in zoom-in-95 duration-300">
-                            <VideoThumbnail
+                            <FragmentThumbnail
                                 youtubeId={youtubeId}
                                 title={title}
                                 className="shadow-2xl ring-4 ring-black/5 dark:ring-white/5"
@@ -125,7 +119,7 @@ const EditPage = () => {
                     )}
 
                     <div className="space-y-2">
-                        <Label htmlFor="title" className="text-sm font-bold ml-1">Название видео</Label>
+                        <Label htmlFor="title" className="text-sm font-bold ml-1">Название фрагмента</Label>
                         <Input
                             id="title"
                             value={title}
@@ -203,9 +197,9 @@ const EditPage = () => {
             <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
                 <DialogContent className="rounded-3xl max-w-[90vw]">
                     <DialogHeader>
-                        <DialogTitle className="text-2xl font-black">Удалить видео?</DialogTitle>
+                        <DialogTitle className="text-2xl font-black">Удалить фрагмент?</DialogTitle>
                         <DialogDescription className="text-base">
-                            Это видео будет навсегда удалено из всех ваших плейлистов. Это действие нельзя отменить.
+                            Этот фрагмент будет навсегда удален из всех ваших плейлистов. Это действие нельзя отменить.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="flex flex-col gap-3 mt-4 sm:flex-col">
@@ -214,7 +208,7 @@ const EditPage = () => {
                             className="h-14 rounded-2xl font-bold text-base"
                             onClick={confirmDelete}
                         >
-                            Да, удалить видео
+                            Да, удалить фрагмент
                         </Button>
                         <Button
                             variant="ghost"

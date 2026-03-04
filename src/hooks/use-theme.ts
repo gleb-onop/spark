@@ -2,10 +2,13 @@ import { useState, useEffect } from "react"
 
 export type Theme = "light" | "dark"
 
+const THEME_KEY = "spark_theme"
+
 export function useTheme() {
     const [theme, setTheme] = useState<Theme>(() => {
-        const saved = localStorage.getItem("spark-theme")
+        const saved = localStorage.getItem(THEME_KEY)
         if (saved === "light" || saved === "dark") return saved
+
         return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
     })
 
@@ -13,7 +16,7 @@ export function useTheme() {
         const root = window.document.documentElement
         root.classList.remove("light", "dark")
         root.classList.add(theme)
-        localStorage.setItem("spark-theme", theme)
+        localStorage.setItem(THEME_KEY, theme)
     }, [theme])
 
     const toggleTheme = () => {

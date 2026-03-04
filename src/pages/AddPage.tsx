@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { storage } from '../utils/storage';
-import { fetchVideoTitle } from '../utils/youtube';
+import { fetchFragmentTitle, ensureYouTubeIframeAPIReady } from '../utils/youtube';
+import { parseTime } from '../utils/time';
 import type { Playlist } from '../types';
 import { Plus, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
@@ -27,7 +28,7 @@ const AddPage = () => {
     // Playlist fields (new playlist mode only)
     const [playlistName, setPlaylistName] = useState('');
 
-    // Video fields
+    // Fragment fields
     const [url, setUrl] = useState('');
     const [youtubeId, setYoutubeId] = useState('');
     const [title, setTitle] = useState('');
@@ -64,7 +65,7 @@ const AddPage = () => {
                 setYoutubeId(newId);
                 setUrlError('');
                 setIsFetchingTitle(true);
-                fetchVideoTitle(newId).then(fetchedTitle => {
+                fetchFragmentTitle(newId).then((fetchedTitle: string | null) => {
                     if (fetchedTitle) setTitle(fetchedTitle);
                     setIsFetchingTitle(false);
                 });
@@ -77,35 +78,11 @@ const AddPage = () => {
         return () => clearTimeout(timer);
     }, [url]);
 
-    // Load YT API if not loaded
-    const ensureYTLoaded = useCallback((): Promise<void> => {
-        return new Promise((resolve) => {
-            if (window.YT && window.YT.Player) {
-                resolve();
-                return;
-            }
-            const existingScript = document.querySelector('script[src*="youtube.com/iframe_api"]');
-            if (existingScript) {
-                const check = setInterval(() => {
-                    if (window.YT && window.YT.Player) {
-                        clearInterval(check);
-                        resolve();
-                    }
-                }, 100);
-                return;
-            }
-            const tag = document.createElement('script');
-            tag.src = 'https://www.youtube.com/iframe_api';
-            const firstScriptTag = document.getElementsByTagName('script')[0];
-            firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-            window.onYouTubeIframeAPIReady = () => resolve();
-        });
-    }, []);
 
-    // Validate video via hidden iframe
-    const validateVideo = useCallback((videoId: string): Promise<boolean> => {
+    // Validate fragment via hidden iframe
+    const validateFragment = useCallback((videoId: string): Promise<boolean> => {
         return new Promise(async (resolve) => {
-            await ensureYTLoaded();
+            await ensureYouTubeIframeAPIReady();
 
             if (validationPlayerRef.current) {
                 validationPlayerRef.current.destroy();
@@ -149,7 +126,7 @@ const AddPage = () => {
                 },
             });
         });
-    }, [ensureYTLoaded]);
+    }, []);
 
     const handleSave = async () => {
         setError('');
@@ -171,32 +148,25 @@ const AddPage = () => {
                 setError('Заполните оба поля времени');
                 return;
             }
-            const parseTime = (str: string) => {
-                if (str.includes(':')) {
-                    const [m, s] = str.split(':').map(Number);
-                    return m * 60 + s;
-                }
-                return Number(str);
-            };
             if (parseTime(timeEnd) <= parseTime(timeStart)) {
                 setError('Конец должен быть позже начала');
                 return;
             }
         }
 
-        // Validate video via iframe
+        // Validate fragment via iframe
         setIsValidating(true);
-        const isValid = await validateVideo(youtubeId);
+        const isValid = await validateFragment(youtubeId);
         setIsValidating(false);
 
         if (!isValid) {
-            setError('Видео недоступно или указан неправильный URL');
+            setError('Фрагмент недоступен или указан неправильный URL');
             return;
         }
 
-        const videoData = {
+        const fragmentData = {
             youtubeId,
-            title: title || 'Новое видео',
+            title: title || 'Новый фрагмент',
             description,
             isVertical: url.includes('/shorts/'),
             timeStart: useRange ? timeStart : null,
@@ -204,9 +174,9 @@ const AddPage = () => {
         };
 
         if (isNewPlaylistMode) {
-            storage.addPlaylistWithVideo(playlistName.trim(), videoData);
+            storage.addPlaylistWithFragment(playlistName.trim(), fragmentData);
         } else {
-            storage.addVideo(videoData, playlistId);
+            storage.addFragment(fragmentData, playlistId);
         }
 
         navigate('/playlists');
@@ -224,7 +194,7 @@ const AddPage = () => {
     return (
         <div className="flex flex-col min-h-screen bg-background pb-24">
             <PageHeader
-                title={isNewPlaylistMode ? 'Новый плейлист' : 'Добавить видео'}
+                title={isNewPlaylistMode ? 'Новый плейлист' : 'Добавить фрагмент'}
                 backPath={-1}
             />
 
@@ -261,9 +231,9 @@ const AddPage = () => {
                     )}
 
                     <div className="space-y-2">
-                        <Label htmlFor="video-url" className="text-sm font-bold ml-1">Ссылка на YouTube</Label>
+                        <Label htmlFor="fragment-url" className="text-sm font-bold ml-1">Ссылка на YouTube</Label>
                         <Input
-                            id="video-url"
+                            id="fragment-url"
                             value={url}
                             onChange={(e) => setUrl(e.target.value)}
                             placeholder="Вставьте ссылку..."
@@ -288,10 +258,10 @@ const AddPage = () => {
 
                     {youtubeId && (
                         <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-500">
-                            <Label htmlFor="video-title" className="text-sm font-bold ml-1">Название видео</Label>
+                            <Label htmlFor="fragment-title" className="text-sm font-bold ml-1">Название фрагмента</Label>
                             <div className="relative">
                                 <Input
-                                    id="video-title"
+                                    id="fragment-title"
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                     placeholder={isFetchingTitle ? 'Загрузка...' : 'Заголовок...'}
@@ -307,9 +277,9 @@ const AddPage = () => {
                     )}
 
                     <div className="space-y-2">
-                        <Label htmlFor="video-desc" className="text-sm font-bold ml-1">Описание (необязательно)</Label>
+                        <Label htmlFor="fragment-desc" className="text-sm font-bold ml-1">Описание (необязательно)</Label>
                         <textarea
-                            id="video-desc"
+                            id="fragment-desc"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Добавьте заметки..."
@@ -375,7 +345,7 @@ const AddPage = () => {
                     ) : (
                         <>
                             <Plus className="mr-2 h-6 w-6" />
-                            {isNewPlaylistMode ? 'Создать плейлист' : 'Добавить видео'}
+                            {isNewPlaylistMode ? 'Создать плейлист' : 'Добавить фрагмент'}
                         </>
                     )}
                 </Button>

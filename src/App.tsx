@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import TabBar from './components/TabBar';
 import PlaylistsPage from './pages/PlaylistsPage';
 import PlaylistDetailsPage from './pages/PlaylistDetailsPage';
-import VideoPage from './pages/VideoPage';
+import FragmentPage from './pages/FragmentPage';
 import AddPage from './pages/AddPage';
 import EditPage from './pages/EditPage';
 import './index.css';
@@ -16,9 +16,9 @@ function App() {
             <Route path="/" element={<Navigate to="/playlists" replace />} />
             <Route path="/playlists" element={<PlaylistsPage />} />
             <Route path="/playlist/:playlistId" element={<PlaylistDetailsPage />} />
-            <Route path="/video/:playlistId/:videoId" element={<VideoPage />} />
+            <Route path="/fragment/:playlistId/:fragmentId" element={<FragmentPage />} />
             <Route path="/add" element={<AddPage />} />
-            <Route path="/edit/:videoId" element={<EditPage />} />
+            <Route path="/edit/:fragmentId/:playlistId?" element={<EditPage />} />
           </Routes>
         </main>
         <TabBar />
