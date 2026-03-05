@@ -1,7 +1,7 @@
 import { Scissors } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface FragmentThumbnailProps {
+interface SegmentThumbnailProps {
     youtubeId: string;
     title: string;
     timeStart?: string | null;
@@ -10,15 +10,15 @@ interface FragmentThumbnailProps {
     size?: 'sm' | 'md' | 'lg';
 }
 
-export const FragmentThumbnail = ({
+export const SegmentThumbnail = ({
     youtubeId,
     title,
     timeStart,
     timeEnd,
     className,
     size = 'md'
-}: FragmentThumbnailProps) => {
-    const isShowingFragment = !!timeStart;
+}: SegmentThumbnailProps) => {
+    const isShowingSegment = !!timeStart;
 
     const sizeClasses = {
         sm: "w-[72px] h-12 rounded-lg",
@@ -33,7 +33,7 @@ export const FragmentThumbnail = ({
                 alt={title}
                 className="absolute inset-0 w-full h-full object-cover"
             />
-            {isShowingFragment && size !== 'sm' && (
+            {isShowingSegment && size !== 'sm' && (
                 <div className="absolute top-2 left-2 inline-flex items-center gap-1.5 bg-accent/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-[10px] font-bold text-white shadow-sm ring-1 ring-white/20">
                     <Scissors className="h-3 w-3" />
                     <span>{timeStart} {timeEnd ? `– ${timeEnd}` : ''}</span>

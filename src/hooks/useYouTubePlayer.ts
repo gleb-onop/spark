@@ -7,7 +7,7 @@ interface UseYouTubePlayerProps {
     timeStart: string | null;
     timeEnd: string | null;
     onComplete: () => void;
-    onFragmentEnded: () => void;
+    onSegmentEnded: () => void;
 }
 
 export const useYouTubePlayer = ({
@@ -15,19 +15,19 @@ export const useYouTubePlayer = ({
     timeStart,
     timeEnd,
     onComplete,
-    onFragmentEnded,
+    onSegmentEnded,
 }: UseYouTubePlayerProps) => {
     const playerRef = useRef<any>(null);
     const intervalRef = useRef<number | null>(null);
 
     // Use refs for callbacks to avoid re-initializing the player when callbacks change
     const onCompleteRef = useRef(onComplete);
-    const onFragmentEndedRef = useRef(onFragmentEnded);
+    const onSegmentEndedRef = useRef(onSegmentEnded);
 
     useEffect(() => {
         onCompleteRef.current = onComplete;
-        onFragmentEndedRef.current = onFragmentEnded;
-    }, [onComplete, onFragmentEnded]);
+        onSegmentEndedRef.current = onSegmentEnded;
+    }, [onComplete, onSegmentEnded]);
 
     const stopInterval = () => {
         if (intervalRef.current !== null) {
@@ -39,7 +39,7 @@ export const useYouTubePlayer = ({
     useEffect(() => {
         const startSec = parseTime(timeStart);
         const endSec = parseTime(timeEnd);
-        const hasFragment = !!timeEnd;
+        const hasSegment = !!timeEnd;
         let isMounted = true;
 
         const initializePlayer = () => {
@@ -76,13 +76,13 @@ export const useYouTubePlayer = ({
                             onCompleteRef.current();
                         }
 
-                        if (hasFragment) {
+                        if (hasSegment) {
                             stopInterval();
                             if (event.data === window.YT.PlayerState.PLAYING) {
                                 intervalRef.current = window.setInterval(() => {
                                     const currentTime = event.target.getCurrentTime();
                                     if (currentTime >= endSec - 0.15) {
-                                        onFragmentEndedRef.current();
+                                        onSegmentEndedRef.current();
                                     }
                                 }, 100);
                             }

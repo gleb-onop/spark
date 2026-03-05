@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { storage } from '../utils/storage';
+import { api } from '../services/api';
 import { Check, Loader2, Trash2 } from 'lucide-react';
 import { parseTime } from '../utils/time';
 import { Input } from '@/components/ui/input';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { PageHeader } from '@/components/PageHeader';
-import { FragmentThumbnail } from '@/components/FragmentThumbnail';
+import { SegmentThumbnail } from '@/components/SegmentThumbnail';
 import {
     Dialog,
     DialogContent,
@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dialog";
 
 const EditPage = () => {
-    const { playlistId, fragmentId } = useParams<{ playlistId: string; fragmentId: string }>();
+    const { segmentedVideoId, segmentId } = useParams<{ segmentedVideoId: string; segmentId: string }>();
     const navigate = useNavigate();
 
     const [title, setTitle] = useState('');
@@ -30,28 +30,38 @@ const EditPage = () => {
     const [youtubeId, setYoutubeId] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     const [error, setError] = useState('');
 
     useEffect(() => {
-        if (!fragmentId) return;
+        if (!segmentId) return;
 
-        const fragment = storage.getFragment(fragmentId);
-        if (fragment) {
-            setTitle(fragment.title);
-            setDescription(fragment.description || '');
-            setYoutubeId(fragment.youtubeId);
-            if (fragment.timeStart || fragment.timeEnd) {
-                setUseRange(true);
-                setTimeStart(fragment.timeStart || '');
-                setTimeEnd(fragment.timeEnd || '');
+        const loadSegment = async () => {
+            setIsLoading(true);
+            try {
+                const segment = await api.getSegment(segmentId);
+                if (segment) {
+                    setTitle(segment.video.title);
+                    setDescription(segment.description || '');
+                    setYoutubeId(segment.video.youtubeId);
+                    if (segment.timeStart || segment.timeEnd) {
+                        setUseRange(true);
+                        setTimeStart(segment.timeStart || '');
+                        setTimeEnd(segment.timeEnd || '');
+                    }
+                }
+            } catch (e) {
+                console.error('Error loading segment:', e);
+            } finally {
+                setIsLoading(false);
             }
-        }
-        setIsLoading(false);
-    }, [fragmentId]);
+        };
+        loadSegment();
+    }, [segmentId]);
 
-    const handleSave = () => {
-        if (!fragmentId) return;
+    const handleSave = async () => {
+        if (!segmentId) return;
         setError('');
 
         if (useRange) {
@@ -65,20 +75,36 @@ const EditPage = () => {
             }
         }
 
-        storage.updateFragment(fragmentId, {
-            title,
-            description,
-            timeStart: useRange ? timeStart : null,
-            timeEnd: useRange ? timeEnd : null,
-        });
-
-        navigate(playlistId ? `/playlist/${playlistId}` : '/playlists');
+        setIsSaving(true);
+        try {
+            const segment = await api.getSegment(segmentId);
+            if (segment) {
+                await api.updateSegment(segmentId, {
+                    description,
+                    timeStart: useRange ? timeStart : null,
+                    timeEnd: useRange ? timeEnd : null,
+                    video: {
+                        ...segment.video,
+                        title
+                    }
+                });
+                navigate(segmentedVideoId ? `/segmented-video/${segmentedVideoId}` : '/segmented-videos');
+            }
+        } catch (e) {
+            console.error('Error saving segment:', e);
+            setError('Ошибка при сохранении');
+            setIsSaving(false);
+        }
     };
 
-    const confirmDelete = () => {
-        if (!fragmentId) return;
-        storage.deleteFragment(fragmentId);
-        navigate(playlistId ? `/playlist/${playlistId}` : '/playlists');
+    const confirmDelete = async () => {
+        if (!segmentId) return;
+        try {
+            await api.deleteSegment(segmentId);
+            navigate(segmentedVideoId ? `/segmented-video/${segmentedVideoId}` : '/segmented-videos');
+        } catch (e) {
+            console.error('Error deleting segment:', e);
+        }
     };
 
     if (isLoading) {
@@ -110,7 +136,7 @@ const EditPage = () => {
                 <section className="flex flex-col gap-6">
                     {youtubeId && (
                         <div className="animate-in zoom-in-95 duration-300">
-                            <FragmentThumbnail
+                            <SegmentThumbnail
                                 youtubeId={youtubeId}
                                 title={title}
                                 className="shadow-2xl ring-4 ring-black/5 dark:ring-white/5"
@@ -119,7 +145,7 @@ const EditPage = () => {
                     )}
 
                     <div className="space-y-2">
-                        <Label htmlFor="title" className="text-sm font-bold ml-1">Название фрагмента</Label>
+                        <Label htmlFor="title" className="text-sm font-bold ml-1">Название видео</Label>
                         <Input
                             id="title"
                             value={title}
@@ -142,7 +168,7 @@ const EditPage = () => {
 
                     <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border border-border/50">
                         <Label htmlFor="range-toggle" className="text-sm font-bold cursor-pointer">
-                            Использовать фрагмент
+                            Использовать сегмент
                         </Label>
                         <Switch
                             id="range-toggle"
@@ -187,19 +213,29 @@ const EditPage = () => {
                 <Button
                     size="lg"
                     onClick={handleSave}
+                    disabled={isSaving}
                     className="h-16 rounded-2xl shadow-xl shadow-accent/30 font-bold text-lg transition-transform active:scale-95"
                 >
-                    <Check className="mr-2 h-6 w-6" />
-                    Сохранить изменения
+                    {isSaving ? (
+                        <>
+                            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+                            Сохранение...
+                        </>
+                    ) : (
+                        <>
+                            <Check className="mr-2 h-6 w-6" />
+                            Сохранить изменения
+                        </>
+                    )}
                 </Button>
             </main>
 
             <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
                 <DialogContent className="rounded-3xl max-w-[90vw]">
                     <DialogHeader>
-                        <DialogTitle className="text-2xl font-black">Удалить фрагмент?</DialogTitle>
+                        <DialogTitle className="text-2xl font-black">Удалить сегмент?</DialogTitle>
                         <DialogDescription className="text-base">
-                            Этот фрагмент будет навсегда удален из всех ваших плейлистов. Это действие нельзя отменить.
+                            Этот сегмент будет навсегда удален. Это действие нельзя отменить.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="flex flex-col gap-3 mt-4 sm:flex-col">
@@ -208,7 +244,7 @@ const EditPage = () => {
                             className="h-14 rounded-2xl font-bold text-base"
                             onClick={confirmDelete}
                         >
-                            Да, удалить фрагмент
+                            Да, удалить сегмент
                         </Button>
                         <Button
                             variant="ghost"
@@ -225,3 +261,4 @@ const EditPage = () => {
 };
 
 export default EditPage;
+

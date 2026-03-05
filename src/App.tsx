@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import TabBar from './components/TabBar';
-import PlaylistsPage from './pages/PlaylistsPage';
-import PlaylistDetailsPage from './pages/PlaylistDetailsPage';
-import FragmentPage from './pages/FragmentPage';
+import SegmentedVideosPage from './pages/SegmentedVideosPage';
+import SegmentedVideoPage from './pages/SegmentedVideoPage';
+import SegmentPage from './pages/SegmentPage';
 import AddPage from './pages/AddPage';
 import EditPage from './pages/EditPage';
 import './index.css';
@@ -13,12 +13,12 @@ function App() {
       <div className="max-w-[390px] mx-auto min-h-screen relative flex flex-col bg-background selection:bg-accent/30">
         <main className="flex-1 pb-24">
           <Routes>
-            <Route path="/" element={<Navigate to="/playlists" replace />} />
-            <Route path="/playlists" element={<PlaylistsPage />} />
-            <Route path="/playlist/:playlistId" element={<PlaylistDetailsPage />} />
-            <Route path="/fragment/:playlistId/:fragmentId" element={<FragmentPage />} />
+            <Route path="/" element={<Navigate to="/segmented-videos" replace />} />
+            <Route path="/segmented-videos" element={<SegmentedVideosPage />} />
+            <Route path="/segmented-video/:segmentedVideoId" element={<SegmentedVideoPage />} />
+            <Route path="/segment/:segmentedVideoId/:segmentId" element={<SegmentPage />} />
             <Route path="/add" element={<AddPage />} />
-            <Route path="/edit/:fragmentId/:playlistId?" element={<EditPage />} />
+            <Route path="/edit/:segmentId/:segmentedVideoId?" element={<EditPage />} />
           </Routes>
         </main>
         <TabBar />

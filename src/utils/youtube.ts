@@ -1,4 +1,4 @@
-export async function fetchFragmentTitle(youtubeId: string): Promise<string | null> {
+export async function fetchSegmentTitle(youtubeId: string): Promise<string | null> {
     try {
         const url = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${youtubeId}&format=json`;
         const res = await fetch(url);

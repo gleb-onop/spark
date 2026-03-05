@@ -17,46 +17,50 @@ import {
 } from "../components/ui/dropdown-menu";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { storage } from '../utils/storage';
+import { api } from '../services/api';
 import { PageHeader } from '@/components/PageHeader';
-import { FragmentItem } from '@/components/FragmentItem';
-import { usePlaylist } from '@/hooks/usePlaylist';
+import { SegmentItem } from '@/components/SegmentItem';
+import { useSegmentedVideo } from '@/hooks/useSegmentedVideo';
 
-const PlaylistDetailsPage = () => {
-    const { playlistId } = useParams<{ playlistId: string }>();
+const SegmentedVideoPage = () => {
+    const { segmentedVideoId } = useParams<{ segmentedVideoId: string }>();
     const navigate = useNavigate();
-    const [fragmentToDelete, setFragmentToDelete] = useState<string | null>(null);
+    const [segmentToDelete, setSegmentToDelete] = useState<string | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [isDeletePlaylistModalOpen, setIsDeletePlaylistModalOpen] = useState(false);
+    const [isDeleteSegmentedVideoModalOpen, setIsDeleteSegmentedVideoModalOpen] = useState(false);
     const [newName, setNewName] = useState('');
 
-    const { playlist, fragments, isLoading, deleteFragment, renamePlaylist } = usePlaylist(playlistId);
+    const { segmentedVideo, segments, isLoading, deleteSegment, renameSegmentedVideo } = useSegmentedVideo(segmentedVideoId);
 
     const handleRename = () => {
         if (newName.trim()) {
-            renamePlaylist(newName);
+            renameSegmentedVideo(newName);
             setIsEditModalOpen(false);
         }
     };
 
-    const handleDeletePlaylist = () => {
-        if (!playlistId) return;
-        storage.deletePlaylist(playlistId);
-        navigate('/playlists');
+    const handleDeleteSegmentedVideo = async () => {
+        if (!segmentedVideoId) return;
+        try {
+            await api.deleteSegmentedVideo(segmentedVideoId);
+            navigate('/segmented-videos');
+        } catch (e) {
+            console.error('Error deleting segmented video:', e);
+        }
     };
 
     if (isLoading) return null;
-    if (!playlist) return <div className="p-8 text-center text-muted-foreground">Плейлист не найден</div>;
+    if (!segmentedVideo) return <div className="p-8 text-center text-muted-foreground">Сегментированное видео не найдено</div>;
 
     return (
         <div className="flex flex-col min-h-screen bg-background pb-20">
             <PageHeader
-                title={playlist.name}
-                backPath="/playlists"
+                title={segmentedVideo.name}
+                backPath="/segmented-videos"
                 actions={
                     <div className="flex items-center gap-2">
                         <Button size="icon" asChild className="rounded-full shadow-lg shadow-brand/20 bg-brand hover:bg-brand/90 text-white">
-                            <Link to={`/add?playlistId=${playlist.uuid}`}>
+                            <Link to={`/add?segmentedVideoId=${segmentedVideo.uuid}`}>
                                 <Plus className="h-5 w-5" />
                             </Link>
                         </Button>
@@ -66,10 +70,10 @@ const PlaylistDetailsPage = () => {
                                     <MoreVertical className="h-5 w-5" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48 p-1">
+                            <DropdownMenuContent align="end" className="w-56 p-1">
                                 <DropdownMenuItem
                                     onClick={() => {
-                                        setNewName(playlist.name);
+                                        setNewName(segmentedVideo.name);
                                         setIsEditModalOpen(true);
                                     }}
                                     className="rounded-lg gap-2"
@@ -78,11 +82,11 @@ const PlaylistDetailsPage = () => {
                                     <span>Переименовать</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                    onClick={() => setIsDeletePlaylistModalOpen(true)}
+                                    onClick={() => setIsDeleteSegmentedVideoModalOpen(true)}
                                     className="rounded-lg gap-2 text-red-500 focus:text-red-500"
                                 >
                                     <Trash2 className="h-4 w-4" />
-                                    <span>Удалить список</span>
+                                    <span>Удалить сегментированное видео</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -93,57 +97,70 @@ const PlaylistDetailsPage = () => {
             <main className="flex-1 p-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="flex items-center justify-between mb-8">
                     <div className="flex flex-col gap-1">
-                        <div className="text-3xl font-black tracking-tight">{playlist.name}</div>
+                        <div className="text-3xl font-black tracking-tight">{segmentedVideo.name}</div>
                         <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
                             <FolderOpen className="h-3 w-3" />
-                            {fragments.length} фрагментов
+                            {segments.length} сегментов
                         </div>
                     </div>
-                    {fragments.length > 0 && (
+                    {segments.length > 0 && (
                         <Button
                             asChild
                             size="icon"
                             className="rounded-full h-14 w-14 shadow-xl shadow-brand/25 bg-brand text-white hover:bg-brand/90 flex items-center justify-center"
                         >
-                            <Link to={`/fragment/${playlist.uuid}/${fragments[0].uuid}`}>
+                            <Link to={`/segment/${segmentedVideo.uuid}/${segments[0].uuid}`}>
                                 <Play className="h-7 w-7 fill-current ml-1" />
                             </Link>
                         </Button>
                     )}
                 </div>
 
-                <div className="flex flex-col gap-5">
-                    {fragments.map((fragment) => (
-                        <FragmentItem
-                            key={fragment.uuid}
-                            fragment={fragment}
-                            playlistId={playlist.uuid}
-                            onDelete={(uuid) => setFragmentToDelete(uuid)}
-                        />
-                    ))}
-                </div>
+                {segments.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center p-8 text-center bg-muted/20 border border-border rounded-2xl">
+                        <FolderOpen className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
+                        <h3 className="font-bold mb-1">Сегментированное видео пусто</h3>
+                        <p className="text-sm text-muted-foreground mb-4">Начните изучение, добавив первый сегмент</p>
+                        <Button asChild size="sm" className="rounded-xl bg-brand text-white font-semibold">
+                            <Link to={`/add?segmentedVideoId=${segmentedVideo.uuid}`}>
+                                Добавить первый сегмент
+                            </Link>
+                        </Button>
+                    </div>
+                ) : (
+                    <div className="flex flex-col gap-5">
+                        {segments.map((segment) => (
+                            <SegmentItem
+                                key={segment.uuid}
+                                segment={segment}
+                                segmentedVideoId={segmentedVideo.uuid}
+                                onDelete={(uuid) => setSegmentToDelete(uuid)}
+                            />
+                        ))}
+                    </div>
+                )}
             </main>
 
             {/* Modals */}
-            <Dialog open={!!fragmentToDelete} onOpenChange={(open) => !open && setFragmentToDelete(null)}>
+            <Dialog open={!!segmentToDelete} onOpenChange={(open) => !open && setSegmentToDelete(null)}>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                        <DialogTitle>Удалить фрагмент?</DialogTitle>
+                        <DialogTitle>Удалить сегмент?</DialogTitle>
                         <DialogDescription>
-                            Это действие нельзя будет отменить. Фрагмент будет удален из текущего списка.
+                            Это действие нельзя будет отменить. Сегмент будет удален из текущего сегментированного видео.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="flex-row gap-2 mt-4">
-                        <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setFragmentToDelete(null)}>
+                        <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setSegmentToDelete(null)}>
                             Отмена
                         </Button>
                         <Button
                             variant="destructive"
                             className="flex-1 rounded-xl"
                             onClick={() => {
-                                if (fragmentToDelete) {
-                                    deleteFragment(fragmentToDelete);
-                                    setFragmentToDelete(null);
+                                if (segmentToDelete) {
+                                    deleteSegment(segmentToDelete);
+                                    setSegmentToDelete(null);
                                 }
                             }}
                         >
@@ -158,14 +175,14 @@ const PlaylistDetailsPage = () => {
                     <DialogHeader>
                         <DialogTitle>Редактировать название</DialogTitle>
                         <DialogDescription>
-                            Введите новое название для плейлиста.
+                            Введите новое название для сегментированного видео.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="py-4">
                         <Input
                             value={newName}
                             onChange={(e) => setNewName(e.target.value)}
-                            placeholder="Название плейлиста"
+                            placeholder="Название сегментированного видео"
                             onKeyDown={(e) => e.key === 'Enter' && handleRename()}
                         />
                     </div>
@@ -180,20 +197,20 @@ const PlaylistDetailsPage = () => {
                 </DialogContent>
             </Dialog>
 
-            <Dialog open={isDeletePlaylistModalOpen} onOpenChange={setIsDeletePlaylistModalOpen}>
+            <Dialog open={isDeleteSegmentedVideoModalOpen} onOpenChange={setIsDeleteSegmentedVideoModalOpen}>
                 <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                        <DialogTitle>Удалить плейлист?</DialogTitle>
+                        <DialogTitle>Удалить сегментированное видео?</DialogTitle>
                         <DialogDescription>
-                            Вы уверены, что хотите удалить плейлист "{playlist.name}"? Это также удалит все фрагменты, которые в нем находятся.
+                            Вы уверены, что хотите удалить сегментированное видео "{segmentedVideo.name}"? Это также удалит все сегменты, которые в нем находятся.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="flex-row gap-2 mt-4">
-                        <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setIsDeletePlaylistModalOpen(false)}>
+                        <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setIsDeleteSegmentedVideoModalOpen(false)}>
                             Отмена
                         </Button>
-                        <Button variant="destructive" className="flex-1 rounded-xl" onClick={handleDeletePlaylist}>
-                            Удалить список
+                        <Button variant="destructive" className="flex-1 rounded-xl" onClick={handleDeleteSegmentedVideo}>
+                            Удалить
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -202,4 +219,4 @@ const PlaylistDetailsPage = () => {
     );
 };
 
-export default PlaylistDetailsPage;
+export default SegmentedVideoPage;

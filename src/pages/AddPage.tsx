@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { storage } from '../utils/storage';
-import { fetchFragmentTitle, ensureYouTubeIframeAPIReady } from '../utils/youtube';
+import { api } from '../services/api';
+import { fetchSegmentTitle, ensureYouTubeIframeAPIReady } from '../utils/youtube';
 import { parseTime } from '../utils/time';
-import type { Playlist } from '../types';
+import type { SegmentedVideo } from '../types';
 import { Plus, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -21,14 +21,14 @@ declare global {
 const AddPage = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const existingPlaylistId = searchParams.get('playlistId') || '';
+    const existingSegmentedVideoId = searchParams.get('segmentedVideoId') || '';
 
-    const isNewPlaylistMode = !existingPlaylistId;
+    const isNewSegmentedVideoMode = !existingSegmentedVideoId;
 
-    // Playlist fields (new playlist mode only)
-    const [playlistName, setPlaylistName] = useState('');
+    // SegmentedVideo fields (new partitioned video mode only)
+    const [segmentedVideoName, setSegmentedVideoName] = useState('');
 
-    // Fragment fields
+    // Segment fields
     const [url, setUrl] = useState('');
     const [youtubeId, setYoutubeId] = useState('');
     const [title, setTitle] = useState('');
@@ -39,8 +39,8 @@ const AddPage = () => {
     const [timeEnd, setTimeEnd] = useState('');
 
     // For "add to existing" mode
-    const [playlistId, setPlaylistId] = useState(existingPlaylistId);
-    const [playlists, setPlaylists] = useState<Playlist[]>([]);
+    const [segmentedVideoId, setSegmentedVideoId] = useState(existingSegmentedVideoId);
+    const [segmentedVideos, setSegmentedVideos] = useState<SegmentedVideo[]>([]);
 
     // Validation & state
     const [error, setError] = useState('');
@@ -51,10 +51,14 @@ const AddPage = () => {
     const validationContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (!isNewPlaylistMode) {
-            setPlaylists(storage.getPlaylists());
+        if (!isNewSegmentedVideoMode) {
+            const loadSegmentedVideos = async () => {
+                const data = await api.getSegmentedVideos();
+                setSegmentedVideos(data);
+            };
+            loadSegmentedVideos();
         }
-    }, [isNewPlaylistMode]);
+    }, [isNewSegmentedVideoMode]);
 
     // Parse youtubeId from URL with debounce
     useEffect(() => {
@@ -72,7 +76,7 @@ const AddPage = () => {
                 setYoutubeId(newId);
                 setUrlError('');
                 setIsFetchingTitle(true);
-                fetchFragmentTitle(newId).then((fetchedTitle: string | null) => {
+                fetchSegmentTitle(newId).then((fetchedTitle: string | null) => {
                     if (fetchedTitle) setTitle(fetchedTitle);
                     setIsFetchingTitle(false);
                 });
@@ -86,8 +90,8 @@ const AddPage = () => {
     }, [url]);
 
 
-    // Validate fragment via hidden iframe
-    const validateFragment = useCallback((videoId: string): Promise<boolean> => {
+    // Validate segment via hidden iframe
+    const validateSegment = useCallback((videoId: string): Promise<boolean> => {
         return new Promise(async (resolve) => {
             await ensureYouTubeIframeAPIReady();
 
@@ -138,16 +142,16 @@ const AddPage = () => {
     const handleSave = async () => {
         setError('');
 
-        if (isNewPlaylistMode && !playlistName.trim()) {
-            setError('Введите название плейлиста');
+        if (isNewSegmentedVideoMode && !segmentedVideoName.trim()) {
+            setError('Введите название сегментированного видео');
             return;
         }
         if (!youtubeId) {
             setError('Введите корректную ссылку');
             return;
         }
-        if (!isNewPlaylistMode && !playlistId) {
-            setError('Выберите плейлист');
+        if (!isNewSegmentedVideoMode && !segmentedVideoId) {
+            setError('Выберите сегментированное видео');
             return;
         }
         if (useRange) {
@@ -161,33 +165,49 @@ const AddPage = () => {
             }
         }
 
-        // Validate fragment via iframe
+        // Validate segment via iframe
         setIsValidating(true);
-        const isValid = await validateFragment(youtubeId);
-        setIsValidating(false);
+        const isValid = await validateSegment(youtubeId);
 
         if (!isValid) {
-            setError('Фрагмент недоступен или указан неправильный URL');
+            setError('Сегмент недоступен или указан неправильный URL');
+            setIsValidating(false);
             return;
         }
 
-        const fragmentData = {
+        const videoData = {
+            uuid: crypto.randomUUID(),
             youtubeId,
-            title: title || 'Новый фрагмент',
-            description,
+            title: title || 'Новое видео',
+            description: '',
+            duration: 0, // Should be fetched but okay for now
+            isEmbeddable: true,
             isVertical: url.includes('/shorts/'),
-            timeStart: useRange ? timeStart : null,
-            timeEnd: useRange ? timeEnd : null,
+            createdAt: Date.now()
         };
 
-        if (isNewPlaylistMode) {
-            storage.addPlaylistWithFragment(playlistName.trim(), fragmentData);
-        } else {
-            storage.addFragment(fragmentData, playlistId);
-        }
+        const segmentData = {
+            description,
+            timeStart: useRange ? timeStart : null,
+            timeEnd: useRange ? timeEnd : null,
+            video: videoData
+        };
 
-        navigate('/playlists');
+        try {
+            if (isNewSegmentedVideoMode) {
+                await api.addSegmentedVideoWithSegment(segmentedVideoName.trim(), segmentData);
+            } else {
+                await api.addSegment(segmentData, segmentedVideoId);
+            }
+            navigate('/segmented-videos');
+        } catch (e) {
+            console.error('Error saving data:', e);
+            setError('Произошла ошибка при сохранении');
+        } finally {
+            setIsValidating(false);
+        }
     };
+
 
     // Cleanup validation player on unmount
     useEffect(() => {
@@ -201,19 +221,19 @@ const AddPage = () => {
     return (
         <div className="flex flex-col min-h-screen bg-background pb-24">
             <PageHeader
-                title={isNewPlaylistMode ? 'Новый плейлист' : 'Добавить фрагмент'}
+                title={isNewSegmentedVideoMode ? 'Новое сегментированное видео' : 'Добавить сегмент'}
                 backPath={-1}
             />
 
             <main className="p-5 flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <section className="flex flex-col gap-6">
-                    {isNewPlaylistMode && (
+                    {isNewSegmentedVideoMode && (
                         <div className="space-y-2">
-                            <Label htmlFor="playlist-name" className="text-sm font-bold ml-1">Название плейлиста</Label>
+                            <Label htmlFor="segmented-video-name" className="text-sm font-bold ml-1">Название сегментированного видео</Label>
                             <Input
-                                id="playlist-name"
-                                value={playlistName}
-                                onChange={(e) => setPlaylistName(e.target.value)}
+                                id="segmented-video-name"
+                                value={segmentedVideoName}
+                                onChange={(e) => setSegmentedVideoName(e.target.value)}
                                 placeholder="Напр. Мои любимые клипы"
                                 className="h-14 rounded-2xl bg-muted/30 border-none shadow-inner"
                                 autoFocus
@@ -221,16 +241,16 @@ const AddPage = () => {
                         </div>
                     )}
 
-                    {!isNewPlaylistMode && (
+                    {!isNewSegmentedVideoMode && (
                         <div className="space-y-2">
-                            <Label className="text-sm font-bold ml-1">Выберите плейлист</Label>
+                            <Label className="text-sm font-bold ml-1">Выберите сегментированное видео</Label>
                             <select
-                                value={playlistId}
-                                onChange={(e) => setPlaylistId(e.target.value)}
+                                value={segmentedVideoId}
+                                onChange={(e) => setSegmentedVideoId(e.target.value)}
                                 className="w-full h-14 px-4 bg-muted/30 border-none rounded-2xl outline-none text-foreground font-semibold shadow-inner appearance-none transition-all focus:ring-2 focus:ring-accent/20"
                             >
-                                <option value="">Плейлист...</option>
-                                {playlists.map(p => (
+                                <option value="">Сегментированное видео...</option>
+                                {segmentedVideos.map(p => (
                                     <option key={p.uuid} value={p.uuid}>{p.name}</option>
                                 ))}
                             </select>
@@ -238,9 +258,9 @@ const AddPage = () => {
                     )}
 
                     <div className="space-y-2">
-                        <Label htmlFor="fragment-url" className="text-sm font-bold ml-1">Ссылка на YouTube</Label>
+                        <Label htmlFor="segment-url" className="text-sm font-bold ml-1">Ссылка на YouTube</Label>
                         <Input
-                            id="fragment-url"
+                            id="segment-url"
                             value={url}
                             onChange={(e) => setUrl(e.target.value)}
                             placeholder="Вставьте ссылку..."
@@ -264,10 +284,10 @@ const AddPage = () => {
 
                     {youtubeId && (
                         <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-500">
-                            <Label htmlFor="fragment-title" className="text-sm font-bold ml-1">Название фрагмента</Label>
+                            <Label htmlFor="segment-title" className="text-sm font-bold ml-1">Название видео</Label>
                             <div className="relative">
                                 <Input
-                                    id="fragment-title"
+                                    id="segment-title"
                                     value={title}
                                     onChange={(e) => setTitle(e.target.value)}
                                     placeholder={isFetchingTitle ? 'Загрузка...' : 'Заголовок...'}
@@ -283,9 +303,9 @@ const AddPage = () => {
                     )}
 
                     <div className="space-y-2">
-                        <Label htmlFor="fragment-desc" className="text-sm font-bold ml-1">Описание (необязательно)</Label>
+                        <Label htmlFor="segment-desc" className="text-sm font-bold ml-1">Описание (необязательно)</Label>
                         <textarea
-                            id="fragment-desc"
+                            id="segment-desc"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="Добавьте заметки..."
@@ -295,7 +315,7 @@ const AddPage = () => {
 
                     <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border border-border/50">
                         <Label htmlFor="range-toggle" className="text-sm font-bold cursor-pointer">
-                            Использовать фрагмент
+                            Использовать только сегмент
                         </Label>
                         <Switch
                             id="range-toggle"
@@ -351,7 +371,7 @@ const AddPage = () => {
                     ) : (
                         <>
                             <Plus className="mr-2 h-6 w-6" />
-                            {isNewPlaylistMode ? 'Создать плейлист' : 'Добавить фрагмент'}
+                            {isNewSegmentedVideoMode ? 'Создать' : 'Добавить сегмент'}
                         </>
                     )}
                 </Button>
