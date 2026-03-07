@@ -22,7 +22,6 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
     // UI State
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -92,16 +91,6 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
         }
     };
 
-    const confirmDelete = async () => {
-        if (!segmentId) return;
-        try {
-            await api.deleteSegment(segmentId);
-            navigate(segmentedVideoId ? `/segmented-video/${segmentedVideoId}` : '/segmented-videos');
-        } catch (e) {
-            console.error('Error deleting segment:', e);
-        }
-    };
-
     return {
         state: {
             title,
@@ -112,7 +101,6 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
             youtubeId,
             isLoading,
             isSaving,
-            isDeleteModalOpen,
             error,
         },
         actions: {
@@ -121,9 +109,7 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
             setUseRange,
             setTimeStart,
             setTimeEnd,
-            setIsDeleteModalOpen,
             handleSave,
-            confirmDelete,
         }
     };
 };

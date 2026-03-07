@@ -1,11 +1,10 @@
 import { useParams } from 'react-router-dom';
-import { Check, Loader2, Trash2 } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/PageHeader';
 import { YouTubeInputSection } from '../components/AddPage/YouTubeInputSection';
 import { SegmentConfig } from '../components/AddPage/SegmentConfig';
 import { useEditSegment } from '../hooks/useEditSegment';
-import { DeleteDialog } from '../components/AddPage/DeleteDialog';
 
 const EditPage = () => {
     const { segmentedVideoId, segmentId } = useParams<{ segmentedVideoId: string; segmentId: string }>();
@@ -24,16 +23,6 @@ const EditPage = () => {
             <PageHeader
                 title="Редактировать"
                 backPath={-1}
-                actions={
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => actions.setIsDeleteModalOpen(true)}
-                        className="text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full"
-                    >
-                        <Trash2 className="h-5 w-5" />
-                    </Button>
-                }
             />
 
             <main className="p-5 flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -83,12 +72,6 @@ const EditPage = () => {
                     )}
                 </Button>
             </main>
-
-            <DeleteDialog
-                open={state.isDeleteModalOpen}
-                onConfirm={actions.confirmDelete}
-                onCancel={() => actions.setIsDeleteModalOpen(false)}
-            />
         </div>
     );
 };

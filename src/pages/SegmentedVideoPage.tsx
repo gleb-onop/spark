@@ -2,51 +2,50 @@ import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { MoreVertical, Trash2, FolderOpen, Edit2, Plus, Play } from 'lucide-react';
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "../components/ui/dialog";
-import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
 import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { api } from '../services/api';
 import { PageHeader } from '@/components/PageHeader';
 import { SegmentItem } from '@/components/SegmentItem';
 import { useSegmentedVideo } from '@/hooks/useSegmentedVideo';
+import { ConfirmDialog } from '../components/ConfirmDialog';
+import { Input } from "../components/ui/input";
+
+type ModalState =
+    | { type: 'deleteSegment'; segmentUuid: string }
+    | { type: 'rename' }
+    | { type: 'deleteVideo' }
+    | null;
 
 const SegmentedVideoPage = () => {
     const { segmentedVideoId } = useParams<{ segmentedVideoId: string }>();
     const navigate = useNavigate();
-    const [segmentToDelete, setSegmentToDelete] = useState<string | null>(null);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [isDeleteSegmentedVideoModalOpen, setIsDeleteSegmentedVideoModalOpen] = useState(false);
+
+    const [modal, setModal] = useState<ModalState>(null);
     const [newName, setNewName] = useState('');
 
-    const { segmentedVideo, segments, isLoading, deleteSegment, renameSegmentedVideo } = useSegmentedVideo(segmentedVideoId);
+    const {
+        segmentedVideo,
+        segments,
+        isLoading,
+        deleteSegment,
+        renameSegmentedVideo,
+        deleteSegmentedVideo
+    } = useSegmentedVideo(segmentedVideoId);
 
-    const handleRename = () => {
+    const handleRename = async () => {
         if (newName.trim()) {
-            renameSegmentedVideo(newName);
-            setIsEditModalOpen(false);
+            await renameSegmentedVideo(newName);
+            setModal(null);
         }
     };
 
-    const handleDeleteSegmentedVideo = async () => {
-        if (!segmentedVideoId) return;
-        try {
-            await api.deleteSegmentedVideo(segmentedVideoId);
-            navigate('/segmented-videos');
-        } catch (e) {
-            console.error('Error deleting segmented video:', e);
-        }
+    const handleDeleteVideo = async () => {
+        await deleteSegmentedVideo();
+        navigate('/segmented-videos');
     };
 
     if (isLoading) return null;
@@ -74,7 +73,7 @@ const SegmentedVideoPage = () => {
                                 <DropdownMenuItem
                                     onClick={() => {
                                         setNewName(segmentedVideo.name);
-                                        setIsEditModalOpen(true);
+                                        setModal({ type: 'rename' });
                                     }}
                                     className="rounded-lg gap-2"
                                 >
@@ -82,7 +81,7 @@ const SegmentedVideoPage = () => {
                                     <span>Переименовать</span>
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
-                                    onClick={() => setIsDeleteSegmentedVideoModalOpen(true)}
+                                    onClick={() => setModal({ type: 'deleteVideo' })}
                                     className="rounded-lg gap-2 text-red-500 focus:text-red-500"
                                 >
                                     <Trash2 className="h-4 w-4" />
@@ -134,87 +133,73 @@ const SegmentedVideoPage = () => {
                                 key={segment.uuid}
                                 segment={segment}
                                 segmentedVideoId={segmentedVideo.uuid}
-                                onDelete={(uuid) => setSegmentToDelete(uuid)}
+                                onDelete={(uuid) => setModal({ type: 'deleteSegment', segmentUuid: uuid })}
                             />
                         ))}
                     </div>
                 )}
             </main>
 
-            {/* Modals */}
-            <Dialog open={!!segmentToDelete} onOpenChange={(open) => !open && setSegmentToDelete(null)}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>Удалить сегмент?</DialogTitle>
-                        <DialogDescription>
-                            Это действие нельзя будет отменить. Сегмент будет удален из текущего сегментированного видео.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="flex-row gap-2 mt-4">
-                        <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setSegmentToDelete(null)}>
-                            Отмена
-                        </Button>
-                        <Button
-                            variant="destructive"
-                            className="flex-1 rounded-xl"
-                            onClick={() => {
-                                if (segmentToDelete) {
-                                    deleteSegment(segmentToDelete);
-                                    setSegmentToDelete(null);
-                                }
-                            }}
-                        >
-                            Удалить
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <ConfirmDialog
+                open={modal?.type === 'deleteSegment'}
+                onOpenChange={(open) => !open && setModal(null)}
+                title="Удалить сегмент?"
+                description="Это действие нельзя будет отменить. Сегмент будет удален из текущего сегментированного видео."
+                primaryAction={{
+                    label: "Удалить",
+                    variant: "destructive",
+                    onClick: async () => {
+                        if (modal?.type === 'deleteSegment') {
+                            await deleteSegment(modal.segmentUuid);
+                            setModal(null);
+                        }
+                    }
+                }}
+                secondaryAction={{
+                    label: "Отмена",
+                    onClick: () => setModal(null)
+                }}
+            />
 
-            <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>Редактировать название</DialogTitle>
-                        <DialogDescription>
-                            Введите новое название для сегментированного видео.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4">
-                        <Input
-                            value={newName}
-                            onChange={(e) => setNewName(e.target.value)}
-                            placeholder="Название сегментированного видео"
-                            onKeyDown={(e) => e.key === 'Enter' && handleRename()}
-                        />
-                    </div>
-                    <DialogFooter className="flex-row gap-2">
-                        <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setIsEditModalOpen(false)}>
-                            Отмена
-                        </Button>
-                        <Button className="flex-1 rounded-xl shadow-lg" onClick={handleRename}>
-                            Сохранить
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <ConfirmDialog
+                open={modal?.type === 'rename'}
+                onOpenChange={(open) => !open && setModal(null)}
+                title="Редактировать название"
+                description="Введите новое название для сегментированного видео."
+                primaryAction={{
+                    label: "Сохранить",
+                    onClick: handleRename
+                }}
+                secondaryAction={{
+                    label: "Отмена",
+                    onClick: () => setModal(null)
+                }}
+            >
+                <div className="py-4">
+                    <Input
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        placeholder="Название сегментированного видео"
+                        onKeyDown={(e) => e.key === 'Enter' && handleRename()}
+                    />
+                </div>
+            </ConfirmDialog>
 
-            <Dialog open={isDeleteSegmentedVideoModalOpen} onOpenChange={setIsDeleteSegmentedVideoModalOpen}>
-                <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                        <DialogTitle>Удалить сегментированное видео?</DialogTitle>
-                        <DialogDescription>
-                            Вы уверены, что хотите удалить сегментированное видео "{segmentedVideo.name}"? Это также удалит все сегменты, которые в нем находятся.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="flex-row gap-2 mt-4">
-                        <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setIsDeleteSegmentedVideoModalOpen(false)}>
-                            Отмена
-                        </Button>
-                        <Button variant="destructive" className="flex-1 rounded-xl" onClick={handleDeleteSegmentedVideo}>
-                            Удалить
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <ConfirmDialog
+                open={modal?.type === 'deleteVideo'}
+                onOpenChange={(open) => !open && setModal(null)}
+                title="Удалить сегментированное видео?"
+                description={`Вы уверены, что хотите удалить сегментированное видео "${segmentedVideo.name}"? Это также удалит все сегменты, которые в нем находятся.`}
+                primaryAction={{
+                    label: "Удалить",
+                    variant: "destructive",
+                    onClick: handleDeleteVideo
+                }}
+                secondaryAction={{
+                    label: "Отмена",
+                    onClick: () => setModal(null)
+                }}
+            />
         </div>
     );
 };

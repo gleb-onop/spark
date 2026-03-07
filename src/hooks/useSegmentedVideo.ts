@@ -54,13 +54,19 @@ export function useSegmentedVideo(segmentedVideoId: string | undefined) {
         setSegmentedVideo(updated);
     };
 
+    const deleteSegmentedVideo = async () => {
+        if (!segmentedVideoId) return;
+        await api.deleteSegmentedVideo(segmentedVideoId);
+    };
+
     return {
         segmentedVideo,
         segments,
         isLoading,
         refreshSegmentedVideo: loadSegmentedVideo,
         deleteSegment,
-        renameSegmentedVideo
+        renameSegmentedVideo,
+        deleteSegmentedVideo
     };
 }
 
