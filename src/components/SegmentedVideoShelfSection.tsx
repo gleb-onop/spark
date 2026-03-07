@@ -27,7 +27,7 @@ export const SegmentedVideoShelfSection = ({ segmentedVideo, segments }: Segment
                         </Link>
                     </h2>
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                        {segmentedVideoSegments.length} сегментов
+                        Cегментов: {segmentedVideoSegments.length}
                     </span>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">

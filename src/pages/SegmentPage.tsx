@@ -1,5 +1,4 @@
-import { useState, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { Info, Edit2, Scissors } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -7,28 +6,23 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/PageHeader';
 import { useSegmentedVideo } from '@/hooks/useSegmentedVideo';
 import { useYouTubePlayer } from '@/hooks/useYouTubePlayer';
+import { useLoopSetting } from '@/hooks/useLoopSetting';
+import { useSegmentNavigation } from '@/hooks/useSegmentNavigation';
+import { ExpandableDescription } from '@/components/ExpandableDescription';
 
 const SegmentPage = () => {
     const { segmentedVideoId, segmentId } = useParams<{ segmentedVideoId: string; segmentId: string }>();
-    const navigate = useNavigate();
-    const [isExpanded, setIsExpanded] = useState(false);
-    const [isLooping, setIsLooping] = useState(() => localStorage.getItem('spark_looping') === 'true');
 
     const { segmentedVideo, segments } = useSegmentedVideo(segmentedVideoId);
     const segment = segments.find(f => f.uuid === segmentId);
 
-    const onComplete = useCallback(() => {
-        if (!segmentedVideo || !segment) return;
-        const currentIndex = segmentedVideo.segmentIds.indexOf(segment.uuid);
-        if (currentIndex < segmentedVideo.segmentIds.length - 1) {
-            navigate(`/segment/${segmentedVideoId}/${segmentedVideo.segmentIds[currentIndex + 1]}`);
-        } else if (isLooping) {
-            navigate(`/segment/${segmentedVideoId}/${segmentedVideo.segmentIds[0]}`);
-        } else {
-            navigate(`/segmented-video/${segmentedVideoId}`);
-        }
-    }, [segmentedVideo, segment, segmentedVideoId, navigate, isLooping]);
-
+    const { isLooping, toggleLoop } = useLoopSetting();
+    const { onComplete } = useSegmentNavigation({
+        segmentedVideo,
+        segment,
+        segmentedVideoId,
+        isLooping
+    });
 
     useYouTubePlayer({
         youtubeId: segment?.video.youtubeId || '',
@@ -38,12 +32,9 @@ const SegmentPage = () => {
         onSegmentEnded: onComplete,
     });
 
-    const toggleLoop = (checked: boolean) => {
-        setIsLooping(checked);
-        localStorage.setItem('spark_looping', String(checked));
-    };
-
     if (!segment || !segmentedVideo) return null;
+
+    const descriptionText = segment.description || segment.video.description || '';
 
     return (
         <div className="flex flex-col min-h-screen bg-background pb-24">
@@ -76,21 +67,7 @@ const SegmentPage = () => {
                         </div>
                     )}
 
-                    <div className="bg-muted/50 dark:bg-muted/20 border border-border p-4 rounded-2xl overflow-hidden relative">
-                        <div className="min-w-0">
-                            <p className={`text-sm leading-relaxed m-0 text-foreground/80 break-words whitespace-pre-wrap ${isExpanded ? '' : 'line-clamp-3'}`}>
-                                {segment.description || segment.video.description || 'Нет описания'}
-                            </p>
-                            {(segment.description || segment.video.description) && (segment.description || segment.video.description).length > 110 && (
-                                <button
-                                    onClick={() => setIsExpanded(!isExpanded)}
-                                    className="text-accent font-bold text-xs mt-3 uppercase tracking-wider hover:underline"
-                                >
-                                    {isExpanded ? 'Свернуть' : 'Развернуть'}
-                                </button>
-                            )}
-                        </div>
-                    </div>
+                    <ExpandableDescription text={descriptionText} />
                 </section>
 
                 <section className="flex flex-col gap-4">
