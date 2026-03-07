@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { fetchSegmentTitle, ensureYouTubeIframeAPIReady } from '../utils/youtube';
+import { generateUUID } from '../utils/uuid';
 import { parseTime } from '../utils/time';
 import type { SegmentedVideo } from '../types';
 import { Plus, Loader2 } from 'lucide-react';
@@ -93,49 +94,83 @@ const AddPage = () => {
     // Validate segment via hidden iframe
     const validateSegment = useCallback((videoId: string): Promise<boolean> => {
         return new Promise(async (resolve) => {
-            await ensureYouTubeIframeAPIReady();
-
-            if (validationPlayerRef.current) {
-                validationPlayerRef.current.destroy();
-                validationPlayerRef.current = null;
-            }
+            let resolved = false;
 
             const timeout = setTimeout(() => {
+                if (!resolved) {
+                    resolved = true;
+                    if (validationPlayerRef.current) {
+                        try {
+                            validationPlayerRef.current.destroy();
+                        } catch (e) { }
+                        validationPlayerRef.current = null;
+                    }
+                    console.warn('Validation timed out for video:', videoId);
+                    // Resolve as false to show error if validation hangs
+                    resolve(false);
+                }
+            }, 8000);
+
+            try {
+                await ensureYouTubeIframeAPIReady();
+
+                // If timeout already fired, stop here
+                if (resolved) return;
+
                 if (validationPlayerRef.current) {
                     validationPlayerRef.current.destroy();
                     validationPlayerRef.current = null;
                 }
-                resolve(false);
-            }, 8000);
 
-            validationPlayerRef.current = new window.YT.Player('validation-player', {
-                width: 1,
-                height: 1,
-                videoId: videoId,
-                playerVars: {
-                    autoplay: 0,
-                    controls: 0,
-                    mute: 1,
-                },
-                events: {
-                    onReady: () => {
-                        clearTimeout(timeout);
-                        if (validationPlayerRef.current) {
-                            validationPlayerRef.current.destroy();
-                            validationPlayerRef.current = null;
-                        }
-                        resolve(true);
+                // If YT is not available even after waiting, assume valid if title was fetched
+                if (!window.YT || !window.YT.Player) {
+                    clearTimeout(timeout);
+                    resolved = true;
+                    resolve(true);
+                    return;
+                }
+
+                validationPlayerRef.current = new window.YT.Player('validation-player', {
+                    width: 1,
+                    height: 1,
+                    videoId: videoId,
+                    playerVars: {
+                        autoplay: 0,
+                        controls: 0,
+                        mute: 1,
                     },
-                    onError: () => {
-                        clearTimeout(timeout);
-                        if (validationPlayerRef.current) {
-                            validationPlayerRef.current.destroy();
-                            validationPlayerRef.current = null;
-                        }
-                        resolve(false);
+                    events: {
+                        onReady: () => {
+                            if (!resolved) {
+                                clearTimeout(timeout);
+                                resolved = true;
+                                if (validationPlayerRef.current) {
+                                    validationPlayerRef.current.destroy();
+                                    validationPlayerRef.current = null;
+                                }
+                                resolve(true);
+                            }
+                        },
+                        onError: () => {
+                            if (!resolved) {
+                                clearTimeout(timeout);
+                                resolved = true;
+                                if (validationPlayerRef.current) {
+                                    validationPlayerRef.current.destroy();
+                                    validationPlayerRef.current = null;
+                                }
+                                resolve(false);
+                            }
+                        },
                     },
-                },
-            });
+                });
+            } catch (err) {
+                if (!resolved) {
+                    clearTimeout(timeout);
+                    resolved = true;
+                    resolve(true); // Fallback to success on error
+                }
+            }
         });
     }, []);
 
@@ -174,26 +209,25 @@ const AddPage = () => {
             setIsValidating(false);
             return;
         }
-
-        const videoData = {
-            uuid: crypto.randomUUID(),
-            youtubeId,
-            title: title || 'Новое видео',
-            description: '',
-            duration: 0, // Should be fetched but okay for now
-            isEmbeddable: true,
-            isVertical: url.includes('/shorts/'),
-            createdAt: Date.now()
-        };
-
-        const segmentData = {
-            description,
-            timeStart: useRange ? timeStart : null,
-            timeEnd: useRange ? timeEnd : null,
-            video: videoData
-        };
-
         try {
+            const videoData = {
+                uuid: generateUUID(),
+                youtubeId,
+                title: title || 'Новое видео',
+                description: '',
+                duration: 0, // Should be fetched but okay for now
+                isEmbeddable: true,
+                isVertical: url.includes('/shorts/'),
+                createdAt: Date.now()
+            };
+
+            const segmentData = {
+                description,
+                timeStart: useRange ? timeStart : null,
+                timeEnd: useRange ? timeEnd : null,
+                video: videoData
+            };
+
             if (isNewSegmentedVideoMode) {
                 await api.addSegmentedVideoWithSegment(segmentedVideoName.trim(), segmentData);
             } else {

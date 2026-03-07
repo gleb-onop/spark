@@ -29,12 +29,22 @@ export function ensureYouTubeIframeAPIReady(): Promise<void> {
         if (isApiLoading) return;
         isApiLoading = true;
 
+        const timeout = setTimeout(() => {
+            if (isApiLoading) {
+                console.warn('YouTube IFrame API load timeout - resolving anyway');
+                apiResolvers.forEach(res => res());
+                apiResolvers = [];
+                isApiLoading = false;
+            }
+        }, 5000);
+
         // Check if script is already added but not ready
         const existingScript = document.querySelector('script[src*="youtube.com/iframe_api"]');
         if (existingScript) {
             const check = setInterval(() => {
                 if (window.YT && window.YT.Player) {
                     clearInterval(check);
+                    clearTimeout(timeout);
                     apiResolvers.forEach(res => res());
                     apiResolvers = [];
                     isApiLoading = false;
@@ -49,6 +59,7 @@ export function ensureYouTubeIframeAPIReady(): Promise<void> {
         firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
 
         window.onYouTubeIframeAPIReady = () => {
+            clearTimeout(timeout);
             apiResolvers.forEach(res => res());
             apiResolvers = [];
             isApiLoading = false;

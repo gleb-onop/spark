@@ -1,4 +1,5 @@
 import type { SegmentedVideo, Segment } from '../types';
+import { generateUUID } from '../utils/uuid';
 
 // Fake delay to simulate network latency
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
@@ -36,7 +37,7 @@ export const api = {
         await delay(500);
         const segmentedVideos = getFromStorage<SegmentedVideo>(SEGMENTED_VIDEOS_KEY);
         const newSegmentedVideo: SegmentedVideo = {
-            uuid: crypto.randomUUID(),
+            uuid: generateUUID(),
             name,
             createdAt: Date.now(),
             segmentIds: [],
@@ -90,7 +91,7 @@ export const api = {
         const segments = getFromStorage<Segment>(SEGMENTS_KEY);
         const newSegment: Segment = {
             ...segmentData,
-            uuid: crypto.randomUUID(),
+            uuid: generateUUID(),
             createdAt: Date.now(),
         };
 
