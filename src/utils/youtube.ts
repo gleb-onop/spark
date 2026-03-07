@@ -1,3 +1,10 @@
+declare global {
+    interface Window {
+        YT: any;
+        onYouTubeIframeAPIReady: () => void;
+    }
+}
+
 export async function fetchSegmentTitle(youtubeId: string): Promise<string | null> {
     try {
         const url = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${youtubeId}&format=json`;
