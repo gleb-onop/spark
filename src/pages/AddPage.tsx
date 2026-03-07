@@ -1,17 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { api } from '../services/api';
-import { generateUUID } from '../utils/uuid';
-import { parseTime } from '../utils/time';
-import type { SegmentedVideo } from '../types';
-import { Plus, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
+import { api } from '@/services/api';
+import { useYouTubeMetadata } from '@/hooks/useYouTubeMetadata';
+import { formatTime, parseTime } from '@/utils/time';
+import { generateUUID } from '@/utils/uuid';
 import { PageHeader } from '@/components/PageHeader';
-import { useYouTubeMetadata } from '../hooks/useYouTubeMetadata';
-import { useSegmentValidation } from '../hooks/useSegmentValidation';
 import { SegmentedVideoSelector } from '../components/AddPage/SegmentedVideoSelector';
 import { YouTubeInputSection } from '../components/AddPage/YouTubeInputSection';
 import { SegmentConfig } from '../components/AddPage/SegmentConfig';
+import type { SegmentedVideo } from '../types';
 
 const AddPage = () => {
     const navigate = useNavigate();
@@ -25,59 +23,63 @@ const AddPage = () => {
     const [segmentedVideoId, setSegmentedVideoId] = useState(existingSegmentedVideoId);
     const [url, setUrl] = useState('');
     const [description, setDescription] = useState('');
-    const [useRange, setUseRange] = useState(false);
     const [timeStart, setTimeStart] = useState('');
     const [timeEnd, setTimeEnd] = useState('');
+    const [duration, setDuration] = useState(0);
 
     // Shared Data
     const [segmentedVideos, setSegmentedVideos] = useState<SegmentedVideo[]>([]);
     const [error, setError] = useState('');
-    const [isSaving, setIsSaving] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     // Custom Hooks
     const { youtubeId, title, setTitle, isFetchingTitle, urlError } = useYouTubeMetadata(url);
-    const { validateSegment } = useSegmentValidation();
 
     useEffect(() => {
-        if (!isNewMode) {
-            api.getSegmentedVideos().then(setSegmentedVideos);
-        }
-    }, [isNewMode]);
+        api.getSegmentedVideos().then(setSegmentedVideos);
+    }, []);
+
+    const handleDurationReady = useCallback((dur: number) => {
+        setDuration(dur);
+        if (!timeStart) setTimeStart('0:00');
+        if (!timeEnd) setTimeEnd(formatTime(dur));
+    }, [timeStart, timeEnd]);
+
+    const handleRangeChange = useCallback((start: number, end: number) => {
+        setTimeStart(formatTime(start));
+        setTimeEnd(formatTime(end));
+    }, []);
 
     const validateForm = () => {
-        if (isNewMode && !segmentedVideoName.trim()) return 'Введите название сегментированного видео';
-        if (!youtubeId) return 'Введите корректную ссылку';
-        if (!isNewMode && !segmentedVideoId) return 'Выберите сегментированное видео';
+        if (!youtubeId) return 'Введите корректную ссылку на YouTube';
+        if (!title.trim()) return 'Введите название видео';
+        if (!isNewMode && !segmentedVideoId) return 'Выберите видео для сегментации';
+        if (isNewMode && !segmentedVideoName.trim()) return 'Введите название коллекции';
 
-        if (useRange) {
-            if (!timeStart || !timeEnd) return 'Заполните оба поля времени';
+        if (timeStart && timeEnd) {
             if (parseTime(timeEnd) <= parseTime(timeStart)) return 'Конец должен быть позже начала';
         }
+
         return null;
     };
 
     const handleSave = async () => {
-        setError('');
         const validationError = validateForm();
         if (validationError) {
             setError(validationError);
             return;
         }
 
-        setIsSaving(true);
-        try {
-            const isValid = await validateSegment(youtubeId);
-            if (!isValid) {
-                setError('Сегмент недоступен или указан неправильный URL');
-                return;
-            }
+        setIsLoading(true);
+        setError('');
 
+        try {
             const videoData = {
                 uuid: generateUUID(),
                 youtubeId,
-                title: title || 'Новое видео',
+                title,
                 description: '',
-                duration: 0,
+                duration: duration,
                 isEmbeddable: true,
                 isVertical: url.includes('/shorts/'),
                 createdAt: Date.now()
@@ -85,22 +87,23 @@ const AddPage = () => {
 
             const segmentData = {
                 description,
-                timeStart: useRange ? timeStart : null,
-                timeEnd: useRange ? timeEnd : null,
+                timeStart,
+                timeEnd,
                 video: videoData
             };
 
             if (isNewMode) {
-                await api.addSegmentedVideoWithSegment(segmentedVideoName.trim(), segmentData);
-            } else {
+                await api.addSegmentedVideoWithSegment(segmentedVideoName, segmentData);
+            } else if (segmentedVideoId) {
                 await api.addSegment(segmentData, segmentedVideoId);
             }
+
             navigate('/segmented-videos');
         } catch (e) {
-            console.error('Error saving data:', e);
-            setError('Произошла ошибка при сохранении');
+            console.error('Save error:', e);
+            setError('Ошибка при сохранении. Попробуйте еще раз.');
         } finally {
-            setIsSaving(false);
+            setIsLoading(false);
         }
     };
 
@@ -130,45 +133,42 @@ const AddPage = () => {
                         title={title}
                         setTitle={setTitle}
                         isFetchingTitle={isFetchingTitle}
+                        onDurationReady={handleDurationReady}
+                        duration={duration}
+                        timeStart={timeStart}
+                        timeEnd={timeEnd}
+                        setTimeStart={setTimeStart}
+                        setTimeEnd={setTimeEnd}
+                        onRangeChange={handleRangeChange}
                     />
 
                     <SegmentConfig
                         description={description}
                         setDescription={setDescription}
-                        useRange={useRange}
-                        setUseRange={setUseRange}
-                        timeStart={timeStart}
-                        setTimeStart={setTimeStart}
-                        timeEnd={timeEnd}
-                        setTimeEnd={setTimeEnd}
                     />
 
                     {error && (
                         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 animate-in shake-1 duration-500">
-                            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                            <p className="text-red-500 text-xs font-bold leading-tight">{error}</p>
+                            <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                            <p className="text-red-500 text-[10px] font-black uppercase tracking-widest">{error}</p>
                         </div>
                     )}
-                </section>
 
-                <Button
-                    size="lg"
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="h-16 rounded-2xl shadow-xl shadow-accent/30 font-bold text-lg transition-transform active:scale-95"
-                >
-                    {isSaving ? (
-                        <>
-                            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                            Проверка и сохранение...
-                        </>
-                    ) : (
-                        <>
-                            <Plus className="mr-2 h-6 w-6" />
-                            {isNewMode ? 'Создать' : 'Добавить сегмент'}
-                        </>
-                    )}
-                </Button>
+                    <button
+                        onClick={handleSave}
+                        disabled={isLoading || isFetchingTitle}
+                        className="h-16 w-full mt-4 bg-brand text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-[0_8px_30px_rgb(255,107,53,0.3)] hover:shadow-[0_8px_30px_rgb(255,107,53,0.5)] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100 disabled:shadow-none flex items-center justify-center gap-3 group"
+                    >
+                        {isLoading ? (
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                            <>
+                                <span>Сохранить</span>
+                                <div className="h-1.5 w-1.5 rounded-full bg-white group-hover:animate-ping" />
+                            </>
+                        )}
+                    </button>
+                </section>
             </main>
 
             <div className="absolute -left-[9999px] -top-[9999px] w-px h-px overflow-hidden">

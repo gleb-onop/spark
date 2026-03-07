@@ -1,6 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { Check, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { YouTubeInputSection } from '../components/AddPage/YouTubeInputSection';
 import { SegmentConfig } from '../components/AddPage/SegmentConfig';
@@ -32,45 +31,42 @@ const EditPage = () => {
                         title={state.title}
                         setTitle={actions.setTitle}
                         showUrlInput={false}
+                        onDurationReady={actions.handleDurationReady}
+                        duration={state.duration}
+                        timeStart={state.timeStart}
+                        timeEnd={state.timeEnd}
+                        setTimeStart={actions.setTimeStart}
+                        setTimeEnd={actions.setTimeEnd}
+                        onRangeChange={actions.handleRangeChange}
                     />
 
                     <SegmentConfig
                         description={state.description}
                         setDescription={actions.setDescription}
-                        useRange={state.useRange}
-                        setUseRange={actions.setUseRange}
-                        timeStart={state.timeStart}
-                        setTimeStart={actions.setTimeStart}
-                        timeEnd={state.timeEnd}
-                        setTimeEnd={actions.setTimeEnd}
                     />
 
                     {state.error && (
                         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 animate-in shake-1 duration-500">
-                            <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-                            <p className="text-red-500 text-xs font-bold leading-tight">{state.error}</p>
+                            <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                            <p className="text-red-500 text-[10px] font-black uppercase tracking-widest">{state.error}</p>
                         </div>
                     )}
-                </section>
 
-                <Button
-                    size="lg"
-                    onClick={actions.handleSave}
-                    disabled={state.isSaving}
-                    className="h-16 rounded-2xl shadow-xl shadow-accent/30 font-bold text-lg transition-transform active:scale-95"
-                >
-                    {state.isSaving ? (
-                        <>
-                            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                            Сохранение...
-                        </>
-                    ) : (
-                        <>
-                            <Check className="mr-2 h-6 w-6" />
-                            Сохранить изменения
-                        </>
-                    )}
-                </Button>
+                    <button
+                        onClick={actions.handleSave}
+                        disabled={state.isSaving}
+                        className="h-16 w-full mt-4 bg-brand text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-[0_8px_30px_rgb(255,107,53,0.3)] hover:shadow-[0_8px_30px_rgb(255,107,53,0.5)] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100 disabled:shadow-none flex items-center justify-center gap-3 group"
+                    >
+                        {state.isSaving ? (
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                        ) : (
+                            <>
+                                <span>Сохранить</span>
+                                <div className="h-1.5 w-1.5 rounded-full bg-white group-hover:animate-ping" />
+                            </>
+                        )}
+                    </button>
+                </section>
             </main>
         </div>
     );

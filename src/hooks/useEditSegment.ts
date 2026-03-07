@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
-import { parseTime } from '../utils/time';
+import { parseTime, formatTime } from '../utils/time';
 
 interface UseEditSegmentProps {
     segmentId?: string;
@@ -14,10 +14,10 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
     // Form State
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
-    const [useRange, setUseRange] = useState(false);
     const [timeStart, setTimeStart] = useState('');
     const [timeEnd, setTimeEnd] = useState('');
     const [youtubeId, setYoutubeId] = useState('');
+    const [duration, setDuration] = useState(0);
 
     // UI State
     const [isLoading, setIsLoading] = useState(true);
@@ -35,11 +35,9 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
                     setTitle(segment.video.title);
                     setDescription(segment.description || '');
                     setYoutubeId(segment.video.youtubeId);
-                    if (segment.timeStart || segment.timeEnd) {
-                        setUseRange(true);
-                        setTimeStart(segment.timeStart || '');
-                        setTimeEnd(segment.timeEnd || '');
-                    }
+                    setDuration(segment.video.duration || 0);
+                    setTimeStart(segment.timeStart || '');
+                    setTimeEnd(segment.timeEnd || '');
                 }
             } catch (e) {
                 console.error('Error loading segment:', e);
@@ -50,9 +48,19 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
         loadSegment();
     }, [segmentId]);
 
+    const handleDurationReady = useCallback((dur: number) => {
+        setDuration(dur);
+        if (!timeStart) setTimeStart('0:00');
+        if (!timeEnd) setTimeEnd(formatTime(dur));
+    }, [timeStart, timeEnd]);
+
+    const handleRangeChange = useCallback((start: number, end: number) => {
+        setTimeStart(formatTime(start));
+        setTimeEnd(formatTime(end));
+    }, []);
+
     const validateForm = () => {
-        if (useRange) {
-            if (!timeStart || !timeEnd) return 'Заполните оба поля времени';
+        if (timeStart && timeEnd) {
             if (parseTime(timeEnd) <= parseTime(timeStart)) return 'Конец должен быть позже начала';
         }
         return null;
@@ -74,11 +82,12 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
             if (segment) {
                 await api.updateSegment(segmentId, {
                     description,
-                    timeStart: useRange ? timeStart : null,
-                    timeEnd: useRange ? timeEnd : null,
+                    timeStart,
+                    timeEnd,
                     video: {
                         ...segment.video,
-                        title
+                        title,
+                        duration
                     }
                 });
                 navigate(segmentedVideoId ? `/segmented-video/${segmentedVideoId}` : '/segmented-videos');
@@ -95,10 +104,10 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
         state: {
             title,
             description,
-            useRange,
             timeStart,
             timeEnd,
             youtubeId,
+            duration,
             isLoading,
             isSaving,
             error,
@@ -106,9 +115,10 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
         actions: {
             setTitle,
             setDescription,
-            setUseRange,
             setTimeStart,
             setTimeEnd,
+            handleDurationReady,
+            handleRangeChange,
             handleSave,
         }
     };
