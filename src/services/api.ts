@@ -46,13 +46,6 @@ export const api = {
         return newSegmentedVideo;
     },
 
-    updateSegmentedVideo: async (updated: SegmentedVideo): Promise<void> => {
-        await delay(400);
-        const segmentedVideos = getFromStorage<SegmentedVideo>(SEGMENTED_VIDEOS_KEY).map(p =>
-            p.uuid === updated.uuid ? updated : p
-        );
-        saveToStorage(SEGMENTED_VIDEOS_KEY, segmentedVideos);
-    },
 
     deleteSegmentedVideo: async (uuid: string): Promise<void> => {
         await delay(500);

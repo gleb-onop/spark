@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { MoreVertical, Trash2, FolderOpen, Edit2, Plus, Play } from 'lucide-react';
+import { MoreVertical, Trash2, FolderOpen, Plus, Play } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -12,11 +12,9 @@ import { PageHeader } from '@/components/PageHeader';
 import { SegmentItem } from '@/components/SegmentItem';
 import { useSegmentedVideo } from '@/hooks/useSegmentedVideo';
 import { ConfirmDialog } from '../components/ConfirmDialog';
-import { Input } from "../components/ui/input";
 
 type ModalState =
     | { type: 'deleteSegment'; segmentUuid: string }
-    | { type: 'rename' }
     | { type: 'deleteVideo' }
     | null;
 
@@ -25,23 +23,14 @@ const SegmentedVideoPage = () => {
     const navigate = useNavigate();
 
     const [modal, setModal] = useState<ModalState>(null);
-    const [newName, setNewName] = useState('');
 
     const {
         segmentedVideo,
         segments,
         isLoading,
         deleteSegment,
-        renameSegmentedVideo,
         deleteSegmentedVideo
     } = useSegmentedVideo(segmentedVideoId);
-
-    const handleRename = async () => {
-        if (newName.trim()) {
-            await renameSegmentedVideo(newName);
-            setModal(null);
-        }
-    };
 
     const handleDeleteVideo = async () => {
         await deleteSegmentedVideo();
@@ -70,16 +59,6 @@ const SegmentedVideoPage = () => {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56 p-1">
-                                <DropdownMenuItem
-                                    onClick={() => {
-                                        setNewName(segmentedVideo.name);
-                                        setModal({ type: 'rename' });
-                                    }}
-                                    className="rounded-lg gap-2"
-                                >
-                                    <Edit2 className="h-4 w-4" />
-                                    <span>Переименовать</span>
-                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                     onClick={() => setModal({ type: 'deleteVideo' })}
                                     className="rounded-lg gap-2 text-red-500 focus:text-red-500"
@@ -160,30 +139,6 @@ const SegmentedVideoPage = () => {
                     onClick: () => setModal(null)
                 }}
             />
-
-            <ConfirmDialog
-                open={modal?.type === 'rename'}
-                onOpenChange={(open) => !open && setModal(null)}
-                title="Редактировать название"
-                description="Введите новое название для сегментированного видео."
-                primaryAction={{
-                    label: "Сохранить",
-                    onClick: handleRename
-                }}
-                secondaryAction={{
-                    label: "Отмена",
-                    onClick: () => setModal(null)
-                }}
-            >
-                <div className="py-4">
-                    <Input
-                        value={newName}
-                        onChange={(e) => setNewName(e.target.value)}
-                        placeholder="Название сегментированного видео"
-                        onKeyDown={(e) => e.key === 'Enter' && handleRename()}
-                    />
-                </div>
-            </ConfirmDialog>
 
             <ConfirmDialog
                 open={modal?.type === 'deleteVideo'}
