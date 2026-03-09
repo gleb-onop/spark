@@ -43,6 +43,11 @@ export const YouTubeInputSection = ({
     const [isMobileSlider, setIsMobileSlider] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
 
+    const onDurationReadyRef = useRef(onDurationReady);
+    useEffect(() => {
+        onDurationReadyRef.current = onDurationReady;
+    }, [onDurationReady]);
+
     useEffect(() => {
         let isMounted = true;
 
@@ -69,8 +74,8 @@ export const YouTubeInputSection = ({
                 },
                 events: {
                     onReady: (event: any) => {
-                        if (onDurationReady) {
-                            onDurationReady(event.target.getDuration());
+                        if (onDurationReadyRef.current) {
+                            onDurationReadyRef.current(event.target.getDuration());
                         }
                     },
                     onStateChange: (event: any) => {
@@ -102,7 +107,7 @@ export const YouTubeInputSection = ({
                 } catch (e) { }
             }
         };
-    }, [youtubeId, onDurationReady]);
+    }, [youtubeId]);
 
     // Handle ResizeObserver for dynamic slider positioning
     useEffect(() => {
@@ -297,6 +302,7 @@ export const YouTubeInputSection = ({
                         timeEnd={timeEnd}
                         onChangeStart={setTimeStart}
                         onChangeEnd={setTimeEnd}
+                        duration={duration}
                     />
                 </div>
             )}

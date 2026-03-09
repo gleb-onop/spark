@@ -1,11 +1,14 @@
+import { useState, useEffect } from 'react';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
+import { parseTime, formatTime } from '@/utils/time';
 
 interface TimeRangeFieldsProps {
     timeStart: string;
     timeEnd: string;
     onChangeStart: (val: string) => void;
     onChangeEnd: (val: string) => void;
+    duration?: number;
 }
 
 export const TimeRangeFields = ({
@@ -13,15 +16,61 @@ export const TimeRangeFields = ({
     timeEnd,
     onChangeStart,
     onChangeEnd,
+    duration = 0,
 }: TimeRangeFieldsProps) => {
+    // Local state for smooth typing
+    const [localStart, setLocalStart] = useState(timeStart);
+    const [localEnd, setLocalEnd] = useState(timeEnd);
+
+    // Sync external changes (e.g. from slider) to local state,
+    // but only if the user is not actively typing (handled via blur).
+    useEffect(() => {
+        setLocalStart(timeStart);
+    }, [timeStart]);
+
+    useEffect(() => {
+        setLocalEnd(timeEnd);
+    }, [timeEnd]);
+
+    const handleStartBlur = () => {
+        if (!localStart.trim()) {
+            // Restore previous valid if empty
+            setLocalStart(timeStart);
+            return;
+        }
+        onChangeStart(localStart);
+    };
+
+    const handleEndBlur = () => {
+        if (!localEnd.trim()) {
+            // Restore previous valid if empty
+            setLocalEnd(timeEnd);
+            return;
+        }
+
+        // Clamp to duration if exceeded
+        if (duration > 0) {
+            const endSeconds = parseTime(localEnd);
+            if (endSeconds > duration) {
+                const maxTimeStr = formatTime(duration);
+                setLocalEnd(maxTimeStr);
+                onChangeEnd(maxTimeStr);
+                return;
+            }
+        }
+
+        onChangeEnd(localEnd);
+    };
+
     return (
         <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
             <div className="space-y-2">
                 <Label htmlFor="start" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Старт (м:сс)</Label>
                 <Input
                     id="start"
-                    value={timeStart}
-                    onChange={(e) => onChangeStart(e.target.value)}
+                    value={localStart}
+                    onChange={(e) => setLocalStart(e.target.value)}
+                    onBlur={handleStartBlur}
                     placeholder="0:00"
                     className="h-12 rounded-xl bg-muted/30 border-none shadow-inner"
                 />
@@ -30,8 +79,9 @@ export const TimeRangeFields = ({
                 <Label htmlFor="end" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Конец (м:сс)</Label>
                 <Input
                     id="end"
-                    value={timeEnd}
-                    onChange={(e) => onChangeEnd(e.target.value)}
+                    value={localEnd}
+                    onChange={(e) => setLocalEnd(e.target.value)}
+                    onBlur={handleEndBlur}
                     placeholder="1:00"
                     className="h-12 rounded-xl bg-muted/30 border-none shadow-inner"
                 />
