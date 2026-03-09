@@ -9,6 +9,9 @@ declare global {
 let isApiLoading = false;
 let apiResolvers: (() => void)[] = [];
 
+const YT_API_TIMEOUT_MS = 5000;
+const YT_API_POLL_INTERVAL_MS = 100;
+
 /**
  * Ensures that the YouTube IFrame API is loaded and returns a promise
  * that resolves when it's ready.
@@ -32,7 +35,7 @@ export function ensureYouTubeIframeAPIReady(): Promise<void> {
                 apiResolvers = [];
                 isApiLoading = false;
             }
-        }, 5000);
+        }, YT_API_TIMEOUT_MS);
 
         // Check if script is already added but not ready
         const existingScript = document.querySelector('script[src*="youtube.com/iframe_api"]');
@@ -45,7 +48,7 @@ export function ensureYouTubeIframeAPIReady(): Promise<void> {
                     apiResolvers = [];
                     isApiLoading = false;
                 }
-            }, 100);
+            }, YT_API_POLL_INTERVAL_MS);
             return;
         }
 

@@ -7,6 +7,11 @@ import { RangeSlider } from './RangeSlider';
 import { parseTime } from '@/utils/time';
 import { TimeRangeFields } from './TimeRangeFields';
 
+const SEEK_DEBOUNCE_MS = 500;
+const SEEK_PLAY_CYCLE_MS = 100;
+const SEEK_JITTER_THRESHOLD_SEC = 0.1;
+const PREVIEW_STOP_BUFFER_SEC = 0.02;
+
 interface YouTubeInputSectionProps {
     url?: string;
     setUrl?: (url: string) => void;
@@ -134,8 +139,8 @@ export const YouTubeInputSection = ({
             if (playerRef.current && isPreviewing) {
                 try {
                     const currentTime = playerRef.current.getCurrentTime();
-                    // Increased precision with 0.02s buffer
-                    if (currentTime >= endSeconds - 0.02) {
+                    // Increased precision with buffer
+                    if (currentTime >= endSeconds - PREVIEW_STOP_BUFFER_SEC) {
                         playerRef.current.mute(); // Immediate silence
                         playerRef.current.pauseVideo();
                         playerRef.current.seekTo(endSeconds, true); // Freeze on exact frame
@@ -188,9 +193,9 @@ export const YouTubeInputSection = ({
                 const seconds = parseTime(timeStart);
                 const player = playerRef.current;
 
-                // Only seek if we are more than 0.1s away (avoid jitter)
+                // Only seek if we are more than threshold away (avoid jitter)
                 const current = player.getCurrentTime();
-                if (Math.abs(current - seconds) < 0.1) return;
+                if (Math.abs(current - seconds) < SEEK_JITTER_THRESHOLD_SEC) return;
 
                 player.seekTo(seconds, true);
 
@@ -204,12 +209,12 @@ export const YouTubeInputSection = ({
                             playerRef.current.pauseVideo();
                             playerRef.current.unMute();
                         }
-                    }, 100); // Reduced delay and made it silent
+                    }, SEEK_PLAY_CYCLE_MS); // Reduced delay and made it silent
                 }
             } catch (e) {
                 console.error('Seek error:', e);
             }
-        }, 500);
+        }, SEEK_DEBOUNCE_MS);
 
         return () => clearTimeout(timer);
     }, [timeStart, isPreviewing]);

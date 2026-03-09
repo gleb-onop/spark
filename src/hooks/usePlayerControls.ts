@@ -32,10 +32,12 @@ export interface PlayerControlsState {
 export const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
 const STORAGE_VOLUME_KEY = 'spark_volume';
+const DEFAULT_VOLUME = 100;
+const PLAYER_POLL_INTERVAL_MS = 250;
 
 const getSavedVolume = (): number => {
     const v = sessionStorage.getItem(STORAGE_VOLUME_KEY);
-    return v !== null ? Number(v) : 100;
+    return v !== null ? Number(v) : DEFAULT_VOLUME;
 };
 
 export const usePlayerControls = ({
@@ -91,7 +93,7 @@ export const usePlayerControls = ({
             if (typeof player.getPlaybackRate === 'function') {
                 setPlaybackRateState(player.getPlaybackRate());
             }
-        }, 250);
+        }, PLAYER_POLL_INTERVAL_MS);
 
         return () => clearInterval(interval);
 

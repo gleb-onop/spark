@@ -5,6 +5,8 @@ import {
 import { PLAYBACK_RATES, type PlayerControlsState } from '@/hooks/usePlayerControls';
 import { cn } from '@/lib/utils';
 
+const CONTROLS_AUTO_HIDE_DELAY_MS = 3000;
+
 interface PlayerControlsProps extends PlayerControlsState {
     containerRef: RefObject<HTMLElement>;
 }
@@ -39,7 +41,7 @@ export const PlayerControls = ({
         const scheduleHide = () => {
             if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
             setVisible(true);
-            hideTimerRef.current = setTimeout(() => setVisible(false), 3000);
+            hideTimerRef.current = setTimeout(() => setVisible(false), CONTROLS_AUTO_HIDE_DELAY_MS);
         };
 
         scheduleHide(); // start timer immediately on entering fullscreen

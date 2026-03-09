@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 
+const DEBOUNCE_DELAY_MS = 500;
+
 export const useYouTubeMetadata = (url: string) => {
     const [youtubeId, setYoutubeId] = useState('');
     const [urlError, setUrlError] = useState('');
@@ -27,7 +29,7 @@ export const useYouTubeMetadata = (url: string) => {
                 setYoutubeId('');
                 setUrlError('Не удалось распознать ссылку');
             }
-        }, 500);
+        }, DEBOUNCE_DELAY_MS);
 
         return () => clearTimeout(timer);
     }, [url]);
