@@ -7,21 +7,21 @@ const TabBar = () => {
             <NavLink
                 to="/segmented-videos"
                 className={({ isActive }) =>
-                    `flex flex-col items-center gap-1.5 no-underline transition-all duration-300 ${isActive ? 'text-accent scale-110' : 'text-muted-foreground hover:text-foreground'}`
+                    `flex-1 flex flex-col items-center gap-1.5 no-underline transition-all duration-300 ${isActive ? 'text-accent scale-110' : 'text-muted-foreground hover:text-foreground'}`
                 }
             >
                 <LayoutGrid className={`h-6 w-6 transition-transform duration-300`} />
-                <span className="text-[10px] font-black uppercase tracking-widest text-inherit text-center">Сегментированные видео</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-inherit text-center leading-tight">Сегментированные видео</span>
             </NavLink>
 
             <NavLink
                 to="/add"
                 className={({ isActive }) =>
-                    `flex flex-col items-center gap-1.5 no-underline transition-all duration-300 ${isActive ? 'text-accent scale-110' : 'text-muted-foreground hover:text-foreground'}`
+                    `flex-1 flex flex-col items-center gap-1.5 no-underline transition-all duration-300 ${isActive ? 'text-accent scale-110' : 'text-muted-foreground hover:text-foreground'}`
                 }
             >
                 <PlusSquare className={`h-6 w-6 transition-transform duration-300`} />
-                <span className="text-[10px] font-black uppercase tracking-widest text-inherit">Добавить</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-inherit text-center">Добавить</span>
             </NavLink>
         </nav>
     );

@@ -27,7 +27,7 @@ const SegmentPage = () => {
         isLooping
     });
 
-    // containerRef is the fullscreen target – it wraps both the iframe and controls
+    // Container ref for fullscreen API
     const containerRef = useRef<HTMLDivElement>(null);
 
     const { playerRef } = useYouTubePlayer({
@@ -52,7 +52,7 @@ const SegmentPage = () => {
     const playerPaddingTop = segment.video.isVertical ? '100%' : '56.25%';
 
     return (
-        <div className="flex flex-col min-h-screen bg-background pb-24">
+        <div className="flex flex-col flex-1 bg-background pb-12 overflow-x-hidden">
             <PageHeader
                 title={segmentedVideo.name}
                 backPath={`/segmented-video/${segmentedVideoId}`}
@@ -88,7 +88,7 @@ const SegmentPage = () => {
                 />
             </div>
 
-            <main className="p-5 flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <main className="px-5 py-5 flex flex-col gap-6 fade-in duration-500 w-full max-w-full">
                 <section>
                     {segment.timeStart && (
                         <div className="flex items-center gap-2 text-sm text-brand font-black mb-4 bg-brand/10 w-fit px-3 py-1 rounded-xl border border-brand/20 shadow-sm animate-in fade-in slide-in-from-left-4 duration-500 delay-100">

@@ -109,7 +109,7 @@ export const PlayerControls = ({
             </div>
 
             {/* Controls Row */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar touch-pan-x w-full">
                 {/* Play/Pause */}
                 <button
                     onClick={togglePlay}
@@ -128,16 +128,16 @@ export const PlayerControls = ({
                 </span>
 
                 {/* Flex spacer */}
-                <div className="flex-1" />
+                <div className="flex-1 min-w-[10px]" />
 
-                {/* Volume */}
-                <div className="flex items-center gap-1.5 shrink-0">
+                {/* Volume - hidden on very small screens since mobile has hardware buttons */}
+                <div className="hidden sm:flex items-center gap-1.5 shrink-0">
                     <button
                         onClick={toggleMute}
                         className="text-white/80 hover:text-white transition-colors"
                         aria-label={isMuted ? 'Включить звук' : 'Выключить звук'}
                     >
-                        {isMuted || volume === 0
+                        {(isMuted || volume === 0)
                             ? <VolumeX className="h-4 w-4" />
                             : <Volume2 className="h-4 w-4" />
                         }
