@@ -11,11 +11,8 @@ interface YouTubeInputSectionProps {
     url?: string;
     setUrl?: (url: string) => void;
     urlError?: string;
-    youtubeId: string;
-    title: string;
-    setTitle: (title: string) => void;
-    isFetchingTitle?: boolean;
     showUrlInput?: boolean;
+    youtubeId: string;
     onDurationReady?: (duration: number) => void;
     duration?: number;
     timeStart?: string;
@@ -29,11 +26,8 @@ export const YouTubeInputSection = ({
     url = '',
     setUrl = () => { },
     urlError = '',
-    youtubeId,
-    title,
-    setTitle,
-    isFetchingTitle = false,
     showUrlInput = true,
+    youtubeId,
     onDurationReady,
     duration = 0,
     timeStart = '',
@@ -304,26 +298,6 @@ export const YouTubeInputSection = ({
                         onChangeStart={setTimeStart}
                         onChangeEnd={setTimeEnd}
                     />
-                </div>
-            )}
-
-            {youtubeId && (
-                <div className="space-y-2 animate-in fade-in slide-in-from-top-4 duration-500">
-                    <Label htmlFor="segment-title" className="text-sm font-bold ml-1">Название видео</Label>
-                    <div className="relative">
-                        <Input
-                            id="segment-title"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            placeholder={isFetchingTitle ? 'Загрузка...' : 'Заголовок...'}
-                            className="h-14 rounded-2xl bg-muted/30 border-none shadow-inner pr-12"
-                        />
-                        {isFetchingTitle && (
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                                <Loader2 className="h-5 w-5 animate-spin text-accent" />
-                            </div>
-                        )}
-                    </div>
                 </div>
             )}
         </div>

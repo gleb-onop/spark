@@ -1,17 +1,13 @@
 import { useState, useEffect } from 'react';
-import { fetchSegmentTitle } from '../utils/youtube';
 
 export const useYouTubeMetadata = (url: string) => {
     const [youtubeId, setYoutubeId] = useState('');
-    const [title, setTitle] = useState('');
-    const [isFetchingTitle, setIsFetchingTitle] = useState(false);
     const [urlError, setUrlError] = useState('');
 
     useEffect(() => {
         const timer = setTimeout(() => {
             if (!url) {
                 setYoutubeId('');
-                setTitle('');
                 setUrlError('');
                 return;
             }
@@ -27,15 +23,8 @@ export const useYouTubeMetadata = (url: string) => {
 
             if (newId) {
                 setYoutubeId(newId);
-                setUrlError('');
-                setIsFetchingTitle(true);
-                fetchSegmentTitle(newId).then((fetchedTitle: string | null) => {
-                    if (fetchedTitle) setTitle(fetchedTitle);
-                    setIsFetchingTitle(false);
-                });
             } else {
                 setYoutubeId('');
-                setTitle('');
                 setUrlError('Не удалось распознать ссылку');
             }
         }, 500);
@@ -45,9 +34,6 @@ export const useYouTubeMetadata = (url: string) => {
 
     return {
         youtubeId,
-        title,
-        setTitle,
-        isFetchingTitle,
         urlError
     };
 };

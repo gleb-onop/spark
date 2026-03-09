@@ -33,7 +33,7 @@ const AddPage = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     // Custom Hooks
-    const { youtubeId, title, setTitle, isFetchingTitle, urlError } = useYouTubeMetadata(url);
+    const { youtubeId, urlError } = useYouTubeMetadata(url);
 
     useEffect(() => {
         api.getSegmentedVideos().then(setSegmentedVideos);
@@ -52,7 +52,6 @@ const AddPage = () => {
 
     const validateForm = () => {
         if (!youtubeId) return 'Введите корректную ссылку на YouTube';
-        if (!title.trim()) return 'Введите название видео';
         if (!isNewMode && !segmentedVideoId) return 'Выберите видео для сегментации';
         if (isNewMode && !segmentedVideoName.trim()) return 'Введите название коллекции';
 
@@ -77,7 +76,6 @@ const AddPage = () => {
             const videoData = {
                 uuid: generateUUID(),
                 youtubeId,
-                title,
                 description: '',
                 duration: duration,
                 isEmbeddable: true,
@@ -130,9 +128,6 @@ const AddPage = () => {
                         setUrl={setUrl}
                         urlError={urlError}
                         youtubeId={youtubeId}
-                        title={title}
-                        setTitle={setTitle}
-                        isFetchingTitle={isFetchingTitle}
                         onDurationReady={handleDurationReady}
                         duration={duration}
                         timeStart={timeStart}
@@ -156,7 +151,7 @@ const AddPage = () => {
 
                     <button
                         onClick={handleSave}
-                        disabled={isLoading || isFetchingTitle}
+                        disabled={isLoading}
                         className="h-16 w-full mt-4 bg-brand text-white rounded-2xl font-black uppercase tracking-[0.2em] shadow-[0_8px_30px_rgb(255,107,53,0.3)] hover:shadow-[0_8px_30px_rgb(255,107,53,0.5)] active:scale-[0.98] transition-all disabled:opacity-50 disabled:scale-100 disabled:shadow-none flex items-center justify-center gap-3 group"
                     >
                         {isLoading ? (

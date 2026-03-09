@@ -58,8 +58,6 @@ const SegmentPage = () => {
 
             <main className="p-5 flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <section>
-                    <h1 className="text-2xl font-black m-0 mb-2 tracking-tight leading-tight">{segment.video.title}</h1>
-
                     {segment.timeStart && (
                         <div className="flex items-center gap-2 text-sm text-brand font-black mb-4 bg-brand/10 w-fit px-3 py-1 rounded-xl border border-brand/20 shadow-sm animate-in fade-in slide-in-from-left-4 duration-500 delay-100">
                             <Scissors className="h-4 w-4" />

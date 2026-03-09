@@ -12,7 +12,6 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
     const navigate = useNavigate();
 
     // Form State
-    const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [timeStart, setTimeStart] = useState('');
     const [timeEnd, setTimeEnd] = useState('');
@@ -32,7 +31,6 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
             try {
                 const segment = await api.getSegment(segmentId);
                 if (segment) {
-                    setTitle(segment.video.title);
                     setDescription(segment.description || '');
                     setYoutubeId(segment.video.youtubeId);
                     setDuration(segment.video.duration || 0);
@@ -86,7 +84,6 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
                     timeEnd,
                     video: {
                         ...segment.video,
-                        title,
                         duration
                     }
                 });
@@ -102,7 +99,6 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
 
     return {
         state: {
-            title,
             description,
             timeStart,
             timeEnd,
@@ -113,7 +109,6 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
             error,
         },
         actions: {
-            setTitle,
             setDescription,
             setTimeStart,
             setTimeEnd,

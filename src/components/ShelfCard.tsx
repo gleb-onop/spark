@@ -33,12 +33,9 @@ const ShelfCard = ({ segment, segmentedVideoId, isPlaceholder }: ShelfCardProps)
         >
             <SegmentThumbnail
                 youtubeId={segment.video.youtubeId}
-                title={segment.video.title}
+                title={segment.description}
                 className="mb-2 group-hover:ring-accent/50 group-hover:scale-[1.02] transition-all duration-300 shadow-md"
             />
-            <div className="text-xs leading-snug line-clamp-2 overflow-hidden font-semibold group-hover:text-accent transition-colors px-1">
-                {segment.video.title}
-            </div>
         </Link>
     );
 };

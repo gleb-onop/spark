@@ -4,7 +4,6 @@ export type Timestamp = number;
 export interface Video {
     uuid: Uuid;
     youtubeId: string;
-    title: string;
     description: string;
     duration: number;
     isEmbeddable: boolean;

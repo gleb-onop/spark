@@ -28,8 +28,6 @@ const EditPage = () => {
                 <section className="flex flex-col gap-6">
                     <YouTubeInputSection
                         youtubeId={state.youtubeId}
-                        title={state.title}
-                        setTitle={actions.setTitle}
                         showUrlInput={false}
                         onDurationReady={actions.handleDurationReady}
                         duration={state.duration}
