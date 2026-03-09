@@ -44,6 +44,7 @@ const SegmentPage = () => {
         timeStart: segment?.timeStart || null,
         timeEnd: segment?.timeEnd || null,
         containerRef: containerRef as React.RefObject<HTMLElement>,
+        isVertical: segment?.video.isVertical,
     });
 
     if (!segment || !segmentedVideo) return null;
@@ -74,8 +75,12 @@ const SegmentPage = () => {
                 ref={containerRef}
                 className="w-full bg-black sticky top-[61px] z-20 shadow-xl"
             >
-                {/* YouTube iframe – padding-top trick for responsive aspect ratio */}
-                <div style={{ paddingTop: playerPaddingTop, position: 'relative' }}>
+                {/* YouTube iframe – changing padding/dimensions for responsive vs fullscreen */}
+                <div style={
+                    controls.isFullscreen
+                        ? { height: '100vh', width: '100vw', position: 'relative' }
+                        : { paddingTop: playerPaddingTop, position: 'relative' }
+                }>
                     <div id="youtube-player" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
                 </div>
 

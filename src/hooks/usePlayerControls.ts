@@ -6,6 +6,7 @@ interface UsePlayerControlsProps {
     timeStart: string | null;
     timeEnd: string | null;
     containerRef: RefObject<HTMLElement>;
+    isVertical?: boolean;
 }
 
 export interface PlayerControlsState {
@@ -45,6 +46,7 @@ export const usePlayerControls = ({
     timeStart,
     timeEnd,
     containerRef,
+    isVertical,
 }: UsePlayerControlsProps): PlayerControlsState => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
@@ -102,7 +104,19 @@ export const usePlayerControls = ({
 
     // ─── Fullscreen sync ────────────────────────────────────────────────────
     useEffect(() => {
-        const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+        const handleFsChange = () => {
+            const isFs = !!document.fullscreenElement;
+            setIsFullscreen(isFs);
+            if (!isFs) {
+                try {
+                    if (screen.orientation && (screen.orientation as any).unlock) {
+                        (screen.orientation as any).unlock();
+                    }
+                } catch (e) {
+                    console.warn('Screen orientation unlock failed:', e);
+                }
+            }
+        };
         document.addEventListener('fullscreenchange', handleFsChange);
         return () => document.removeEventListener('fullscreenchange', handleFsChange);
     }, []);
@@ -174,11 +188,24 @@ export const usePlayerControls = ({
     const toggleFullscreen = useCallback(() => {
         if (!containerRef.current) return;
         if (!document.fullscreenElement) {
-            containerRef.current.requestFullscreen();
+            containerRef.current.requestFullscreen().then(() => {
+                try {
+                    if (screen.orientation && (screen.orientation as any).lock) {
+                        const lockType = isVertical ? 'portrait' : 'landscape';
+                        (screen.orientation as any).lock(lockType).catch((err: any) => {
+                            console.warn('Screen orientation lock failed:', err);
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Screen orientation API not supported:', e);
+                }
+            }).catch(err => {
+                console.error('Fullscreen request failed:', err);
+            });
         } else {
             document.exitFullscreen();
         }
-    }, [containerRef]);
+    }, [containerRef, isVertical]);
 
     return {
         isPlaying,
