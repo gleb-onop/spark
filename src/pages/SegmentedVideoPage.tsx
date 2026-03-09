@@ -14,7 +14,6 @@ import { useSegmentedVideo } from '@/hooks/useSegmentedVideo';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 
 type ModalState =
-    | { type: 'deleteSegment'; segmentUuid: string }
     | { type: 'deleteVideo' }
     | null;
 
@@ -28,7 +27,6 @@ const SegmentedVideoPage = () => {
         segmentedVideo,
         segments,
         isLoading,
-        deleteSegment,
         deleteSegmentedVideo
     } = useSegmentedVideo(segmentedVideoId);
 
@@ -78,7 +76,7 @@ const SegmentedVideoPage = () => {
                         <div className="text-3xl font-black tracking-tight">{segmentedVideo.name}</div>
                         <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
                             <FolderOpen className="h-3 w-3" />
-                            {segments.length} сегментов
+                            Сегментов: {segments.length}
                         </div>
                     </div>
                     {segments.length > 0 && (
@@ -112,33 +110,12 @@ const SegmentedVideoPage = () => {
                                 key={segment.uuid}
                                 segment={segment}
                                 segmentedVideoId={segmentedVideo.uuid}
-                                onDelete={(uuid) => setModal({ type: 'deleteSegment', segmentUuid: uuid })}
                             />
                         ))}
                     </div>
                 )}
             </main>
 
-            <ConfirmDialog
-                open={modal?.type === 'deleteSegment'}
-                onOpenChange={(open) => !open && setModal(null)}
-                title="Удалить сегмент?"
-                description="Это действие нельзя будет отменить. Сегмент будет удален из текущего сегментированного видео."
-                primaryAction={{
-                    label: "Удалить",
-                    variant: "destructive",
-                    onClick: async () => {
-                        if (modal?.type === 'deleteSegment') {
-                            await deleteSegment(modal.segmentUuid);
-                            setModal(null);
-                        }
-                    }
-                }}
-                secondaryAction={{
-                    label: "Отмена",
-                    onClick: () => setModal(null)
-                }}
-            />
 
             <ConfirmDialog
                 open={modal?.type === 'deleteVideo'}

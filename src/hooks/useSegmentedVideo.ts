@@ -40,12 +40,6 @@ export function useSegmentedVideo(segmentedVideoId: string | undefined) {
         loadSegmentedVideo();
     }, [loadSegmentedVideo]);
 
-    const deleteSegment = async (segmentUuid: string) => {
-        if (segmentedVideoId) {
-            await api.deleteSegment(segmentUuid, segmentedVideoId);
-            await loadSegmentedVideo();
-        }
-    };
 
 
     const deleteSegmentedVideo = async () => {
@@ -58,7 +52,6 @@ export function useSegmentedVideo(segmentedVideoId: string | undefined) {
         segments,
         isLoading,
         refreshSegmentedVideo: loadSegmentedVideo,
-        deleteSegment,
         deleteSegmentedVideo
     };
 }
