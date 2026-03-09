@@ -73,7 +73,7 @@ export const RangeSlider = ({
         <div className={`flex flex-col ${isFullWidth ? 'gap-0' : 'gap-4'} ${className}`}>
             <div
                 ref={sliderRef}
-                className={`relative h-1.5 w-full bg-[#0a0a0a] transition-colors duration-300 ${isFullWidth ? '' : 'rounded-full'}`}
+                className={`relative ${isFullWidth ? 'h-3.5' : 'h-1.5'} w-full bg-[#0a0a0a] transition-colors duration-300 ${isFullWidth ? '' : 'rounded-full'}`}
             >
                 {/* Highlighted Range */}
                 <div
@@ -83,8 +83,11 @@ export const RangeSlider = ({
 
                 {/* Start Handle */}
                 <div
-                    className="absolute top-1/2 -translate-y-1/2 h-7 w-2 bg-white rounded-full shadow-lg cursor-grab active:cursor-grabbing z-20 -ml-1 group"
-                    style={{ left: `${startPos}%` }}
+                    className="absolute top-1/2 -translate-y-1/2 h-7 w-2 bg-white rounded-full shadow-lg cursor-grab active:cursor-grabbing z-20 group"
+                    style={{
+                        left: `${startPos}%`,
+                        marginLeft: `${-8 * (startPos / 100)}px`
+                    }}
                     onMouseDown={(e) => { e.stopPropagation(); setIsDragging('start'); }}
                     onTouchStart={(e) => { e.stopPropagation(); setIsDragging('start'); }}
                 >
@@ -95,8 +98,11 @@ export const RangeSlider = ({
 
                 {/* End Handle */}
                 <div
-                    className="absolute top-1/2 -translate-y-1/2 h-7 w-2 bg-white rounded-full shadow-lg cursor-grab active:cursor-grabbing z-20 -ml-1 group"
-                    style={{ left: `${endPos}%` }}
+                    className="absolute top-1/2 -translate-y-1/2 h-7 w-2 bg-white rounded-full shadow-lg cursor-grab active:cursor-grabbing z-20 group"
+                    style={{
+                        left: `${endPos}%`,
+                        marginLeft: `${-8 * (endPos / 100)}px`
+                    }}
                     onMouseDown={(e) => { e.stopPropagation(); setIsDragging('end'); }}
                     onTouchStart={(e) => { e.stopPropagation(); setIsDragging('end'); }}
                 >

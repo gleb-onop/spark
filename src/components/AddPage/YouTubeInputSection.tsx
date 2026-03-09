@@ -46,6 +46,8 @@ export const YouTubeInputSection = ({
     const [isPreviewing, setIsPreviewing] = useState(false);
     const [playerState, setPlayerState] = useState<number>(-1); // -1: UNSTARTED
     const [hasModifiedRange, setHasModifiedRange] = useState(false);
+    const [isMobileSlider, setIsMobileSlider] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         let isMounted = true;
@@ -107,6 +109,20 @@ export const YouTubeInputSection = ({
             }
         };
     }, [youtubeId, onDurationReady]);
+
+    // Handle ResizeObserver for dynamic slider positioning
+    useEffect(() => {
+        if (!containerRef.current) return;
+
+        const observer = new ResizeObserver((entries) => {
+            for (const entry of entries) {
+                setIsMobileSlider(entry.contentRect.width < 640);
+            }
+        });
+
+        observer.observe(containerRef.current);
+        return () => observer.disconnect();
+    }, [youtubeId]);
 
     // Preview range logic with high-precision requestAnimationFrame
     useEffect(() => {
@@ -219,16 +235,27 @@ export const YouTubeInputSection = ({
 
             {youtubeId && (
                 <div className="animate-in zoom-in-95 duration-300 space-y-4">
-                    <div className="w-full aspect-video relative rounded-3xl overflow-hidden shadow-2xl ring-4 ring-black/5 dark:ring-white/5 bg-black flex flex-col group">
-                        <div id="preview-player" className="absolute inset-0 w-full h-full" />
+                    <div ref={containerRef} className="w-full aspect-video relative group">
+                        {/* Video Container with overflow-hidden */}
+                        <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl ring-4 ring-black/5 dark:ring-white/5 bg-black">
+                            <div id="preview-player" className="absolute inset-0 w-full h-full" />
 
-                        {/* YouTube Style Play Button Overlay - Only show after range modification */}
+                            {!playerRef.current && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <Loader2 className="h-8 w-8 animate-spin text-white/20" />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Overlays and Slider (outside overflow-hidden) */}
+
+                        {/* YouTube Style Play Button Overlay */}
                         {!isPlaying && !isPreviewing && hasModifiedRange && (
                             <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none transition-all duration-300">
                                 <button
                                     type="button"
                                     onClick={handleTogglePreview}
-                                    className="pointer-events-auto w-[68px] h-[48px] scale-[1.2] flex items-center justify-center hover:scale-[1.3] active:scale-95 transition-transform duration-200"
+                                    className="pointer-events-auto w-[64px] h-[46px] flex items-center justify-center hover:scale-[1.1] active:scale-95 transition-transform duration-200"
                                     aria-label="Preview Segment"
                                 >
                                     <svg viewBox="0 0 68 48" className="h-full w-full drop-shadow-2xl">
@@ -255,21 +282,18 @@ export const YouTubeInputSection = ({
                         )}
 
                         {duration > 0 && onRangeChange && (
-                            <div className="absolute bottom-11.5 left-0 right-0 p-0 z-10 transition-opacity duration-300">
+                            <div
+                                className="absolute left-0 right-0 p-0 z-30 transition-all duration-300"
+                                style={{ bottom: isMobileSlider ? '37px' : '42px' }}
+                            >
                                 <RangeSlider
                                     duration={duration}
                                     timeStart={parseTime(timeStart) || 0}
                                     timeEnd={parseTime(timeEnd) || duration}
                                     onChange={handleRangeChangeInternal}
-                                    className="px-4"
+                                    className="px-0"
                                     isFullWidth
                                 />
-                            </div>
-                        )}
-
-                        {!playerRef.current && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <Loader2 className="h-8 w-8 animate-spin text-white/20" />
                             </div>
                         )}
                     </div>
