@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Info, Edit2, Scissors } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
@@ -6,9 +7,11 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/PageHeader';
 import { useSegmentedVideo } from '@/hooks/useSegmentedVideo';
 import { useYouTubePlayer } from '@/hooks/useYouTubePlayer';
+import { usePlayerControls } from '@/hooks/usePlayerControls';
 import { useLoopSetting } from '@/hooks/useLoopSetting';
 import { useSegmentNavigation } from '@/hooks/useSegmentNavigation';
 import { ExpandableDescription } from '@/components/ExpandableDescription';
+import { PlayerControls } from '@/components/PlayerControls';
 
 const SegmentPage = () => {
     const { segmentedVideoId, segmentId } = useParams<{ segmentedVideoId: string; segmentId: string }>();
@@ -24,17 +27,29 @@ const SegmentPage = () => {
         isLooping
     });
 
-    useYouTubePlayer({
+    // containerRef is the fullscreen target – it wraps both the iframe and controls
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    const { playerRef } = useYouTubePlayer({
         youtubeId: segment?.video.youtubeId || '',
         timeStart: segment?.timeStart || null,
         timeEnd: segment?.timeEnd || null,
         onComplete,
         onSegmentEnded: onComplete,
+        exposePlayerRef: true,
+    });
+
+    const controls = usePlayerControls({
+        playerRef,
+        timeStart: segment?.timeStart || null,
+        timeEnd: segment?.timeEnd || null,
+        containerRef: containerRef as React.RefObject<HTMLElement>,
     });
 
     if (!segment || !segmentedVideo) return null;
 
     const descriptionText = segment.description || segment.video.description || '';
+    const playerPaddingTop = segment.video.isVertical ? '100%' : '56.25%';
 
     return (
         <div className="flex flex-col min-h-screen bg-background pb-24">
@@ -50,10 +65,27 @@ const SegmentPage = () => {
                 }
             />
 
-            <div className="w-full bg-black aspect-video sticky top-[61px] z-20 shadow-xl overflow-hidden" style={{
-                paddingTop: segment.video.isVertical ? '100%' : '56.25%',
-            }}>
-                <div id="youtube-player" className="absolute top-0 left-0 w-full h-full" />
+            {/*
+             * containerRef wraps player + controls so that requestFullscreen()
+             * called on it puts both iframe AND controls into fullscreen.
+             * It is also sticky so it stays at the top while scrolling.
+             */}
+            <div
+                ref={containerRef}
+                className="w-full bg-black sticky top-[61px] z-20 shadow-xl"
+            >
+                {/* YouTube iframe – padding-top trick for responsive aspect ratio */}
+                <div style={{ paddingTop: playerPaddingTop, position: 'relative' }}>
+                    <div id="youtube-player" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
+                </div>
+
+                {/* Controls – always inside containerRef.
+                    In normal mode: block flow below iframe.
+                    In fullscreen: position absolute at bottom (handled inside component). */}
+                <PlayerControls
+                    containerRef={containerRef as React.RefObject<HTMLElement>}
+                    {...controls}
+                />
             </div>
 
             <main className="p-5 flex flex-col gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -94,4 +126,3 @@ const SegmentPage = () => {
 };
 
 export default SegmentPage;
-

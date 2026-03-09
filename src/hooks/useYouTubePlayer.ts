@@ -8,6 +8,8 @@ interface UseYouTubePlayerProps {
     timeEnd: string | null;
     onComplete: () => void;
     onSegmentEnded: () => void;
+    /** When true, disables native controls and exposes playerRef for custom controls. */
+    exposePlayerRef?: boolean;
 }
 
 export const useYouTubePlayer = ({
@@ -16,6 +18,7 @@ export const useYouTubePlayer = ({
     timeEnd,
     onComplete,
     onSegmentEnded,
+    exposePlayerRef = false,
 }: UseYouTubePlayerProps) => {
     const playerRef = useRef<any>(null);
     const intervalRef = useRef<number | null>(null);
@@ -54,7 +57,7 @@ export const useYouTubePlayer = ({
                 videoId: youtubeId,
                 playerVars: {
                     autoplay: 1,
-                    controls: 1,
+                    controls: exposePlayerRef ? 0 : 1,
                     modestbranding: 1,
                     rel: 0,
                     showinfo: 0,
@@ -67,6 +70,10 @@ export const useYouTubePlayer = ({
                         if (!isMounted) return;
                         if (sessionStorage.getItem('spark_muted') === '0') {
                             event.target.unMute();
+                        }
+                        const savedVol = sessionStorage.getItem('spark_volume');
+                        if (savedVol !== null) {
+                            event.target.setVolume(Number(savedVol));
                         }
                         event.target.playVideo();
                     },
@@ -108,10 +115,11 @@ export const useYouTubePlayer = ({
                 playerRef.current = null;
             }
         };
-    }, [youtubeId, timeStart, timeEnd]);
+    }, [youtubeId, timeStart, timeEnd, exposePlayerRef]);
 
     return {
         player: playerRef.current,
+        playerRef,
         isMuted: () => playerRef.current?.isMuted?.() || false,
     };
 };
