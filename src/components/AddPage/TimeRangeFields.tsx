@@ -65,24 +65,24 @@ export const TimeRangeFields = ({
     return (
         <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
             <div className="space-y-2">
-                <Label htmlFor="start" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Старт (м:сс)</Label>
+                <Label htmlFor="start" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Старт (м:сс.мс)</Label>
                 <Input
                     id="start"
                     value={localStart}
                     onChange={(e) => setLocalStart(e.target.value)}
                     onBlur={handleStartBlur}
-                    placeholder="0:00"
+                    placeholder="0:00.000"
                     className="h-12 rounded-xl bg-muted/30 border-none shadow-inner"
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="end" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Конец (м:сс)</Label>
+                <Label htmlFor="end" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Конец (м:сс.мс)</Label>
                 <Input
                     id="end"
                     value={localEnd}
                     onChange={(e) => setLocalEnd(e.target.value)}
                     onBlur={handleEndBlur}
-                    placeholder="1:00"
+                    placeholder="1:00.000"
                     className="h-12 rounded-xl bg-muted/30 border-none shadow-inner"
                 />
             </div>

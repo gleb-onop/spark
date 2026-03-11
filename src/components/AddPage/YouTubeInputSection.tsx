@@ -155,14 +155,14 @@ export const YouTubeInputSection = ({
     const captureStartTime = () => {
         if (playerRef.current) {
             const currentTime = playerRef.current.getCurrentTime();
-            setTimeStart(formatTime(currentTime));
+            setTimeStart(formatTime(currentTime, true));
         }
     };
 
     const captureEndTime = () => {
         if (playerRef.current) {
             const currentTime = playerRef.current.getCurrentTime();
-            setTimeEnd(formatTime(currentTime));
+            setTimeEnd(formatTime(currentTime, true));
         }
     };
 

@@ -48,8 +48,8 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
 
     const handleDurationReady = useCallback((dur: number) => {
         setDuration(dur);
-        if (!timeStart) setTimeStart('0:00');
-        if (!timeEnd) setTimeEnd(formatTime(dur));
+        if (!timeStart) setTimeStart('0:00.000');
+        if (!timeEnd) setTimeEnd(formatTime(dur, true));
     }, [timeStart, timeEnd]);
 
 
