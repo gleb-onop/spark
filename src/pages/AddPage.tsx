@@ -121,6 +121,7 @@ const AddPage = () => {
                         selectedId={segmentedVideoId}
                         setSelectedId={setSegmentedVideoId}
                         options={segmentedVideos}
+                        error={error === 'Введите название коллекции'}
                     />
 
                     <YouTubeInputSection

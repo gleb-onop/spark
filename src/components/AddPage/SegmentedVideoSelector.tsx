@@ -9,6 +9,7 @@ interface SegmentedVideoSelectorProps {
     selectedId: string;
     setSelectedId: (id: string) => void;
     options: SegmentedVideo[];
+    error?: boolean;
 }
 
 export const SegmentedVideoSelector = ({
@@ -17,7 +18,8 @@ export const SegmentedVideoSelector = ({
     setName,
     selectedId,
     setSelectedId,
-    options
+    options,
+    error
 }: SegmentedVideoSelectorProps) => {
     if (isNewMode) {
         return (
@@ -30,7 +32,7 @@ export const SegmentedVideoSelector = ({
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Напр. Мои любимые клипы"
-                    className="h-14 rounded-2xl bg-muted/30 border-none shadow-inner"
+                    className={`h-14 rounded-2xl bg-muted/30 border-none shadow-inner transition-all ${error ? 'ring-2 ring-red-500/50' : ''}`}
                     autoFocus
                 />
             </div>
