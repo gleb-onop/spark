@@ -56,7 +56,10 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
 
     const validateForm = () => {
         if (timeStart && timeEnd) {
-            if (parseTime(timeEnd) <= parseTime(timeStart)) return 'Конец должен быть позже начала';
+            const start = parseTime(timeStart);
+            const end = parseTime(timeEnd);
+            if (end <= start) return 'Конец должен быть позже начала';
+            if (end - start < 2.5) return 'Минимальная длина отрезка — 2.5 сек';
         }
         return null;
     };
