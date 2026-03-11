@@ -113,13 +113,13 @@ const AddPage = () => {
     };
 
     return (
-        <div className="bg-background pb-24">
+        <div className="bg-background pb-24 md:pb-8">
             <PageHeader
                 title={isNewMode ? 'Новое сегментированное видео' : 'Добавить сегмент'}
                 backPath={-1}
             />
 
-            <main className="p-5 flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <main className="p-5 flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500 md:max-w-xl md:mx-auto md:pt-8">
                 <section className="flex flex-col gap-6">
                     <SegmentedVideoSelector
                         isNewMode={isNewMode}

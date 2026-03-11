@@ -12,6 +12,8 @@ import { useLoopSetting } from '@/hooks/useLoopSetting';
 import { useSegmentNavigation } from '@/hooks/useSegmentNavigation';
 import { ExpandableDescription } from '@/components/ExpandableDescription';
 import { PlayerControls } from '@/components/PlayerControls';
+import { SegmentThumbnail } from '@/components/SegmentThumbnail';
+import { cn } from '@/lib/utils';
 
 const SegmentPage = () => {
     const { segmentedVideoId, segmentId } = useParams<{ segmentedVideoId: string; segmentId: string }>();
@@ -53,7 +55,7 @@ const SegmentPage = () => {
     const playerPaddingTop = segment.video.isVertical ? '100%' : '56.25%';
 
     return (
-        <div className="bg-background pb-24">
+        <div className="bg-background pb-24 md:pb-8">
             <PageHeader
                 title={segmentedVideo.name}
                 backPath={`/segmented-videos/${segmentedVideoId}`}
@@ -66,68 +68,114 @@ const SegmentPage = () => {
                 }
             />
 
-            {/*
-             * containerRef wraps player + controls so that requestFullscreen()
-             * called on it puts both iframe AND controls into fullscreen.
-             * It is also sticky so it stays at the top while scrolling.
-             */}
-            <div
-                ref={containerRef}
-                className="w-full bg-black sticky top-[61px] z-20 shadow-xl"
-            >
-                {/* YouTube iframe – changing padding/dimensions for responsive vs fullscreen */}
-                <div style={
-                    controls.isFullscreen
-                        ? { height: '100vh', width: '100vw', position: 'relative' }
-                        : { paddingTop: playerPaddingTop, position: 'relative' }
-                }>
-                    <div id="youtube-player" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
-                </div>
-
-                {/* Controls – always inside containerRef.
-                    In normal mode: block flow below iframe.
-                    In fullscreen: position absolute at bottom (handled inside component). */}
-                <PlayerControls
-                    containerRef={containerRef as React.RefObject<HTMLElement>}
-                    {...controls}
-                />
+            {/* Desktop header */}
+            <div className="hidden md:flex items-center justify-between px-8 pt-8 pb-4">
+                <h1 className="text-4xl font-black tracking-tight truncate">{segmentedVideo.name}</h1>
+                <Button asChild variant="outline" className="rounded-xl px-4">
+                    <Link to={`/segmented-videos/${segmentedVideoId}/segments/${segment.uuid}/edit`} className="flex items-center gap-2">
+                        <Edit2 className="h-4 w-4" />
+                        <span>Редактировать</span>
+                    </Link>
+                </Button>
             </div>
 
-            <main className="px-5 py-5 flex flex-col gap-6 fade-in duration-500 w-full max-w-full">
-                <section>
-                    {segment.timeStart && (
-                        <div className="flex items-center gap-2 text-sm text-brand font-black mb-4 bg-brand/10 w-fit px-3 py-1 rounded-xl border border-brand/20 shadow-sm animate-in fade-in slide-in-from-left-4 duration-500 delay-100">
-                            <Scissors className="h-4 w-4" />
-                            <span>{segment.timeStart} {segment.timeEnd ? `– ${segment.timeEnd}` : ''}</span>
+            {/* Desktop: 3-column grid. Mobile: single column */}
+            <div className="md:grid md:grid-cols-3 md:gap-6 md:px-8 md:pb-8">
+                {/* Player — 2 columns on desktop */}
+                <div className="md:col-span-2">
+                    <div
+                        ref={containerRef}
+                        className="w-full bg-black sticky top-[61px] z-20 shadow-xl md:relative md:top-auto md:rounded-2xl md:overflow-hidden"
+                    >
+                        <div style={
+                            controls.isFullscreen
+                                ? { height: '100vh', width: '100vw', position: 'relative' }
+                                : { paddingTop: playerPaddingTop, position: 'relative' }
+                        }>
+                            <div id="youtube-player" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
                         </div>
-                    )}
 
-                    <ExpandableDescription text={descriptionText} />
-                </section>
-
-                <section className="flex flex-col gap-4">
-                    <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border border-border/50">
-                        <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className="p-2 bg-accent/10 rounded-xl shrink-0">
-                                <Info className="h-5 w-5 text-accent" />
-                            </div>
-                            <div className="flex flex-col min-w-0">
-                                <Label htmlFor="loop-toggle" className="text-sm font-bold cursor-pointer">
-                                    Зациклить сегментированное видео
-                                </Label>
-                                <span className="text-[10px] text-muted-foreground truncate">Авто-повтор текущего списка</span>
-                            </div>
-                        </div>
-                        <Switch
-                            id="loop-toggle"
-                            checked={isLooping}
-                            onCheckedChange={toggleLoop}
+                        <PlayerControls
+                            containerRef={containerRef as React.RefObject<HTMLElement>}
+                            {...controls}
                         />
                     </div>
-                </section>
-            </main>
+
+                    {/* Info under player */}
+                    <main className="px-5 py-5 flex flex-col gap-6 fade-in duration-500 w-full max-w-full md:px-0 md:pt-6">
+                        <section>
+                            {segment.timeStart && (
+                                <div className="flex items-center gap-2 text-sm text-brand font-black mb-4 bg-brand/10 w-fit px-3 py-1 rounded-xl border border-brand/20 shadow-sm animate-in fade-in slide-in-from-left-4 duration-500 delay-100">
+                                    <Scissors className="h-4 w-4" />
+                                    <span>{segment.timeStart} {segment.timeEnd ? `– ${segment.timeEnd}` : ''}</span>
+                                </div>
+                            )}
+
+                            <ExpandableDescription text={descriptionText} />
+                        </section>
+
+                        <section className="flex flex-col gap-4">
+                            <div className="flex items-center justify-between p-4 bg-muted/30 rounded-2xl border border-border/50">
+                                <div className="flex items-center gap-3 min-w-0 flex-1">
+                                    <div className="p-2 bg-accent/10 rounded-xl shrink-0">
+                                        <Info className="h-5 w-5 text-accent" />
+                                    </div>
+                                    <div className="flex flex-col min-w-0">
+                                        <Label htmlFor="loop-toggle" className="text-sm font-bold cursor-pointer">
+                                            Зациклить сегментированное видео
+                                        </Label>
+                                        <span className="text-[10px] text-muted-foreground truncate">Авто-повтор текущего списка</span>
+                                    </div>
+                                </div>
+                                <Switch
+                                    id="loop-toggle"
+                                    checked={isLooping}
+                                    onCheckedChange={toggleLoop}
+                                />
+                            </div>
+                        </section>
+                    </main>
+                </div>
+
+                {/* Segment list sidebar — desktop only, 1 column */}
+                <div className="hidden md:block md:col-span-1">
+                    <div className="sticky top-4">
+                        <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-4">Сегменты</h3>
+                        <div className="flex flex-col gap-2 max-h-[calc(100vh-8rem)] overflow-y-auto pr-1">
+                            {segments.map(seg => (
+                                <Link
+                                    key={seg.uuid}
+                                    to={`/segmented-videos/${segmentedVideoId}/segments/${seg.uuid}`}
+                                    className={cn(
+                                        "flex items-center gap-3 p-2 rounded-xl no-underline transition-all duration-200",
+                                        seg.uuid === segmentId
+                                            ? "bg-brand/10 ring-1 ring-brand/30"
+                                            : "hover:bg-muted/50 text-inherit"
+                                    )}
+                                >
+                                    <SegmentThumbnail
+                                        youtubeId={seg.video.youtubeId}
+                                        title={seg.description}
+                                        size="sm"
+                                        className="shrink-0 w-16"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-xs font-medium line-clamp-2">{seg.description || 'Без описания'}</div>
+                                        {seg.timeStart && (
+                                            <div className="text-[10px] text-brand font-bold mt-0.5">
+                                                {seg.timeStart} {seg.timeEnd ? `– ${seg.timeEnd}` : ''}
+                                            </div>
+                                        )}
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };
 
 export default SegmentPage;
+

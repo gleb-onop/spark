@@ -121,10 +121,23 @@ body {
   flex-direction: column;
 }
 
+@media (min-width: 768px) {
+  .app-container {
+    max-width: 64rem;
+    flex-direction: row;
+  }
+}
+
 .page-content {
   flex: 1;
   padding-bottom: 80px;
   /* Space for TabBar */
+}
+
+@media (min-width: 768px) {
+  .page-content {
+    padding-bottom: 2rem;
+  }
 }
 
 /* Hide scrollbar for shelves */

@@ -26,11 +26,11 @@ export const PageHeader = ({
 
     return (
         <header className={cn(
-            "px-5 py-4 flex items-center justify-between z-10 border-b border-border bg-background/80 backdrop-blur-md",
+            "px-5 py-4 flex items-center justify-between z-10 border-b border-border bg-background/80 backdrop-blur-md md:hidden",
             sticky && "sticky top-0",
             className
         )}>
-            <div className="flex items-center gap-2 min-w-0 max-w-[70%]">
+            <div className="flex items-center gap-2 min-w-0 max-w-[70%] md:max-w-none">
                 {backPath !== undefined && (
                     <Button
                         variant="ghost"

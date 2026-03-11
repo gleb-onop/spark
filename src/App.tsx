@@ -12,8 +12,9 @@ function App() {
   return (
     <BrowserRouter>
       <Toaster position="top-center" expand />
-      <div className="max-w-[390px] mx-auto min-h-screen relative flex flex-col bg-background selection:bg-accent/30">
-        <main className="flex-1">
+      <TabBar />
+      <div className="max-w-[390px] md:max-w-none md:ml-60 mx-auto min-h-screen relative flex flex-col bg-background selection:bg-accent/30">
+        <main className="flex-1 min-w-0">
           <Routes>
             <Route path="/" element={<Navigate to="/segmented-videos" replace />} />
             <Route path="/segmented-videos" element={<SegmentedVideosPage />} />
@@ -25,9 +26,9 @@ function App() {
           </Routes>
         </main>
       </div>
-      <TabBar />
     </BrowserRouter>
   );
 }
 
 export default App;
+

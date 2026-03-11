@@ -3,7 +3,7 @@ import { parseTime, formatTime } from '../utils/time';
 import type { YTPlayer } from '../utils/youtube';
 
 interface UsePlayerControlsProps {
-    playerRef: RefObject<YTPlayer>;
+    playerRef: RefObject<YTPlayer | null>;
     timeStart: string | null;
     timeEnd: string | null;
     containerRef: RefObject<HTMLElement>;

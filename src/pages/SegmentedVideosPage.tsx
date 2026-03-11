@@ -33,7 +33,7 @@ const SegmentedVideosPage = () => {
     }
 
     return (
-        <div className="bg-background pb-24">
+        <div className="bg-background pb-24 md:pb-8">
             <PageHeader
                 title="Spark"
                 actions={
@@ -45,7 +45,18 @@ const SegmentedVideosPage = () => {
                 }
             />
 
-            <main className="flex-1 px-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Desktop header (since PageHeader is md:hidden) */}
+            <div className="hidden md:flex items-center justify-between px-8 pt-8 pb-4">
+                <h1 className="text-4xl font-black tracking-tight">Сегментированные видео</h1>
+                <Button asChild className="rounded-xl shadow-lg shadow-brand/20 bg-brand hover:bg-brand/90 text-white md:w-auto md:px-4">
+                    <Link to="/segmented-videos/new" className="flex items-center gap-2">
+                        <Plus className="h-5 w-5" />
+                        <span>Добавить</span>
+                    </Link>
+                </Button>
+            </div>
+
+            <main className="flex-1 px-5 md:px-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {segmentedVideos.map(video => (
                     <SegmentedVideoShelfSection
                         key={video.uuid}
