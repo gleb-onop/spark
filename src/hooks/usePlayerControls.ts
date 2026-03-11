@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, type RefObject } from 'react';
 import { parseTime, formatTime } from '../utils/time';
+import type { YTPlayer } from '../utils/youtube';
 
 interface UsePlayerControlsProps {
-    playerRef: RefObject<any>;
+    playerRef: RefObject<YTPlayer>;
     timeStart: string | null;
     timeEnd: string | null;
     containerRef: RefObject<HTMLElement>;
@@ -109,7 +110,7 @@ export const usePlayerControls = ({
             setIsFullscreen(isFs);
             if (!isFs) {
                 try {
-                    if (screen.orientation && (screen.orientation as any).unlock) {
+                    if (screen.orientation && 'unlock' in screen.orientation) {
                         (screen.orientation as any).unlock();
                     }
                 } catch (e) {
@@ -190,9 +191,9 @@ export const usePlayerControls = ({
         if (!document.fullscreenElement) {
             containerRef.current.requestFullscreen().then(() => {
                 try {
-                    if (screen.orientation && (screen.orientation as any).lock) {
-                        const lockType = isVertical ? 'portrait' : 'landscape';
-                        (screen.orientation as any).lock(lockType).catch((err: any) => {
+                    if (screen.orientation && 'lock' in screen.orientation) {
+                        const lockType = (isVertical ? 'portrait' : 'landscape') as any;
+                        (screen.orientation as any).lock(lockType).catch((err: unknown) => {
                             console.warn('Screen orientation lock failed:', err);
                         });
                     }

@@ -3,7 +3,7 @@ import { Loader2, Square, Timer, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
-import { ensureYouTubeIframeAPIReady } from '@/utils/youtube';
+import { ensureYouTubeIframeAPIReady, type YTPlayer, type YTEvent } from '@/utils/youtube';
 import { parseTime, formatTime } from '@/utils/time';
 import { TimeRangeFields } from './TimeRangeFields';
 
@@ -36,7 +36,7 @@ export const YouTubeInputSection = ({
     setTimeStart = () => { },
     setTimeEnd = () => { },
 }: YouTubeInputSectionProps) => {
-    const playerRef = useRef<any>(null);
+    const playerRef = useRef<YTPlayer | null>(null);
     const [isPreviewing, setIsPreviewing] = useState(false);
 
     const onDurationReadyRef = useRef(onDurationReady);
@@ -69,12 +69,12 @@ export const YouTubeInputSection = ({
                     rel: 0,
                 },
                 events: {
-                    onReady: (event: any) => {
+                    onReady: (event: YTEvent) => {
                         if (onDurationReadyRef.current) {
                             onDurationReadyRef.current(event.target.getDuration());
                         }
                     },
-                    onStateChange: (event: any) => {
+                    onStateChange: (event: YTEvent) => {
                         // If user manually pauses or video ends, stop previewing
                         if (event.data === 2 || event.data === 0) { // 2 is PAUSED, 0 is ENDED
                             setIsPreviewing(false);

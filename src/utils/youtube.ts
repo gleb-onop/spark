@@ -1,6 +1,57 @@
+export interface YTPlayer {
+    destroy(): void;
+    playVideo(): void;
+    pauseVideo(): void;
+    seekTo(seconds: number, allowSeekAhead: boolean): void;
+    mute(): void;
+    unMute(): void;
+    isMuted(): boolean;
+    setVolume(volume: number): void;
+    getVolume(): number;
+    setPlaybackRate(suggestedRate: number): void;
+    getPlaybackRate(): number;
+    getDuration(): number;
+    getCurrentTime(): number;
+    getPlayerState(): number;
+}
+
+export interface YTEvent {
+    target: YTPlayer;
+    data: any;
+}
+
+export interface YTPlayerOptions {
+    videoId: string;
+    playerVars?: {
+        autoplay?: 0 | 1;
+        controls?: 0 | 1 | 2;
+        modestbranding?: 1;
+        rel?: 0 | 1;
+        showinfo?: 0 | 1;
+        iv_load_policy?: 1 | 3;
+        mute?: 0 | 1;
+        start?: number;
+        [key: string]: any;
+    };
+    events?: {
+        onReady?: (event: YTEvent) => void;
+        onStateChange?: (event: YTEvent) => void;
+        [key: string]: any;
+    };
+}
+
 declare global {
     interface Window {
-        YT: any;
+        YT: {
+            Player: new (elementId: string, options: YTPlayerOptions) => YTPlayer;
+            PlayerState: {
+                ENDED: number;
+                PLAYING: number;
+                PAUSED: number;
+                BUFFERING: number;
+                CUED: number;
+            };
+        };
         onYouTubeIframeAPIReady: () => void;
     }
 }

@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'sonner';
 import TabBar from './components/TabBar';
 import SegmentedVideosPage from './pages/SegmentedVideosPage';
 import SegmentedVideoPage from './pages/SegmentedVideoPage';
@@ -10,6 +11,7 @@ import './index.css';
 function App() {
   return (
     <BrowserRouter>
+      <Toaster position="top-center" expand />
       <div className="max-w-[390px] mx-auto min-h-screen relative flex flex-col bg-background selection:bg-accent/30">
         <main className="flex-1">
           <Routes>

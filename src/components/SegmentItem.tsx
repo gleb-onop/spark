@@ -2,12 +2,12 @@ import { Link } from 'react-router-dom';
 import { Scissors, GripVertical } from 'lucide-react';
 import { SegmentThumbnail } from './SegmentThumbnail';
 import type { Segment } from '../types';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, HTMLAttributes } from 'react';
 
 interface SegmentItemProps {
     segment: Segment;
     segmentedVideoId: string;
-    dragHandleProps?: any;
+    dragHandleProps?: HTMLAttributes<HTMLDivElement>;
     isDragging?: boolean;
     style?: CSSProperties;
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
     useSensor,
     useSensors,
@@ -6,16 +6,20 @@ import {
     TouchSensor,
     KeyboardSensor,
 } from '@dnd-kit/core';
+import type { DragStartEvent, DragEndEvent } from '@dnd-kit/core';
 import {
     arrayMove,
     sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
+import { debounce } from 'lodash';
+import { toast } from 'sonner';
 import { api } from '@/services/api';
 import type { Segment } from '@/types';
 
 export function useSegmentReorder(segments: Segment[], segmentedVideoId: string | undefined) {
     const [localSegments, setLocalSegments] = useState<Segment[]>([]);
     const [activeId, setActiveId] = useState<string | null>(null);
+    const previousSegmentsRef = useRef<Segment[]>([]);
 
     useEffect(() => {
         if (segments) {
@@ -36,30 +40,49 @@ export function useSegmentReorder(segments: Segment[], segmentedVideoId: string 
         })
     );
 
-    const handleDragStart = (event: any) => {
-        setActiveId(event.active.id);
+    // Debounced save function with rollback logic
+    const debouncedSave = useMemo(
+        () =>
+            debounce(async (segmentIds: string[], currentPreviousSegments: Segment[]) => {
+                if (!segmentedVideoId) return;
+                try {
+                    await api.reorderSegments(segmentedVideoId, segmentIds);
+                } catch (error) {
+                    console.error('Failed to reorder segments:', error);
+                    setLocalSegments(currentPreviousSegments);
+                    toast.error('Не удалось сохранить новый порядок сегментов');
+                }
+            }, 1000),
+        [segmentedVideoId]
+    );
+
+    // Cleanup debounce on unmount
+    useEffect(() => {
+        return () => {
+            debouncedSave.cancel();
+        };
+    }, [debouncedSave]);
+
+    const handleDragStart = (event: DragStartEvent) => {
+        setActiveId(event.active.id as string);
+        previousSegmentsRef.current = localSegments;
     };
 
-    const handleDragEnd = async (event: any) => {
+    const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         setActiveId(null);
 
-        if (active.id !== over?.id && segmentedVideoId) {
+        if (active.id !== over?.id && over && segmentedVideoId) {
             const oldIndex = localSegments.findIndex((s) => s.uuid === active.id);
             const newIndex = localSegments.findIndex((s) => s.uuid === over.id);
 
             const newSegments = arrayMove(localSegments, oldIndex, newIndex);
 
-            // Optimistic update
+            // 1. Optimistic update
             setLocalSegments(newSegments);
 
-            try {
-                await api.reorderSegments(segmentedVideoId, newSegments.map(s => s.uuid));
-            } catch (error) {
-                console.error('Failed to reorder segments:', error);
-                // Rollback on error
-                setLocalSegments(localSegments);
-            }
+            // 2. Debounced save with current snapshot for rollback
+            debouncedSave(newSegments.map(s => s.uuid), previousSegmentsRef.current);
         }
     };
 
