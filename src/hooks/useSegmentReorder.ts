@@ -28,7 +28,12 @@ export function useSegmentReorder(segments: Segment[], segmentedVideoId: string 
     }, [segments]);
 
     const sensors = useSensors(
-        useSensor(MouseSensor),
+        useSensor(MouseSensor, {
+            activationConstraint: {
+                distance: 10,
+                delay: 250,
+            },
+        }),
         useSensor(TouchSensor, {
             activationConstraint: {
                 delay: 250,
