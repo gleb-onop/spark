@@ -35,7 +35,6 @@ const EditPage = () => {
                         timeEnd={state.timeEnd}
                         setTimeStart={actions.setTimeStart}
                         setTimeEnd={actions.setTimeEnd}
-                        onRangeChange={actions.handleRangeChange}
                     />
 
                     <SegmentConfig

@@ -52,10 +52,7 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
         if (!timeEnd) setTimeEnd(formatTime(dur));
     }, [timeStart, timeEnd]);
 
-    const handleRangeChange = useCallback((start: number, end: number) => {
-        setTimeStart(formatTime(start));
-        setTimeEnd(formatTime(end));
-    }, []);
+
 
     const validateForm = () => {
         if (timeStart && timeEnd) {
@@ -113,7 +110,6 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
             setTimeStart,
             setTimeEnd,
             handleDurationReady,
-            handleRangeChange,
             handleSave,
         }
     };

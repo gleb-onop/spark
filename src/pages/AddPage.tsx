@@ -45,10 +45,7 @@ const AddPage = () => {
         if (!timeEnd) setTimeEnd(formatTime(dur));
     }, [timeStart, timeEnd]);
 
-    const handleRangeChange = useCallback((start: number, end: number) => {
-        setTimeStart(formatTime(start));
-        setTimeEnd(formatTime(end));
-    }, []);
+
 
     const validateForm = () => {
         if (!youtubeId) return 'Введите корректную ссылку на YouTube';
@@ -134,7 +131,6 @@ const AddPage = () => {
                         timeEnd={timeEnd}
                         setTimeStart={setTimeStart}
                         setTimeEnd={setTimeEnd}
-                        onRangeChange={handleRangeChange}
                     />
 
                     <SegmentConfig
