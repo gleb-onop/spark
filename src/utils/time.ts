@@ -32,3 +32,25 @@ export const formatTime = (seconds: number, includeMs = false): string => {
 
     return mainPart;
 };
+
+/**
+ * Parses YouTube timestamp formats like "90", "1m30s", "1h2m3s" into seconds.
+ */
+export const parseYouTubeTimestamp = (t: string): number => {
+    if (!t) return 0;
+
+    // Numeric format (seconds)
+    if (/^\d+$/.test(t)) return Number(t);
+
+    // YouTube format (e.g., 1h2m3s)
+    let totalSeconds = 0;
+    const hoursMatch = t.match(/(\d+)h/);
+    const minsMatch = t.match(/(\d+)m/);
+    const secsMatch = t.match(/(\d+)s/);
+
+    if (hoursMatch) totalSeconds += parseInt(hoursMatch[1], 10) * 3600;
+    if (minsMatch) totalSeconds += parseInt(minsMatch[1], 10) * 60;
+    if (secsMatch) totalSeconds += parseInt(secsMatch[1], 10);
+
+    return totalSeconds;
+};

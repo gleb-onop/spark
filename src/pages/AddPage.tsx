@@ -33,11 +33,18 @@ const AddPage = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     // Custom Hooks
-    const { youtubeId, urlError } = useYouTubeMetadata(url);
+    const { youtubeId, initialTimestamp, urlError } = useYouTubeMetadata(url);
 
     useEffect(() => {
         api.getSegmentedVideos().then(setSegmentedVideos);
     }, []);
+
+    // If URL has a timestamp, update timeStart
+    useEffect(() => {
+        if (initialTimestamp !== null) {
+            setTimeStart(formatTime(initialTimestamp, true));
+        }
+    }, [initialTimestamp]);
 
     const handleDurationReady = useCallback((dur: number) => {
         setDuration(dur);

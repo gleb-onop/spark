@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
+import { parseYouTubeTimestamp } from '@/utils/time';
 
 const DEBOUNCE_DELAY_MS = 500;
 
 export const useYouTubeMetadata = (url: string) => {
     const [youtubeId, setYoutubeId] = useState('');
+    const [initialTimestamp, setInitialTimestamp] = useState<number | null>(null);
     const [urlError, setUrlError] = useState('');
 
     useEffect(() => {
         const timer = setTimeout(() => {
             if (!url) {
                 setYoutubeId('');
+                setInitialTimestamp(null);
                 setUrlError('');
                 return;
             }
@@ -25,8 +28,18 @@ export const useYouTubeMetadata = (url: string) => {
 
             if (newId) {
                 setYoutubeId(newId);
+
+                // Extract timestamp if present
+                const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+                const t = urlObj.searchParams.get('t') || urlObj.searchParams.get('start');
+                if (t) {
+                    setInitialTimestamp(parseYouTubeTimestamp(t));
+                } else {
+                    setInitialTimestamp(null);
+                }
             } else {
                 setYoutubeId('');
+                setInitialTimestamp(null);
                 setUrlError('Не удалось распознать ссылку');
             }
         }, DEBOUNCE_DELAY_MS);
@@ -36,6 +49,7 @@ export const useYouTubeMetadata = (url: string) => {
 
     return {
         youtubeId,
+        initialTimestamp,
         urlError
     };
 };
