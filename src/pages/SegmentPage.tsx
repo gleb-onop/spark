@@ -53,7 +53,7 @@ const SegmentPage = () => {
     const playerPaddingTop = segment.video.isVertical ? '100%' : '56.25%';
 
     return (
-        <div className="flex flex-col flex-1 bg-background pb-12 overflow-x-hidden">
+        <div className="bg-background pb-24">
             <PageHeader
                 title={segmentedVideo.name}
                 backPath={`/segmented-videos/${segmentedVideoId}`}

@@ -39,7 +39,7 @@ const SegmentedVideoPage = () => {
     if (!segmentedVideo) return <div className="p-8 text-center text-muted-foreground">Сегментированное видео не найдено</div>;
 
     return (
-        <div className="flex flex-col min-h-screen bg-background pb-20">
+        <div className="bg-background pb-24">
             <PageHeader
                 title={segmentedVideo.name}
                 backPath="/segmented-videos"
@@ -71,11 +71,11 @@ const SegmentedVideoPage = () => {
             />
 
             <main className="flex-1 p-5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="flex items-center justify-between mb-8">
-                    <div className="flex flex-col gap-1">
-                        <div className="text-3xl font-black tracking-tight">{segmentedVideo.name}</div>
-                        <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                            <FolderOpen className="h-3 w-3" />
+                <div className="flex items-center justify-between mb-8 gap-4">
+                    <div className="flex flex-col gap-1 min-w-0 flex-1">
+                        <div className="text-2xl font-black tracking-tight truncate">{segmentedVideo.name}</div>
+                        <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest truncate">
+                            <FolderOpen className="h-3 w-3 shrink-0" />
                             Сегментов: {segments.length}
                         </div>
                     </div>

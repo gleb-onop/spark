@@ -3,7 +3,7 @@ import { LayoutGrid, PlusSquare } from 'lucide-react';
 
 const TabBar = () => {
     return (
-        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[390px] h-20 bg-background/80 backdrop-blur-xl border-t border-border/50 flex justify-around items-center z-[100] pb-[safe-area-inset-bottom] px-6 shadow-[0_-8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_-8px_30px_rgb(0,0,0,0.2)]">
+        <nav className="fixed bottom-0 left-0 right-0 mx-auto w-full max-w-[390px] h-20 bg-background/80 backdrop-blur-xl border-t border-border/50 flex justify-around items-center z-[100] pb-[safe-area-inset-bottom] px-6 shadow-[0_-8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_-8px_30px_rgb(0,0,0,0.2)]">
             <NavLink
                 to="/segmented-videos"
                 end

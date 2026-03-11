@@ -106,7 +106,7 @@ const AddPage = () => {
     };
 
     return (
-        <div className="flex flex-col min-h-screen bg-background pb-24">
+        <div className="bg-background pb-24">
             <PageHeader
                 title={isNewMode ? 'Новое сегментированное видео' : 'Добавить сегмент'}
                 backPath={-1}

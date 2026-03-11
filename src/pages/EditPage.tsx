@@ -18,7 +18,7 @@ const EditPage = () => {
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-background pb-24">
+        <div className="bg-background pb-24">
             <PageHeader
                 title="Редактировать"
                 backPath={-1}

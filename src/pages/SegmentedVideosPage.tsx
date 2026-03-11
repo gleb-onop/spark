@@ -33,7 +33,7 @@ const SegmentedVideosPage = () => {
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-background pb-12">
+        <div className="bg-background pb-24">
             <PageHeader
                 title="Spark"
                 actions={

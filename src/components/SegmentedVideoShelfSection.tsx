@@ -17,8 +17,8 @@ export const SegmentedVideoShelfSection = ({ segmentedVideo, segments }: Segment
     return (
         <section className="mt-8">
             <div className="flex justify-between items-end mb-4 px-1">
-                <div className="flex flex-col gap-0.5">
-                    <h2 className="m-0 text-2xl font-black tracking-tight leading-none group">
+                <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                    <h2 className="m-0 text-xl font-black tracking-tight leading-none group truncate">
                         <Link
                             to={`/segmented-videos/${segmentedVideo.uuid}`}
                             className="no-underline text-inherit hover:text-accent transition-colors"
@@ -26,7 +26,7 @@ export const SegmentedVideoShelfSection = ({ segmentedVideo, segments }: Segment
                             {segmentedVideo.name}
                         </Link>
                     </h2>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest truncate">
                         Cегментов: {segmentedVideoSegments.length}
                     </span>
                 </div>

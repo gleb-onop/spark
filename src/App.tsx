@@ -11,7 +11,7 @@ function App() {
   return (
     <BrowserRouter>
       <div className="max-w-[390px] mx-auto min-h-screen relative flex flex-col bg-background selection:bg-accent/30">
-        <main className="flex-1 pb-24">
+        <main className="flex-1">
           <Routes>
             <Route path="/" element={<Navigate to="/segmented-videos" replace />} />
             <Route path="/segmented-videos" element={<SegmentedVideosPage />} />
@@ -22,8 +22,8 @@ function App() {
             <Route path="/segmented-videos/:segmentedVideoId/segments/:segmentId/edit" element={<EditPage />} />
           </Routes>
         </main>
-        <TabBar />
       </div>
+      <TabBar />
     </BrowserRouter>
   );
 }
