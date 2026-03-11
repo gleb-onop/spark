@@ -26,8 +26,6 @@ export const useSegmentNavigation = ({
             navigate(`/segmented-videos/${segmentedVideoId}/segments/${segmentedVideo.segmentIds[currentIndex + 1]}`);
         } else if (isLooping) {
             navigate(`/segmented-videos/${segmentedVideoId}/segments/${segmentedVideo.segmentIds[0]}`);
-        } else {
-            navigate(`/segmented-videos/${segmentedVideoId}`);
         }
     }, [segmentedVideo, segment, segmentedVideoId, navigate, isLooping]);
 
