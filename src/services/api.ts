@@ -62,6 +62,18 @@ export const api = {
         saveToStorage(SEGMENTED_VIDEOS_KEY, remainingSegmentedVideos);
     },
 
+    reorderSegments: async (segmentedVideoId: string, segmentIds: string[]): Promise<void> => {
+        await delay(400);
+        const segmentedVideos = getFromStorage<SegmentedVideo>(SEGMENTED_VIDEOS_KEY);
+        const updatedSegmentedVideos = segmentedVideos.map(p => {
+            if (p.uuid === segmentedVideoId) {
+                return { ...p, segmentIds };
+            }
+            return p;
+        });
+        saveToStorage(SEGMENTED_VIDEOS_KEY, updatedSegmentedVideos);
+    },
+
     // Segments
     getSegments: async (): Promise<Segment[]> => {
         await delay(300);

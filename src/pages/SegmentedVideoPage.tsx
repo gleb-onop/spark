@@ -2,6 +2,16 @@ import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { MoreVertical, Trash2, FolderOpen, Plus, Play } from 'lucide-react';
 import {
+    DndContext,
+    closestCenter,
+    DragOverlay,
+    defaultDropAnimationSideEffects,
+} from '@dnd-kit/core';
+import {
+    SortableContext,
+    verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
@@ -10,7 +20,9 @@ import {
 import { Button } from "../components/ui/button";
 import { PageHeader } from '@/components/PageHeader';
 import { SegmentItem } from '@/components/SegmentItem';
+import { SortableSegmentItem } from '@/components/SortableSegmentItem';
 import { useSegmentedVideo } from '@/hooks/useSegmentedVideo';
+import { useSegmentReorder } from '@/hooks/useSegmentReorder';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 
 type ModalState =
@@ -29,6 +41,14 @@ const SegmentedVideoPage = () => {
         isLoading,
         deleteSegmentedVideo
     } = useSegmentedVideo(segmentedVideoId);
+
+    const {
+        localSegments,
+        sensors,
+        handleDragStart,
+        handleDragEnd,
+        activeSegment
+    } = useSegmentReorder(segments, segmentedVideoId);
 
     const handleDeleteVideo = async () => {
         await deleteSegmentedVideo();
@@ -76,23 +96,23 @@ const SegmentedVideoPage = () => {
                         <div className="text-2xl font-black tracking-tight truncate">{segmentedVideo.name}</div>
                         <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest truncate">
                             <FolderOpen className="h-3 w-3 shrink-0" />
-                            Сегментов: {segments.length}
+                            Сегментов: {localSegments.length}
                         </div>
                     </div>
-                    {segments.length > 0 && (
+                    {localSegments.length > 0 && (
                         <Button
                             asChild
                             size="icon"
                             className="rounded-full h-14 w-14 shadow-xl shadow-brand/25 bg-brand text-white hover:bg-brand/90 flex items-center justify-center"
                         >
-                            <Link to={`/segmented-videos/${segmentedVideo.uuid}/segments/${segments[0].uuid}`}>
+                            <Link to={`/segmented-videos/${segmentedVideo.uuid}/segments/${localSegments[0].uuid}`}>
                                 <Play className="h-7 w-7 fill-current ml-1" />
                             </Link>
                         </Button>
                     )}
                 </div>
 
-                {segments.length === 0 ? (
+                {localSegments.length === 0 ? (
                     <div className="flex flex-col items-center justify-center p-8 text-center bg-muted/20 border border-border rounded-2xl">
                         <FolderOpen className="w-12 h-12 text-muted-foreground mb-4 opacity-50" />
                         <h3 className="font-bold mb-1">Сегментированное видео пусто</h3>
@@ -104,15 +124,47 @@ const SegmentedVideoPage = () => {
                         </Button>
                     </div>
                 ) : (
-                    <div className="flex flex-col gap-5">
-                        {segments.map((segment) => (
-                            <SegmentItem
-                                key={segment.uuid}
-                                segment={segment}
-                                segmentedVideoId={segmentedVideo.uuid}
-                            />
-                        ))}
-                    </div>
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={localSegments.map(s => s.uuid)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            <div className="flex flex-col gap-5">
+                                {localSegments.map((segment) => (
+                                    <SortableSegmentItem
+                                        key={segment.uuid}
+                                        segment={segment}
+                                        segmentedVideoId={segmentedVideo.uuid}
+                                    />
+                                ))}
+                            </div>
+                        </SortableContext>
+                        <DragOverlay
+                            dropAnimation={{
+                                sideEffects: defaultDropAnimationSideEffects({
+                                    styles: {
+                                        active: {
+                                            opacity: '0.4',
+                                        },
+                                    },
+                                }),
+                            }}
+                        >
+                            {activeSegment ? (
+                                <div className="scale-95 opacity-50 shadow-2xl rounded-2xl overflow-hidden ring-2 ring-brand/50">
+                                    <SegmentItem
+                                        segment={activeSegment}
+                                        segmentedVideoId={segmentedVideo.uuid}
+                                    />
+                                </div>
+                            ) : null}
+                        </DragOverlay>
+                    </DndContext>
                 )}
             </main>
 

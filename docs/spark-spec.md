@@ -202,7 +202,7 @@ start: timeStart (если задан)
 - **Громкость** — слайдер 0–100, вызывает `setVolume`
 - **Mute/Unmute** — вызывает `mute()` / `unMute()`; состояние сохраняется в `sessionStorage`
 - **Скорость воспроизведения** — кнопки 0.5×, 0.75×, 1×, 1.25×, 1.5×, 2× через `setPlaybackRate`
-- **Полноэкранный режим** — вызывает `containerRef.current.requestFullscreen()` на контейнере плеера (не на iframe). Выход через `document.exitFullscreen()`. Состояние `isFullscreen` синхронизируется через событие `fullscreenchange` на `document`.
+- **Полноэкранный режим** — вызывает `containerRef.current.requestFullscreen()` на контейнере плеера. Выход через `document.exitFullscreen()`. Состояние `isFullscreen` синхронизируется через событие `fullscreenchange` на `document`.
 
 **Режим отображения контролов:**
 - **Обычный** — контролы расположены под плеером (`position: static`)
