@@ -1,5 +1,6 @@
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
+import { SelectSheet } from '../SelectSheet';
 import type { SegmentedVideo } from '../../types';
 
 interface SegmentedVideoSelectorProps {
@@ -39,21 +40,21 @@ export const SegmentedVideoSelector = ({
         );
     }
 
+    const selectItems = options.map(p => ({
+        id: p.uuid,
+        label: p.name
+    }));
+
     return (
         <div className="space-y-2">
             <Label className="text-sm font-bold ml-1">Выберите сегментированное видео</Label>
-            <select
+            <SelectSheet
+                items={selectItems}
                 value={selectedId}
-                onChange={(e) => setSelectedId(e.target.value)}
-                className="w-full h-14 px-4 bg-muted/30 border-none rounded-2xl outline-none text-foreground font-semibold shadow-inner appearance-none transition-all focus:ring-2 focus:ring-accent/20"
-            >
-                <option value="">Сегментированное видео...</option>
-                {options.map((p) => (
-                    <option key={p.uuid} value={p.uuid}>
-                        {p.name}
-                    </option>
-                ))}
-            </select>
+                onChange={setSelectedId}
+                placeholder="Сегментированное видео..."
+                title="Выбор видео"
+            />
         </div>
     );
 };
