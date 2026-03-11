@@ -87,7 +87,7 @@ export const useEditSegment = ({ segmentId, segmentedVideoId }: UseEditSegmentPr
                         duration
                     }
                 });
-                navigate(segmentedVideoId ? `/segmented-video/${segmentedVideoId}` : '/segmented-videos');
+                navigate(segmentedVideoId ? `/segmented-videos/${segmentedVideoId}` : '/segmented-videos');
             }
         } catch (e) {
             console.error('Error saving segment:', e);

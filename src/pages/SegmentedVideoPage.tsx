@@ -46,7 +46,7 @@ const SegmentedVideoPage = () => {
                 actions={
                     <div className="flex items-center gap-2">
                         <Button size="icon" asChild className="rounded-full shadow-lg shadow-brand/20 bg-brand hover:bg-brand/90 text-white">
-                            <Link to={`/add?segmentedVideoId=${segmentedVideo.uuid}`}>
+                            <Link to={`/segmented-videos/${segmentedVideo.uuid}/segments/new`}>
                                 <Plus className="h-5 w-5" />
                             </Link>
                         </Button>
@@ -85,7 +85,7 @@ const SegmentedVideoPage = () => {
                             size="icon"
                             className="rounded-full h-14 w-14 shadow-xl shadow-brand/25 bg-brand text-white hover:bg-brand/90 flex items-center justify-center"
                         >
-                            <Link to={`/segment/${segmentedVideo.uuid}/${segments[0].uuid}`}>
+                            <Link to={`/segmented-videos/${segmentedVideo.uuid}/segments/${segments[0].uuid}`}>
                                 <Play className="h-7 w-7 fill-current ml-1" />
                             </Link>
                         </Button>
@@ -98,7 +98,7 @@ const SegmentedVideoPage = () => {
                         <h3 className="font-bold mb-1">Сегментированное видео пусто</h3>
                         <p className="text-sm text-muted-foreground mb-4">Начните изучение, добавив первый сегмент</p>
                         <Button asChild size="sm" className="rounded-xl bg-brand text-white font-semibold">
-                            <Link to={`/add?segmentedVideoId=${segmentedVideo.uuid}`}>
+                            <Link to={`/segmented-videos/${segmentedVideo.uuid}/segments/new`}>
                                 Добавить первый сегмент
                             </Link>
                         </Button>

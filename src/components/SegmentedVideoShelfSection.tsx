@@ -20,7 +20,7 @@ export const SegmentedVideoShelfSection = ({ segmentedVideo, segments }: Segment
                 <div className="flex flex-col gap-0.5">
                     <h2 className="m-0 text-2xl font-black tracking-tight leading-none group">
                         <Link
-                            to={`/segmented-video/${segmentedVideo.uuid}`}
+                            to={`/segmented-videos/${segmentedVideo.uuid}`}
                             className="no-underline text-inherit hover:text-accent transition-colors"
                         >
                             {segmentedVideo.name}
@@ -32,7 +32,7 @@ export const SegmentedVideoShelfSection = ({ segmentedVideo, segments }: Segment
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                     <Button variant="ghost" asChild size="sm" className="text-brand font-bold h-8 hover:bg-brand/10 px-2 min-w-0">
-                        <Link to={`/segmented-video/${segmentedVideo.uuid}`} className="flex items-center gap-0.5">
+                        <Link to={`/segmented-videos/${segmentedVideo.uuid}`} className="flex items-center gap-0.5">
                             <span className="text-xs">все</span>
                             <ChevronRight className="h-4 w-4" />
                         </Link>

@@ -56,10 +56,10 @@ const SegmentPage = () => {
         <div className="flex flex-col flex-1 bg-background pb-12 overflow-x-hidden">
             <PageHeader
                 title={segmentedVideo.name}
-                backPath={`/segmented-video/${segmentedVideoId}`}
+                backPath={`/segmented-videos/${segmentedVideoId}`}
                 actions={
                     <Button variant="ghost" size="icon" asChild className="rounded-full">
-                        <Link to={`/edit/${segment.uuid}/${segmentedVideoId}`}>
+                        <Link to={`/segmented-videos/${segmentedVideoId}/segments/${segment.uuid}/edit`}>
                             <Edit2 className="h-4 w-4" />
                         </Link>
                     </Button>

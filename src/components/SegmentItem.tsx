@@ -14,7 +14,7 @@ export const SegmentItem = ({ segment, segmentedVideoId }: SegmentItemProps) => 
             {/* Foreground Content */}
             <div className="bg-background relative z-10 p-1 flex items-center gap-3 transition-transform duration-200 ease-out active:bg-muted/30">
                 <Link
-                    to={`/segment/${segmentedVideoId}/${segment.uuid}`}
+                    to={`/segmented-videos/${segmentedVideoId}/segments/${segment.uuid}`}
                     className="flex flex-1 min-w-0 items-center gap-3 no-underline text-inherit py-2"
                 >
                     <SegmentThumbnail

@@ -15,10 +15,11 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/segmented-videos" replace />} />
             <Route path="/segmented-videos" element={<SegmentedVideosPage />} />
-            <Route path="/segmented-video/:segmentedVideoId" element={<SegmentedVideoPage />} />
-            <Route path="/segment/:segmentedVideoId/:segmentId" element={<SegmentPage />} />
-            <Route path="/add" element={<AddPage />} />
-            <Route path="/edit/:segmentId/:segmentedVideoId?" element={<EditPage />} />
+            <Route path="/segmented-videos/new" element={<AddPage />} />
+            <Route path="/segmented-videos/:segmentedVideoId" element={<SegmentedVideoPage />} />
+            <Route path="/segmented-videos/:segmentedVideoId/segments/new" element={<AddPage />} />
+            <Route path="/segmented-videos/:segmentedVideoId/segments/:segmentId" element={<SegmentPage />} />
+            <Route path="/segmented-videos/:segmentedVideoId/segments/:segmentId/edit" element={<EditPage />} />
           </Routes>
         </main>
         <TabBar />

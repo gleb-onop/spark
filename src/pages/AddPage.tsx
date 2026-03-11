@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { api } from '@/services/api';
 import { useYouTubeMetadata } from '@/hooks/useYouTubeMetadata';
@@ -13,8 +13,8 @@ import type { SegmentedVideo } from '../types';
 
 const AddPage = () => {
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const existingSegmentedVideoId = searchParams.get('segmentedVideoId') || '';
+    const { segmentedVideoId: paramSegmentedVideoId } = useParams<{ segmentedVideoId: string }>();
+    const existingSegmentedVideoId = paramSegmentedVideoId || '';
 
     const isNewMode = !existingSegmentedVideoId;
 

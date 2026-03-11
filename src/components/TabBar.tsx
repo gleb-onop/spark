@@ -15,7 +15,7 @@ const TabBar = () => {
             </NavLink>
 
             <NavLink
-                to="/add"
+                to="/segmented-videos/new"
                 className={({ isActive }) =>
                     `flex-1 flex flex-col items-center gap-1.5 no-underline transition-all duration-300 ${isActive ? 'text-accent scale-110' : 'text-muted-foreground hover:text-foreground'}`
                 }

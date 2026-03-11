@@ -26,7 +26,7 @@ const SegmentedVideosPage = () => {
                     title="Начнем обучение?"
                     description="Пока нет сегментированных видео. Создайте первое и добавьте сегмент."
                     actionLabel="Создать сегментированное видео"
-                    actionTo="/add"
+                    actionTo="/segmented-videos/new"
                 />
             </div>
         );
@@ -38,7 +38,7 @@ const SegmentedVideosPage = () => {
                 title="Spark"
                 actions={
                     <Button size="icon" asChild className="rounded-full shadow-lg shadow-brand/20 bg-brand hover:bg-brand/90 text-white">
-                        <Link to="/add">
+                        <Link to="/segmented-videos/new">
                             <Plus className="h-5 w-5" />
                         </Link>
                     </Button>
