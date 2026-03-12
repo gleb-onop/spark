@@ -6,9 +6,9 @@ import { useYouTubeMetadata } from '@/hooks/useYouTubeMetadata';
 import { formatTime, parseTime } from '@/utils/time';
 import { generateUUID } from '@/utils/uuid';
 import { PageHeader } from '@/components/PageHeader';
-import { SegmentedVideoSelector } from '../components/AddPage/SegmentedVideoSelector';
-import { YouTubeInputSection } from '../components/AddPage/YouTubeInputSection';
-import { SegmentConfig } from '../components/AddPage/SegmentConfig';
+import { SegmentedVideoSelector } from '../components/UpdatePages/SegmentedVideoSelector';
+import { YouTubeInputSection } from '../components/UpdatePages/YouTubeInputSection';
+import { SegmentConfig } from '../components/UpdatePages/SegmentConfig';
 import type { SegmentedVideo } from '../types';
 
 const AddPage = () => {

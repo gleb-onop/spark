@@ -1,8 +1,8 @@
 import { useParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
-import { YouTubeInputSection } from '../components/AddPage/YouTubeInputSection';
-import { SegmentConfig } from '../components/AddPage/SegmentConfig';
+import { YouTubeInputSection } from '../components/UpdatePages/YouTubeInputSection';
+import { SegmentConfig } from '../components/UpdatePages/SegmentConfig';
 import { useEditSegment } from '../hooks/useEditSegment';
 
 const EditPage = () => {

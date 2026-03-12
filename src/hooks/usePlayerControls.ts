@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, type RefObject } from 'react';
 import { parseTime, formatTime } from '../utils/time';
-import type { YTPlayer } from '../utils/youtube';
+import { type YTPlayer, YTPlayerState } from '../utils/youtube';
 
 interface UsePlayerControlsProps {
     playerRef: RefObject<YTPlayer | null>;
@@ -69,9 +69,9 @@ export const usePlayerControls = ({
             const player = playerRef.current;
             if (!player || typeof player.getPlayerState !== 'function') return;
 
-            // Track play state via YT.PlayerState (same enum values as onStateChange)
+            // Track play state via YTPlayerState
             const state = player.getPlayerState();
-            const playing = state === window.YT?.PlayerState?.PLAYING;
+            const playing = state === YTPlayerState.PLAYING;
             setIsPlaying(playing);
 
             // Current position

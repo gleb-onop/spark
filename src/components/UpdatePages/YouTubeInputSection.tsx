@@ -3,7 +3,8 @@ import { Loader2, Square, Timer, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
-import { ensureYouTubeIframeAPIReady, type YTPlayer, type YTEvent } from '@/utils/youtube';
+import { type YTPlayer, type YTEvent, YTPlayerState } from '@/utils/youtube';
+import { useYouTubeBase } from '@/hooks/useYouTubeBase';
 import { parseTime, formatTime } from '@/utils/time';
 import { TimeRangeFields } from './TimeRangeFields';
 
@@ -44,65 +45,36 @@ export const YouTubeInputSection = ({
         onDurationReadyRef.current = onDurationReady;
     }, [onDurationReady]);
 
-    useEffect(() => {
-        let isMounted = true;
-
-        const initPlayer = async () => {
-            if (!youtubeId) return;
-
-            await ensureYouTubeIframeAPIReady();
-            if (!isMounted) return;
-
-            if (playerRef.current) {
-                try {
-                    playerRef.current.destroy();
-                } catch (e) { }
-                playerRef.current = null;
-            }
-
-            playerRef.current = new window.YT.Player('preview-player', {
-                videoId: youtubeId,
-                playerVars: {
-                    autoplay: 0,
-                    controls: 1,
-                    modestbranding: 1,
-                    rel: 0,
-                },
-                events: {
-                    onReady: (event: YTEvent) => {
-                        if (onDurationReadyRef.current) {
-                            onDurationReadyRef.current(event.target.getDuration());
-                        }
-                    },
-                    onStateChange: (event: YTEvent) => {
-                        // If user manually pauses or video ends, stop previewing
-                        if (event.data === 2 || event.data === 0) { // 2 is PAUSED, 0 is ENDED
-                            setIsPreviewing(false);
-                        }
-                        // Automatically restore sound whenever the video starts playing
-                        if (event.data === 1) { // 1 is PLAYING
-                            try {
-                                if (event.target.isMuted()) {
-                                    event.target.unMute();
-                                }
-                            } catch (e) { }
-                        }
-                    }
+    useYouTubeBase({
+        videoId: youtubeId,
+        elementId: 'preview-player',
+        playerRef,
+        playerVars: {
+            autoplay: 0,
+            controls: 1,
+        },
+        events: {
+            onReady: (event: YTEvent) => {
+                if (onDurationReadyRef.current) {
+                    onDurationReadyRef.current(event.target.getDuration());
                 }
-            });
-        };
-
-        initPlayer();
-
-        return () => {
-            isMounted = false;
-            if (playerRef.current) {
-                try {
-                    playerRef.current.destroy();
-                } catch (e) { }
+            },
+            onStateChange: (event: YTEvent) => {
+                // If user manually pauses or video ends, stop previewing
+                if (event.data === YTPlayerState.PAUSED || event.data === YTPlayerState.ENDED) {
+                    setIsPreviewing(false);
+                }
+                // Automatically restore sound whenever the video starts playing
+                if (event.data === YTPlayerState.PLAYING) {
+                    try {
+                        if (event.target.isMuted()) {
+                            event.target.unMute();
+                        }
+                    } catch (e) { }
+                }
             }
-        };
-    }, [youtubeId]);
+        }
+    });
 
     // Preview range logic with high-precision requestAnimationFrame
     useEffect(() => {

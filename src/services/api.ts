@@ -88,7 +88,9 @@ export const api = {
     getSegmentsByUuids: async (uuids: string[]): Promise<Segment[]> => {
         await delay(300);
         const allSegments = getFromStorage<Segment>(SEGMENTS_KEY);
-        return allSegments.filter(v => uuids.includes(v.uuid)).sort((a, b) => a.createdAt - b.createdAt);
+        return uuids
+            .map(uuid => allSegments.find(s => s.uuid === uuid))
+            .filter((s): s is Segment => !!s);
     },
 
     addSegment: async (segmentData: Omit<Segment, 'uuid' | 'createdAt'>, segmentedVideoUuid: string): Promise<Segment> => {

@@ -1,3 +1,14 @@
+export const YTPlayerState = {
+    UNSTARTED: -1,
+    ENDED: 0,
+    PLAYING: 1,
+    PAUSED: 2,
+    BUFFERING: 3,
+    CUED: 5,
+} as const;
+
+export type YTPlayerState = typeof YTPlayerState[keyof typeof YTPlayerState];
+
 export interface YTPlayer {
     destroy(): void;
     playVideo(): void;
@@ -17,7 +28,7 @@ export interface YTPlayer {
 
 export interface YTEvent {
     target: YTPlayer;
-    data: any;
+    data: YTPlayerState;
 }
 
 export interface YTPlayerOptions {

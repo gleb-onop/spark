@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { parseTime } from '../utils/time';
-import { ensureYouTubeIframeAPIReady, type YTPlayer, type YTEvent } from '../utils/youtube';
+import { type YTPlayer, type YTEvent, YTPlayerState } from '../utils/youtube';
+import { useYouTubeBase } from './useYouTubeBase';
 
 interface UseYouTubePlayerProps {
     youtubeId: string;
@@ -22,8 +23,6 @@ export const useYouTubePlayer = ({
 }: UseYouTubePlayerProps) => {
     const playerRef = useRef<YTPlayer | null>(null);
     const intervalRef = useRef<number | null>(null);
-
-    // Use refs for callbacks to avoid re-initializing the player when callbacks change
     const onCompleteRef = useRef(onComplete);
     const onSegmentEndedRef = useRef(onSegmentEnded);
 
@@ -39,87 +38,85 @@ export const useYouTubePlayer = ({
         }
     };
 
+    const hasSegment = !!timeEnd;
+    const startSec = parseTime(timeStart);
+    const endSec = parseTime(timeEnd);
+
+    const startPolling = useCallback(() => {
+        stopInterval();
+        if (!hasSegment) return;
+
+        intervalRef.current = window.setInterval(() => {
+            const player = playerRef.current;
+            if (!player || typeof player.getCurrentTime !== 'function') return;
+
+            const currentTime = player.getCurrentTime();
+            if (currentTime >= (endSec || 0) - 0.15) {
+                stopInterval();
+                onSegmentEndedRef.current();
+            }
+        }, 100);
+    }, [hasSegment, startSec, endSec]);
+
+    // 1. Re-sync player when segment changes (without destroying player if video is same)
     useEffect(() => {
-        const startSec = parseTime(timeStart);
-        const endSec = parseTime(timeEnd);
-        const hasSegment = !!timeEnd;
-        let isMounted = true;
-
-        const initializePlayer = () => {
-            if (!isMounted) return;
-
-            if (playerRef.current) {
-                playerRef.current.destroy();
-                playerRef.current = null;
+        const player = playerRef.current;
+        if (player && typeof player.seekTo === 'function') {
+            player.seekTo(startSec || 0, true);
+            // If already playing, restart polling with new endSec
+            if (player.getPlayerState() === YTPlayerState.PLAYING) {
+                startPolling();
             }
-
-            playerRef.current = new window.YT.Player('youtube-player', {
-                videoId: youtubeId,
-                playerVars: {
-                    autoplay: 1,
-                    controls: exposePlayerRef ? 0 : 1,
-                    modestbranding: 1,
-                    rel: 0,
-                    showinfo: 0,
-                    iv_load_policy: 3,
-                    mute: 1,
-                    start: startSec || 0,
-                },
-                events: {
-                    onReady: (event: YTEvent) => {
-                        if (!isMounted) return;
-                        if (sessionStorage.getItem('spark_muted') === '0') {
-                            event.target.unMute();
-                        }
-                        const savedVol = sessionStorage.getItem('spark_volume');
-                        if (savedVol !== null) {
-                            event.target.setVolume(Number(savedVol));
-                        }
-                        event.target.playVideo();
-                    },
-                    onStateChange: (event: YTEvent) => {
-                        if (!isMounted) return;
-                        if (event.data === window.YT.PlayerState.ENDED) {
-                            onCompleteRef.current();
-                        }
-
-                        if (hasSegment) {
-                            stopInterval();
-                            if (event.data === window.YT.PlayerState.PLAYING) {
-                                intervalRef.current = window.setInterval(() => {
-                                    const currentTime = event.target.getCurrentTime();
-                                    if (currentTime >= (endSec || 0) - 0.15) {
-                                        onSegmentEndedRef.current();
-                                    }
-                                }, 100);
-                            }
-                        }
-                    }
-                }
-            });
-        };
-
-        if (window.YT && window.YT.Player) {
-            initializePlayer();
-        } else {
-            ensureYouTubeIframeAPIReady().then(() => {
-                if (isMounted) initializePlayer();
-            });
         }
+        return () => stopInterval();
+    }, [youtubeId, startSec, endSec, startPolling]);
 
-        return () => {
-            isMounted = false;
-            stopInterval();
-            if (playerRef.current) {
-                playerRef.current.destroy();
-                playerRef.current = null;
+    useYouTubeBase({
+        videoId: youtubeId,
+        elementId: 'youtube-player',
+        playerRef,
+        playerVars: {
+            autoplay: 1,
+            controls: exposePlayerRef ? 0 : 1,
+            mute: 1,
+        },
+        events: {
+            onReady: (event: YTEvent) => {
+                if (sessionStorage.getItem('spark_muted') === '0') {
+                    event.target.unMute();
+                }
+                const savedVol = sessionStorage.getItem('spark_volume');
+                if (savedVol !== null) {
+                    event.target.setVolume(Number(savedVol));
+                }
+                event.target.seekTo(startSec || 0, true);
+                event.target.playVideo();
+            },
+            onStateChange: (event: YTEvent) => {
+                if (event.data === YTPlayerState.ENDED) {
+                    onCompleteRef.current();
+                }
+
+                if (event.data === YTPlayerState.PLAYING) {
+                    startPolling();
+                } else if (event.data === YTPlayerState.PAUSED || event.data === YTPlayerState.BUFFERING) {
+                    // We don't necessarily stop polling on buffering, 
+                    // but on pause we can to save resources.
+                    // Actually, let's just keep it simple.
+                } else {
+                    stopInterval();
+                }
             }
+        }
+    });
+
+    useEffect(() => {
+        return () => {
+            stopInterval();
         };
-    }, [youtubeId, timeStart, timeEnd, exposePlayerRef]);
+    }, []);
 
     return {
-        player: playerRef.current,
-        playerRef,
-        isMuted: () => playerRef.current?.isMuted?.() || false,
+        playerRef
     };
 };
