@@ -13,6 +13,7 @@ import { useSegmentNavigation } from '@/hooks/useSegmentNavigation';
 import { ExpandableDescription } from '@/components/ExpandableDescription';
 import { PlayerControls } from '@/components/PlayerControls';
 import { SegmentThumbnail } from '@/components/SegmentThumbnail';
+import { SegmentsProgressBar } from '@/components/SegmentsProgressBar';
 import { cn } from '@/lib/utils';
 
 const SegmentPage = () => {
@@ -103,9 +104,15 @@ const SegmentPage = () => {
 
                     {/* Info under player */}
                     <main className="px-5 py-5 flex flex-col gap-6 fade-in duration-500 w-full max-w-full md:px-0 md:pt-6">
-                        <section>
+                        <section className="flex flex-col gap-4">
+                            <SegmentsProgressBar
+                                segments={segments}
+                                currentSegmentUuid={segment.uuid}
+                                segmentedVideoId={segmentedVideoId!}
+                            />
+
                             {segment.timeStart && (
-                                <div className="flex items-center gap-2 text-sm text-brand font-black mb-4 bg-brand/10 w-fit px-3 py-1 rounded-xl border border-brand/20 shadow-sm animate-in fade-in slide-in-from-left-4 duration-500 delay-100">
+                                <div className="flex items-center gap-2 text-sm text-brand font-black bg-brand/10 w-fit px-3 py-1 rounded-xl border border-brand/20 shadow-sm animate-in fade-in slide-in-from-left-4 duration-500 delay-100">
                                     <Scissors className="h-4 w-4" />
                                     <span>{segment.timeStart} {segment.timeEnd ? `– ${segment.timeEnd}` : ''}</span>
                                 </div>
@@ -140,7 +147,10 @@ const SegmentPage = () => {
                 {/* Segment list sidebar — desktop only, 1 column */}
                 <div className="hidden md:block md:col-span-1">
                     <div className="sticky top-4">
-                        <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-4">Сегменты</h3>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Сегменты</h3>
+                            <span className="text-xs font-bold text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-md">{segments.length}</span>
+                        </div>
                         <div className="flex flex-col gap-2 max-h-[calc(100vh-8rem)] overflow-y-auto pr-1">
                             {segments.map(seg => (
                                 <Link
