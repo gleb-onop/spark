@@ -15,6 +15,7 @@ import { PlayerControls } from '@/components/PlayerControls';
 import { SegmentThumbnail } from '@/components/SegmentThumbnail';
 import { SegmentsProgressBar } from '@/components/SegmentsProgressBar';
 import { cn } from '@/lib/utils';
+import { parseTime, formatTime } from '@/utils/time';
 
 const SegmentPage = () => {
     const { segmentedVideoId, segmentId } = useParams<{ segmentedVideoId: string; segmentId: string }>();
@@ -111,12 +112,16 @@ const SegmentPage = () => {
                                 segmentedVideoId={segmentedVideoId!}
                             />
 
-                            {segment.timeStart && (
-                                <div className="flex items-center gap-2 text-sm text-brand font-black bg-brand/10 w-fit px-3 py-1 rounded-xl border border-brand/20 shadow-sm animate-in fade-in slide-in-from-left-4 duration-500 delay-100">
-                                    <Scissors className="h-4 w-4" />
-                                    <span>{segment.timeStart} {segment.timeEnd ? `– ${segment.timeEnd}` : ''}</span>
-                                </div>
-                            )}
+                            {segment.timeStart && (() => {
+                                const startText = formatTime(parseTime(segment.timeStart), true);
+                                const endText = segment.timeEnd ? formatTime(parseTime(segment.timeEnd), true) : '';
+                                return (
+                                    <div className="flex items-center gap-2 text-sm text-brand font-black bg-brand/10 w-fit px-3 py-1 rounded-xl border border-brand/20 shadow-sm animate-in fade-in slide-in-from-left-4 duration-500 delay-100">
+                                        <Scissors className="h-4 w-4" />
+                                        <span>{startText} {endText ? `– ${endText}` : ''}</span>
+                                    </div>
+                                );
+                            })()}
 
                             <ExpandableDescription text={descriptionText} />
                         </section>
@@ -171,11 +176,15 @@ const SegmentPage = () => {
                                     />
                                     <div className="flex-1 min-w-0">
                                         <div className="text-xs font-medium line-clamp-2">{seg.description || 'Без описания'}</div>
-                                        {seg.timeStart && (
-                                            <div className="text-[10px] text-brand font-bold mt-0.5">
-                                                {seg.timeStart} {seg.timeEnd ? `– ${seg.timeEnd}` : ''}
-                                            </div>
-                                        )}
+                                        {seg.timeStart && (() => {
+                                            const formattedStart = formatTime(parseTime(seg.timeStart));
+                                            const formattedEnd = seg.timeEnd ? formatTime(parseTime(seg.timeEnd)) : '';
+                                            return (
+                                                <div className="text-[10px] text-brand font-bold mt-0.5">
+                                                    {formattedStart} {formattedEnd ? `– ${formattedEnd}` : ''}
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                 </Link>
                             ))}

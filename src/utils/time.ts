@@ -1,29 +1,49 @@
 /**
- * Parses time string like "1:30" or "1:30.500" or "90" into seconds.
+ * Parses time string like "1:30" or "1:30.500" or "2:01:30" or "90" into seconds.
  */
 export const parseTime = (str: string | null): number => {
     if (!str) return 0;
+
     if (str.includes(':')) {
-        const [m, rest] = str.split(':');
-        const [s, ms] = (rest || '').split('.');
-        const minutes = Number(m) || 0;
+        const parts = str.split(':');
+        let h = 0, m = 0, sParts = '';
+
+        if (parts.length === 3) {
+            h = Number(parts[0]) || 0;
+            m = Number(parts[1]) || 0;
+            sParts = parts[2];
+        } else if (parts.length === 2) {
+            m = Number(parts[0]) || 0;
+            sParts = parts[1];
+        } else {
+            sParts = parts[0];
+        }
+
+        const [s, ms] = (sParts || '').split('.');
         const seconds = Number(s) || 0;
 
         // Handle ms based on length (e.g. .5 -> 500ms, .50 -> 500ms, .500 -> 500ms)
         const msSeconds = ms ? Number(`0.${ms}`) : 0;
 
-        return minutes * 60 + seconds + msSeconds;
+        return (h * 3600) + (m * 60) + seconds + msSeconds;
     }
     return Number(str) || 0;
 };
 
 /**
- * Formats seconds into "m:ss" or "m:ss.SSS" format.
+ * Formats seconds into "h:mm:ss", "m:ss" or "m:ss.SSS" / "h:mm:ss.SSS" format.
  */
 export const formatTime = (seconds: number, includeMs = false): string => {
-    const m = Math.floor(seconds / 60);
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
     const s = Math.floor(seconds % 60);
-    const mainPart = `${m}:${s.toString().padStart(2, '0')}`;
+
+    let mainPart = '';
+    if (h > 0) {
+        mainPart = `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    } else {
+        mainPart = `${m}:${s.toString().padStart(2, '0')}`;
+    }
 
     if (includeMs) {
         const ms = Math.round((seconds % 1) * 1000);
