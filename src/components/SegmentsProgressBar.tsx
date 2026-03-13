@@ -26,7 +26,7 @@ const getSegmentDuration = (segment: Segment) => {
 };
 
 export const SegmentsProgressBar = ({ segments, currentSegmentUuid, segmentedVideoId }: SegmentsProgressBarProps) => {
-    if (!segments || segments.length === 0) return null;
+    if (!segments || segments.length <= 1) return null;
 
     const currentSegmentIndex = segments.findIndex(s => s.uuid === currentSegmentUuid);
 
@@ -34,7 +34,7 @@ export const SegmentsProgressBar = ({ segments, currentSegmentUuid, segmentedVid
     const totalDuration = segmentDurations.reduce((sum, dur) => sum + dur, 0);
 
     return (
-        <div className="w-full flex flex-col gap-2 relative group pt-2">
+        <div className="w-full flex lg:hidden flex-col gap-2 relative group pt-2">
             <div className="flex justify-between items-center text-xs font-bold text-muted-foreground uppercase tracking-wider px-1">
                 <span>
                     Сегмент {currentSegmentIndex !== -1 ? currentSegmentIndex + 1 : '-'}/{segments.length}
