@@ -215,26 +215,37 @@ export const usePlayerControls = ({
         if (!container) return;
 
         const handleKeyDown = (e: KeyboardEvent) => {
-            switch (e.key.toLowerCase()) {
-                case 'f':
+            // Ignore if any modifier is pressed to avoid blocking browser/OS defaults (e.g. Ctrl+F)
+            if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
+
+            switch (e.code) {
+                case 'KeyF':
                     e.preventDefault();
                     toggleFullscreen();
                     break;
-                case 'k':
-                case ' ':
+                case 'KeyK':
+                case 'Space':
                     e.preventDefault();
                     togglePlay();
                     break;
-                case 'm':
+                case 'KeyM':
                     e.preventDefault();
                     toggleMute();
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    setVolume(Math.min(100, volume + 10));
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    setVolume(Math.max(0, volume - 10));
                     break;
             }
         };
 
         container.addEventListener('keydown', handleKeyDown, { capture: true });
         return () => container.removeEventListener('keydown', handleKeyDown, { capture: true });
-    }, [toggleFullscreen, togglePlay, toggleMute, containerRef]);
+    }, [toggleFullscreen, togglePlay, toggleMute, setVolume, volume, containerRef]);
 
     return {
         isPlaying,
