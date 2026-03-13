@@ -87,7 +87,8 @@ const SegmentPage = () => {
                 <div className="md:col-span-2">
                     <div
                         ref={containerRef}
-                        className="w-full bg-black sticky top-[61px] z-20 shadow-xl md:relative md:top-auto md:rounded-2xl md:overflow-hidden"
+                        className="w-full bg-black sticky top-[61px] z-20 shadow-xl md:relative md:top-auto md:rounded-2xl md:overflow-hidden outline-none"
+                        tabIndex={0}
                     >
                         <div style={
                             controls.isFullscreen

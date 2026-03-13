@@ -87,20 +87,39 @@ export const PlayerControls = ({
 
     return (
         <>
-            {/* Catch clicks over the video when controls are hidden in fullscreen */}
-            {isFullscreen && (
-                <div
-                    className={cn(
-                        "absolute inset-0 z-40",
-                        visible ? "pointer-events-none" : "pointer-events-auto"
-                    )}
-                />
-            )}
+            {/* Interaction Overlay: covers the video area to handle clicks and focus */}
             <div
                 className={cn(
-                    'w-full transition-opacity duration-300',
+                    "absolute inset-0 z-40 transition-opacity duration-300",
+                    isFullscreen && !visible ? "cursor-none" : "cursor-default"
+                )}
+                onClick={() => {
+                    // Clicking the overlay focuses the container (parent),
+                    // enabling scoped keyboard shortcuts.
+                    if (containerRef.current) containerRef.current.focus();
+                    togglePlay();
+                }}
+                onDoubleClick={(e) => {
+                    e.preventDefault();
+                    toggleFullscreen();
+                }}
+                onMouseMove={() => {
+                    if (isFullscreen) {
+                        setVisible(true);
+                        if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+                        hideTimerRef.current = setTimeout(() => setVisible(false), CONTROLS_AUTO_HIDE_DELAY_MS);
+                    }
+                }}
+                onTouchStart={() => {
+                    if (isFullscreen) setVisible(true);
+                }}
+            />
+
+            <div
+                className={cn(
+                    'w-full transition-opacity duration-300 relative z-50',
                     isFullscreen
-                        ? 'absolute bottom-0 left-0 right-0 z-50 bg-gradient-to-t from-black/80 to-transparent px-4 py-3'
+                        ? 'absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-4 py-3'
                         : 'bg-black/90 px-4 py-3',
                     isFullscreen && !visible ? 'opacity-0 pointer-events-none' : 'opacity-100',
                 )}
@@ -179,7 +198,12 @@ export const PlayerControls = ({
                             <DropdownMenuTrigger className="text-[11px] font-bold px-2 py-1 bg-brand text-white rounded transition-colors leading-none hover:bg-brand/90 outline-none">
                                 {playbackRate === 1 ? '1×' : `${playbackRate}×`}
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent side="top" align="end" className="min-w-[4rem]">
+                            <DropdownMenuContent
+                                side="top"
+                                align="end"
+                                className="min-w-[4rem]"
+                                container={containerRef.current}
+                            >
                                 {PLAYBACK_RATES.map((rate) => (
                                     <DropdownMenuItem
                                         key={rate}

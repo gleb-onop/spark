@@ -208,6 +208,33 @@ export const usePlayerControls = ({
         }
     }, [containerRef, isVertical]);
 
+    // ─── Keyboard Shortcuts ─────────────────────────────────────────────────
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            switch (e.key.toLowerCase()) {
+                case 'f':
+                    e.preventDefault();
+                    toggleFullscreen();
+                    break;
+                case 'k':
+                case ' ':
+                    e.preventDefault();
+                    togglePlay();
+                    break;
+                case 'm':
+                    e.preventDefault();
+                    toggleMute();
+                    break;
+            }
+        };
+
+        container.addEventListener('keydown', handleKeyDown, { capture: true });
+        return () => container.removeEventListener('keydown', handleKeyDown, { capture: true });
+    }, [toggleFullscreen, togglePlay, toggleMute, containerRef]);
+
     return {
         isPlaying,
         currentTime,

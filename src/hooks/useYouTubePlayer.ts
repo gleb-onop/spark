@@ -78,6 +78,8 @@ export const useYouTubePlayer = ({
         playerVars: {
             autoplay: 1,
             controls: exposePlayerRef ? 0 : 1,
+            disablekb: exposePlayerRef ? 1 : 0,
+            fs: exposePlayerRef ? 0 : 1,
             mute: 1,
         },
         events: {

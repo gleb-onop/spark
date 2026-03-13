@@ -32,6 +32,8 @@ export interface YTEvent {
 }
 
 export interface YTPlayerOptions {
+    width?: number | string;
+    height?: number | string;
     videoId: string;
     playerVars?: {
         autoplay?: 0 | 1;
@@ -42,6 +44,7 @@ export interface YTPlayerOptions {
         iv_load_policy?: 1 | 3;
         mute?: 0 | 1;
         start?: number;
+        disablekb?: 0 | 1;
         [key: string]: any;
     };
     events?: {
