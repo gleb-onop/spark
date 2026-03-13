@@ -121,12 +121,14 @@ export const PlayerControls = ({
                     isFullscreen
                         ? 'absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent px-4 py-3'
                         : 'bg-black/90 px-4 py-3',
-                    isFullscreen && !visible ? 'opacity-0 pointer-events-none' : 'opacity-100',
+                    isFullscreen && !visible ? 'opacity-0 pointer-events-none' : 'opacity-100'
                 )}
             >
                 {/* Progress Bar */}
                 <div
-                    className="relative w-full h-1.5 bg-white/20 rounded-full cursor-pointer mb-3 group"
+                    className={cn(
+                        "relative w-full h-1.5 bg-white/20 rounded-full cursor-pointer group transition-all mb-3"
+                    )}
                     onClick={handleProgressClick}
                     onTouchStart={handleProgressTouch}
                 >
@@ -142,92 +144,98 @@ export const PlayerControls = ({
                     />
                     {/* Thumb */}
                     <div
-                        className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white shadow-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+                        className={cn(
+                            "absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white shadow-md transition-opacity pointer-events-none opacity-0 group-hover:opacity-100"
+                        )}
                         style={{ left: `calc(${progressPct}% - 6px)` }}
                     />
                 </div>
 
                 {/* Controls Row */}
                 <div className="flex items-center gap-3 overflow-x-auto no-scrollbar touch-pan-x w-full">
-                    {/* Play/Pause */}
-                    <button
-                        onClick={togglePlay}
-                        className="text-white hover:text-brand transition-colors shrink-0"
-                        aria-label={isPlaying ? 'Пауза' : 'Воспроизвести'}
-                    >
-                        {isPlaying
-                            ? <Pause className="h-5 w-5 fill-current" />
-                            : <Play className="h-5 w-5 fill-current" />
-                        }
-                    </button>
+                    <div className="flex items-center gap-3 shrink-0">
+                        {/* Play/Pause */}
+                        <button
+                            onClick={togglePlay}
+                            className="text-white hover:text-brand transition-colors shrink-0"
+                            aria-label={isPlaying ? 'Пауза' : 'Воспроизвести'}
+                        >
+                            {isPlaying
+                                ? <Pause className="fill-current h-5 w-5" />
+                                : <Play className="fill-current h-5 w-5" />
+                            }
+                        </button>
 
-                    {/* Time */}
-                    <span className="text-white/70 text-xs font-mono shrink-0 tabular-nums">
-                        {currentTimeStr} / {durationStr}
-                    </span>
+                        {/* Time */}
+                        <span className="text-white/70 font-mono shrink-0 tabular-nums text-xs">
+                            {currentTimeStr} / {durationStr}
+                        </span>
+                    </div>
 
                     {/* Flex spacer */}
                     <div className="flex-1 min-w-[10px]" />
 
-                    {/* Volume - hidden on very small screens since mobile has hardware buttons */}
-                    <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-3 shrink-0">
+                        {/* Volume/Mute */}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                                onClick={toggleMute}
+                                className="text-white/80 hover:text-white transition-colors"
+                                aria-label={isMuted ? 'Включить звук' : 'Выключить звук'}
+                            >
+                                {(isMuted || volume === 0)
+                                    ? <VolumeX className="h-4 w-4" />
+                                    : <Volume2 className="h-4 w-4" />
+                                }
+                            </button>
+                            <input
+                                type="range"
+                                min={0}
+                                max={100}
+                                value={isMuted ? 0 : volume}
+                                onChange={handleVolumeChange}
+                                className="hidden sm:block w-16 h-1 accent-brand cursor-pointer"
+                                aria-label="Громкость"
+                            />
+                        </div>
+
+                        {/* Playback Rate */}
+                        <div className="flex items-center gap-px shrink-0">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger className="font-bold px-2 py-1 bg-brand text-white rounded transition-colors leading-none hover:bg-brand/90 outline-none text-[11px]">
+                                    {playbackRate === 1 ? '1×' : `${playbackRate}×`}
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent
+                                    side="top"
+                                    align="end"
+                                    className="min-w-[4rem]"
+                                    container={containerRef.current}
+                                >
+                                    {PLAYBACK_RATES.map((rate) => (
+                                        <DropdownMenuItem
+                                            key={rate}
+                                            onClick={() => setRate(rate)}
+                                            className="justify-center font-medium text-xs cursor-pointer"
+                                        >
+                                            {rate === 1 ? '1×' : `${rate}×`}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+
+                        {/* Fullscreen */}
                         <button
-                            onClick={toggleMute}
-                            className="text-white/80 hover:text-white transition-colors"
-                            aria-label={isMuted ? 'Включить звук' : 'Выключить звук'}
+                            onClick={toggleFullscreen}
+                            className="text-white/80 hover:text-white transition-colors shrink-0"
+                            aria-label={isFullscreen ? 'Выйти из полноэкранного режима' : 'Полноэкранный режим'}
                         >
-                            {(isMuted || volume === 0)
-                                ? <VolumeX className="h-4 w-4" />
-                                : <Volume2 className="h-4 w-4" />
+                            {isFullscreen
+                                ? <Minimize className="h-4 w-4" />
+                                : <Maximize className="h-4 w-4" />
                             }
                         </button>
-                        <input
-                            type="range"
-                            min={0}
-                            max={100}
-                            value={isMuted ? 0 : volume}
-                            onChange={handleVolumeChange}
-                            className="w-16 h-1 accent-brand cursor-pointer"
-                            aria-label="Громкость"
-                        />
                     </div>
-
-                    {/* Playback Rate */}
-                    <div className="flex items-center gap-px shrink-0">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger className="text-[11px] font-bold px-2 py-1 bg-brand text-white rounded transition-colors leading-none hover:bg-brand/90 outline-none">
-                                {playbackRate === 1 ? '1×' : `${playbackRate}×`}
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                                side="top"
-                                align="end"
-                                className="min-w-[4rem]"
-                                container={containerRef.current}
-                            >
-                                {PLAYBACK_RATES.map((rate) => (
-                                    <DropdownMenuItem
-                                        key={rate}
-                                        onClick={() => setRate(rate)}
-                                        className="justify-center font-medium text-xs cursor-pointer"
-                                    >
-                                        {rate === 1 ? '1×' : `${rate}×`}
-                                    </DropdownMenuItem>
-                                ))}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-
-                    {/* Fullscreen */}
-                    <button
-                        onClick={toggleFullscreen}
-                        className="text-white/80 hover:text-white transition-colors shrink-0"
-                        aria-label={isFullscreen ? 'Выйти из полноэкранного режима' : 'Полноэкранный режим'}
-                    >
-                        {isFullscreen
-                            ? <Minimize className="h-4 w-4" />
-                            : <Maximize className="h-4 w-4" />
-                        }
-                    </button>
                 </div>
             </div>
         </>

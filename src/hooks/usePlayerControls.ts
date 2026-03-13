@@ -21,6 +21,7 @@ export interface PlayerControlsState {
     isMuted: boolean;
     playbackRate: number;
     isFullscreen: boolean;
+    isVertical: boolean;
     currentTimeStr: string;
     durationStr: string;
     togglePlay: () => void;
@@ -47,7 +48,7 @@ export const usePlayerControls = ({
     timeStart,
     timeEnd,
     containerRef,
-    isVertical,
+    isVertical = false,
 }: UsePlayerControlsProps): PlayerControlsState => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
@@ -143,7 +144,7 @@ export const usePlayerControls = ({
         } else {
             player.playVideo();
         }
-    }, [isPlaying]);
+    }, [isPlaying, playerRef]);
 
     const seek = useCallback((pct: number) => {
         const player = playerRef.current;
@@ -152,7 +153,7 @@ export const usePlayerControls = ({
         player.seekTo(targetTime, true);
         // Optimistic update for immediate feel (will also be corrected by polling)
         setCurrentTime(targetTime);
-    }, [segmentStart, segmentDuration]);
+    }, [segmentStart, segmentDuration, playerRef]);
 
     const setVolume = useCallback((vol: number) => {
         const player = playerRef.current;
@@ -164,7 +165,7 @@ export const usePlayerControls = ({
             player.unMute();
             sessionStorage.setItem('spark_muted', '0');
         }
-    }, [isMuted]);
+    }, [isMuted, playerRef]);
 
     const toggleMute = useCallback(() => {
         const player = playerRef.current;
@@ -177,14 +178,14 @@ export const usePlayerControls = ({
             sessionStorage.setItem('spark_muted', '1');
         }
         // polling will update isMuted in ≤250ms
-    }, [isMuted]);
+    }, [isMuted, playerRef]);
 
     const setRate = useCallback((rate: number) => {
         const player = playerRef.current;
         if (!player) return;
         player.setPlaybackRate(rate);
         setPlaybackRateState(rate);
-    }, []);
+    }, [playerRef]);
 
     const toggleFullscreen = useCallback(() => {
         if (!containerRef.current) return;
@@ -246,6 +247,7 @@ export const usePlayerControls = ({
         isMuted,
         playbackRate,
         isFullscreen,
+        isVertical,
         currentTimeStr: formatTime(segmentCurrentTime),
         durationStr: formatTime(segmentDuration),
         togglePlay,
