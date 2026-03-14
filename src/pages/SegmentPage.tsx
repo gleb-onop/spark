@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Info, Edit2, Scissors } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -7,11 +7,10 @@ import { Button } from '@/components/ui/button';
 import { PageHeader } from '@/components/PageHeader';
 import { useSegmentedVideo } from '@/hooks/useSegmentedVideo';
 import { useYouTubePlayer } from '@/hooks/useYouTubePlayer';
-import { usePlayerControls } from '@/hooks/usePlayerControls';
+import { useProgressSync } from '../hooks/useProgressSync';
 import { useLoopSetting } from '@/hooks/useLoopSetting';
 import { useSegmentNavigation } from '@/hooks/useSegmentNavigation';
 import { ExpandableDescription } from '@/components/ExpandableDescription';
-import { PlayerControls } from '@/components/PlayerControls';
 import { SegmentThumbnail } from '@/components/SegmentThumbnail';
 import { SegmentsProgressBar } from '@/components/SegmentsProgressBar';
 import { cn } from '@/lib/utils';
@@ -19,6 +18,8 @@ import { parseTime, formatTime } from '@/utils/time';
 
 const SegmentPage = () => {
     const { segmentedVideoId, segmentId } = useParams<{ segmentedVideoId: string; segmentId: string }>();
+    const navigate = useNavigate();
+    const location = useLocation();
 
     const { segmentedVideo, segments } = useSegmentedVideo(segmentedVideoId);
     const segment = segments.find(f => f.uuid === segmentId);
@@ -31,6 +32,9 @@ const SegmentPage = () => {
         isLooping
     });
 
+    // Detect initial seek percentage from navigation state
+    const initialSeekPct = location.state?.seekPct ?? null;
+
     // Container ref for fullscreen API
     const containerRef = useRef<HTMLDivElement>(null);
 
@@ -38,17 +42,15 @@ const SegmentPage = () => {
         youtubeId: segment?.video.youtubeId || '',
         timeStart: segment?.timeStart || null,
         timeEnd: segment?.timeEnd || null,
+        initialSeekPct,
         onComplete,
         onSegmentEnded: onComplete,
-        exposePlayerRef: true,
     });
 
-    const controls = usePlayerControls({
+    const progressSync = useProgressSync({
         playerRef,
         timeStart: segment?.timeStart || null,
         timeEnd: segment?.timeEnd || null,
-        containerRef: containerRef as React.RefObject<HTMLElement>,
-        isVertical: segment?.video.isVertical,
     });
 
     if (!segment || !segmentedVideo) return null;
@@ -87,32 +89,39 @@ const SegmentPage = () => {
                 <div className="md:col-span-2">
                     <div
                         ref={containerRef}
-                        className="w-full bg-black sticky top-[61px] z-20 shadow-xl md:relative md:top-auto md:rounded-2xl md:overflow-hidden outline-none"
+                        className="w-full bg-black sticky top-[61px] z-20 shadow-xl md:relative md:top-auto md:rounded-2xl md:overflow-hidden outline-none group"
                         tabIndex={0}
                     >
-                        <div style={
-                            controls.isFullscreen
-                                ? { height: '100vh', width: '100vw', position: 'relative' }
-                                : { paddingTop: playerPaddingTop, position: 'relative' }
-                        }>
+                        <div style={{ paddingTop: playerPaddingTop, position: 'relative' }}>
                             <div id="youtube-player" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
-                        </div>
 
-                        <PlayerControls
-                            containerRef={containerRef as React.RefObject<HTMLElement>}
-                            {...controls}
-                        />
+                            {/* Progress Overlay */}
+                            <div className="absolute inset-x-0 bottom-0 z-30 transition-opacity duration-300 pointer-events-none group-hover:opacity-100 opacity-100">
+                                <div className="pointer-events-auto">
+                                    <SegmentsProgressBar
+                                        segments={segments}
+                                        currentSegmentUuid={segment.uuid}
+                                        segmentedVideoId={segmentedVideoId!}
+                                        progressPct={progressSync.progressPct}
+                                        isOverlay={true}
+                                        onSeek={(uuid, pct) => {
+                                            if (uuid === segment.uuid) {
+                                                progressSync.seek(pct);
+                                            } else {
+                                                navigate(`/segmented-videos/${segmentedVideoId}/segments/${uuid}`, {
+                                                    state: { seekPct: pct }
+                                                });
+                                            }
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Info under player */}
                     <main className="px-5 py-5 flex flex-col gap-6 fade-in duration-500 w-full max-w-full md:px-0 md:pt-6">
                         <section className="flex flex-col gap-4">
-                            <SegmentsProgressBar
-                                segments={segments}
-                                currentSegmentUuid={segment.uuid}
-                                segmentedVideoId={segmentedVideoId!}
-                            />
-
                             {segment.timeStart && (() => {
                                 const startText = formatTime(parseTime(segment.timeStart), true);
                                 const endText = segment.timeEnd ? formatTime(parseTime(segment.timeEnd), true) : '';

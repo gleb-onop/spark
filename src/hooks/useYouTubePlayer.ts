@@ -7,24 +7,25 @@ interface UseYouTubePlayerProps {
     youtubeId: string;
     timeStart: string | null;
     timeEnd: string | null;
+    initialSeekPct?: number | null;
     onComplete: () => void;
     onSegmentEnded: () => void;
-    /** When true, disables native controls and exposes playerRef for custom controls. */
-    exposePlayerRef?: boolean;
 }
 
 export const useYouTubePlayer = ({
     youtubeId,
     timeStart,
     timeEnd,
+    initialSeekPct,
     onComplete,
     onSegmentEnded,
-    exposePlayerRef = false,
 }: UseYouTubePlayerProps) => {
     const playerRef = useRef<YTPlayer | null>(null);
     const intervalRef = useRef<number | null>(null);
     const onCompleteRef = useRef(onComplete);
     const onSegmentEndedRef = useRef(onSegmentEnded);
+    const hasPerformedInitialSeek = useRef(false);
+    const lastSegmentKey = useRef<string>('');
 
     useEffect(() => {
         onCompleteRef.current = onComplete;
@@ -58,18 +59,41 @@ export const useYouTubePlayer = ({
         }, 100);
     }, [hasSegment, startSec, endSec]);
 
-    // 1. Re-sync player when segment changes (without destroying player if video is same)
+    // 1. Re-sync player when segment or video changes
     useEffect(() => {
         const player = playerRef.current;
         if (player && typeof player.seekTo === 'function') {
-            player.seekTo(startSec || 0, true);
+            const currentSegmentKey = `${youtubeId}-${timeStart}-${timeEnd}`;
+            const isNewSegment = currentSegmentKey !== lastSegmentKey.current;
+
+            if (isNewSegment) {
+                lastSegmentKey.current = currentSegmentKey;
+                hasPerformedInitialSeek.current = false;
+
+                // Priority:
+                // 1. Initial percentage jump if provided
+                // 2. Default segment start
+                const start = startSec || 0;
+                let targetSeek = start;
+
+                if (initialSeekPct !== undefined && initialSeekPct !== null) {
+                    const duration = (endSec || 0) - start;
+                    if (duration > 0) {
+                        targetSeek = start + (initialSeekPct / 100) * duration;
+                    }
+                }
+
+                player.seekTo(targetSeek, true);
+                hasPerformedInitialSeek.current = true;
+            }
+
             // If already playing, restart polling with new endSec
             if (player.getPlayerState() === YTPlayerState.PLAYING) {
                 startPolling();
             }
         }
         return () => stopInterval();
-    }, [youtubeId, startSec, endSec, startPolling]);
+    }, [youtubeId, startSec, endSec, startPolling, initialSeekPct]);
 
     useYouTubeBase({
         videoId: youtubeId,
@@ -77,9 +101,9 @@ export const useYouTubePlayer = ({
         playerRef,
         playerVars: {
             autoplay: 1,
-            controls: exposePlayerRef ? 0 : 1,
-            disablekb: exposePlayerRef ? 1 : 0,
-            fs: exposePlayerRef ? 0 : 1,
+            controls: 1,
+            disablekb: 0,
+            fs: 1,
             mute: 1,
         },
         events: {
@@ -91,7 +115,20 @@ export const useYouTubePlayer = ({
                 if (savedVol !== null) {
                     event.target.setVolume(Number(savedVol));
                 }
-                event.target.seekTo(startSec || 0, true);
+
+                // Initial seek on ready
+                const start = startSec || 0;
+                let targetSeek = start;
+
+                if (initialSeekPct !== undefined && initialSeekPct !== null) {
+                    const duration = (endSec || 0) - start;
+                    if (duration > 0) {
+                        targetSeek = start + (initialSeekPct / 100) * duration;
+                    }
+                }
+
+                event.target.seekTo(targetSeek, true);
+                hasPerformedInitialSeek.current = true;
                 event.target.playVideo();
             },
             onStateChange: (event: YTEvent) => {
