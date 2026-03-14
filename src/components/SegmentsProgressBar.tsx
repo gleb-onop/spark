@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Timer } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -37,11 +37,19 @@ export const SegmentsProgressBar = ({
     const [hoverTime, setHoverTime] = useState<number | null>(null);
     const [tooltipX, setTooltipX] = useState(0);
 
+    const segmentDurations = useMemo(() =>
+        (segments || []).map(getSegmentDuration),
+        [segments]
+    );
+
+    const totalDuration = useMemo(() =>
+        segmentDurations.reduce((sum: number, dur: number) => sum + dur, 0),
+        [segmentDurations]
+    );
+
     if (!segments || segments.length <= 1) return null;
 
     const currentSegmentIndex = segments.findIndex(s => s.uuid === currentSegmentUuid);
-    const segmentDurations = segments.map(getSegmentDuration);
-    const totalDuration = segmentDurations.reduce((sum, dur) => sum + dur, 0);
 
     const handleSegmentClick = (e: React.MouseEvent, segmentUuid: string) => {
         if (!onSeek) return;

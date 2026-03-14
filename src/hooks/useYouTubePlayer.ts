@@ -26,6 +26,7 @@ export const useYouTubePlayer = ({
     const onSegmentEndedRef = useRef(onSegmentEnded);
     const hasPerformedInitialSeek = useRef(false);
     const lastSegmentKey = useRef<string>('');
+    const playerReady = useRef(false);
 
     useEffect(() => {
         onCompleteRef.current = onComplete;
@@ -62,7 +63,7 @@ export const useYouTubePlayer = ({
     // 1. Re-sync player when segment or video changes
     useEffect(() => {
         const player = playerRef.current;
-        if (player && typeof player.seekTo === 'function') {
+        if (player && playerReady.current && typeof player.seekTo === 'function') {
             const currentSegmentKey = `${youtubeId}-${timeStart}-${timeEnd}`;
             const isNewSegment = currentSegmentKey !== lastSegmentKey.current;
 
@@ -108,6 +109,7 @@ export const useYouTubePlayer = ({
         },
         events: {
             onReady: (event: YTEvent) => {
+                playerReady.current = true;
                 if (sessionStorage.getItem('spark_muted') === '0') {
                     event.target.unMute();
                 }

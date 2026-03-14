@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, type RefObject } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, type RefObject } from 'react';
 import { parseTime } from '../utils/time';
 import { type YTPlayer, YTPlayerState } from '../utils/youtube';
 
@@ -24,13 +24,32 @@ export const useProgressSync = ({
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
 
-    const startSec = parseTime(timeStart);
-    const endSec = parseTime(timeEnd);
+    // Use refs for stable access in effects without triggering re-runs
+    const isPlayingRef = useRef(isPlaying);
+    const durationRef = useRef(duration);
 
-    // ─── Robust State Sync (Fallback + Events) ──────────────────────────
+    useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
+    useEffect(() => { durationRef.current = duration; }, [duration]);
+
+    const startSec = useMemo(() => parseTime(timeStart), [timeStart]);
+    const endSec = useMemo(() => parseTime(timeEnd), [timeEnd]);
+
+    // ─── Event Handlers ──────────────────────────────────────────────────
+    const handleStateChange = useCallback((event: any) => {
+        const state = event.data;
+        const playing = state === YTPlayerState.PLAYING;
+        setIsPlaying(playing);
+
+        if (playing) {
+            const player = playerRef.current;
+            if (player && typeof player.getCurrentTime === 'function') {
+                setCurrentTime(player.getCurrentTime());
+            }
+        }
+    }, [playerRef]);
+
+    // ─── Robust State Sync (Fallback) ──────────────────────────────────
     useEffect(() => {
-        let intervalId: number;
-
         const syncState = () => {
             const player = playerRef.current;
             if (!player) return;
@@ -38,30 +57,21 @@ export const useProgressSync = ({
             // Sync playing state
             if (typeof player.getPlayerState === 'function') {
                 const state = player.getPlayerState();
-                setIsPlaying(state === YTPlayerState.PLAYING);
+                const playing = state === YTPlayerState.PLAYING;
+                if (playing !== isPlayingRef.current) {
+                    setIsPlaying(playing);
+                }
             }
 
             // Sync duration if missing
-            if (duration === 0 && typeof player.getDuration === 'function') {
+            if (durationRef.current === 0 && typeof player.getDuration === 'function') {
                 const d = player.getDuration();
                 if (d > 0) setDuration(d);
             }
 
             // Initial time sync if not playing
-            if (!isPlaying && typeof player.getCurrentTime === 'function') {
+            if (!isPlayingRef.current && typeof player.getCurrentTime === 'function') {
                 setCurrentTime(player.getCurrentTime());
-            }
-        };
-
-        // Event listener for instant response
-        const handleStateChange = (event: any) => {
-            const state = event.data;
-            setIsPlaying(state === YTPlayerState.PLAYING);
-            if (state === YTPlayerState.PLAYING) {
-                const player = playerRef.current;
-                if (player && typeof player.getCurrentTime === 'function') {
-                    setCurrentTime(player.getCurrentTime());
-                }
             }
         };
 
@@ -73,7 +83,7 @@ export const useProgressSync = ({
 
         // Run sync immediately and then on interval
         syncState();
-        intervalId = window.setInterval(syncState, 500);
+        const intervalId = window.setInterval(syncState, 500);
 
         return () => {
             window.clearInterval(intervalId);
@@ -81,7 +91,7 @@ export const useProgressSync = ({
                 p.removeEventListener('onStateChange', handleStateChange);
             }
         };
-    }, [playerRef, duration, isPlaying]);
+    }, [playerRef, handleStateChange]); // Stable dependencies
 
     // ─── High-Frequency Progress Loop (RAF) ─────────────────────────────────
     useEffect(() => {
@@ -102,8 +112,8 @@ export const useProgressSync = ({
 
     // ─── Derived values relative to segment ─────────────────────────────────
     const segmentStart = startSec;
-    const segmentEnd = endSec > 0 ? endSec : duration;
-    const segmentDuration = Math.max(0, segmentEnd - segmentStart);
+    const segmentEnd = useMemo(() => endSec > 0 ? endSec : duration, [endSec, duration]);
+    const segmentDuration = useMemo(() => Math.max(0, segmentEnd - segmentStart), [segmentEnd, segmentStart]);
     const segmentCurrentTime = Math.max(0, currentTime - segmentStart);
     const progressPct = segmentDuration > 0
         ? Math.min(100, (segmentCurrentTime / segmentDuration) * 100)
