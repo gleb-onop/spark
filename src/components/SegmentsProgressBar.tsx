@@ -51,6 +51,27 @@ export const SegmentsProgressBar = ({
 
     const currentSegmentIndex = segments.findIndex(s => s.uuid === currentSegmentUuid);
 
+    const cumulativeWidths = useMemo(() => {
+        const widths: number[] = [];
+        let total = 0;
+        segmentDurations.forEach(dur => {
+            const w = totalDuration > 0 ? (dur / totalDuration) * 100 : (100 / (segments || []).length);
+            widths.push(total);
+            total += w;
+        });
+        widths.push(total);
+        return widths;
+    }, [segmentDurations, totalDuration, segments]);
+
+    const playheadAbsolutePct = useMemo(() => {
+        if (currentSegmentIndex === -1) return 0;
+        const passedWidth = cumulativeWidths[currentSegmentIndex];
+        const currentWidth = (cumulativeWidths[currentSegmentIndex + 1] || 100) - passedWidth;
+        return passedWidth + currentWidth * (progressPct / 100);
+    }, [currentSegmentIndex, cumulativeWidths, progressPct]);
+
+    const hoverAbsolutePct = hoverTime !== null && totalDuration > 0 ? (hoverTime / totalDuration) * 100 : null;
+
     const handleSegmentClick = (e: React.MouseEvent, segmentUuid: string) => {
         if (!onSeek) return;
 
@@ -125,57 +146,85 @@ export const SegmentsProgressBar = ({
                 </div>
             )}
 
-            {/* Protective Overlay & Bar Container */}
+            {/* 3-Layer Progress Structure */}
             <div className={cn(
                 "w-full flex items-center transition-all duration-200 relative z-10",
-                isOverlay ? "h-[14px] md:h-4" : "h-4"
+                isOverlay ? "h-[14px] md:h-5" : "h-5"
             )}>
+                {/* Layer 2: Background Tray */}
                 <div className={cn(
-                    "flex w-full overflow-hidden transition-all duration-300",
+                    "flex w-full transition-all duration-300 items-center px-0.5 relative",
                     isOverlay
-                        ? "h-full bg-white/10 border-y border-white/20 backdrop-blur-md"
-                        : "h-3 bg-muted/30 border border-border/50 rounded-sm shadow-inner"
+                        ? "h-full bg-black/40 backdrop-blur-md rounded-md border border-white/5"
+                        : "h-3 bg-muted/20 border border-border/30 rounded-full"
                 )}>
-                    {segments.map((segment, index) => {
-                        const duration = segmentDurations[index];
-                        const widthPercent = totalDuration > 0 ? (duration / totalDuration) * 100 : (100 / segments.length);
-                        const isCurrent = segment.uuid === currentSegmentUuid;
-                        const isPassed = currentSegmentIndex !== -1 && index < currentSegmentIndex;
+                    {/* Layer 3: Refined Adaptive Segments Bar with YouTube Gaps */}
+                    <div className={cn(
+                        "flex w-full gap-1 px-1 items-center",
+                        isOverlay
+                            ? "h-[6px] md:gap-1.5"
+                            : "h-[6px] rounded-full overflow-hidden"
+                    )}>
+                        {segments.map((segment, index) => {
+                            const duration = segmentDurations[index];
+                            const widthPercent = totalDuration > 0 ? (duration / totalDuration) * 100 : (100 / segments.length);
+                            const isCurrent = segment.uuid === currentSegmentUuid;
+                            const isPassed = currentSegmentIndex !== -1 && index < currentSegmentIndex;
 
-                        return (
-                            <Link
-                                key={segment.uuid}
-                                to={`/segmented-videos/${segmentedVideoId}/segments/${segment.uuid}`}
-                                title={segment.description || `Сегмент ${index + 1}`}
-                                onClick={(e) => isOverlay && handleSegmentClick(e, segment.uuid)}
-                                className={cn(
-                                    "h-full transition-all duration-300 relative overflow-hidden",
-                                    isOverlay
-                                        ? "hover:brightness-125 active:scale-[0.98] border-r-[4px] border-black/60"
-                                        : "hover:brightness-110 border-r-2 border-background/40",
-                                    isPassed ? "bg-brand" : (isCurrent ? "bg-white/30" : "bg-white/10")
-                                )}
-                                style={{
-                                    flex: `${widthPercent} 1 0%`,
-                                    minWidth: '4px',
-                                    borderRightColor: index === segments.length - 1 ? 'transparent' : undefined
-                                }}
-                            >
-                                {isCurrent && (
-                                    <div
-                                        className="absolute left-0 top-0 h-full bg-brand will-change-[width]"
-                                        style={{ width: `${progressPct}%` }}
-                                    />
-                                )}
-                                {isOverlay && isCurrent && (
-                                    <div
-                                        className="absolute top-0 h-full w-[1px] bg-white z-10 will-change-[left]"
-                                        style={{ left: `${progressPct}%` }}
-                                    />
-                                )}
-                            </Link>
-                        );
-                    })}
+                            // Calculate scrub preview for this segment
+                            const segStart = cumulativeWidths[index];
+                            const segEnd = cumulativeWidths[index + 1];
+                            const showScrub = hoverAbsolutePct !== null && hoverAbsolutePct > playheadAbsolutePct;
+
+                            let scrubStart = 0;
+                            let scrubWidth = 0;
+
+                            if (showScrub) {
+                                const rangeStart = Math.max(segStart, playheadAbsolutePct);
+                                const rangeEnd = Math.min(segEnd, hoverAbsolutePct!);
+                                if (rangeEnd > rangeStart) {
+                                    scrubStart = ((rangeStart - segStart) / (segEnd - segStart)) * 100;
+                                    scrubWidth = ((rangeEnd - rangeStart) / (segEnd - segStart)) * 100;
+                                }
+                            }
+
+                            return (
+                                <Link
+                                    key={segment.uuid}
+                                    to={`/segmented-videos/${segmentedVideoId}/segments/${segment.uuid}`}
+                                    title={segment.description || `Сегмент ${index + 1}`}
+                                    onClick={(e) => isOverlay && handleSegmentClick(e, segment.uuid)}
+                                    className={cn(
+                                        "h-full transition-all duration-200 relative overflow-hidden flex-1",
+                                        isOverlay && "hover:scale-y-150 origin-center transition-transform",
+                                        isPassed
+                                            ? "bg-[rgba(var(--brand-rgb),0.75)]"
+                                            : (isCurrent ? "bg-white/30" : "bg-white/10")
+                                    )}
+                                    style={{
+                                        flex: `${widthPercent} 1 0%`,
+                                        minWidth: '2px'
+                                    }}
+                                >
+                                    {/* Forward Seek Preview Highlight (Scrubbing) */}
+                                    {showScrub && scrubWidth > 0 && (
+                                        <div
+                                            className="absolute top-0 h-full bg-white/40 z-10 pointer-events-none"
+                                            style={{ left: `${scrubStart}%`, width: `${scrubWidth}%` }}
+                                        />
+                                    )}
+
+                                    {/* Current Playing Content */}
+                                    {isCurrent && (
+                                        <div
+                                            className="absolute left-0 top-0 h-full bg-[rgba(var(--brand-rgb),1)] z-20 will-change-[width]"
+                                            style={{ width: `${progressPct}%` }}
+                                        />
+                                    )}
+                                </Link>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
 
