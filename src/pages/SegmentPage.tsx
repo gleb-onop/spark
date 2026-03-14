@@ -1,6 +1,6 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Info, Edit2, Scissors } from 'lucide-react';
+import { Info, Edit2, Scissors, Maximize, Minimize } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { useSegmentNavigation } from '@/hooks/useSegmentNavigation';
 import { ExpandableDescription } from '@/components/ExpandableDescription';
 import { SegmentThumbnail } from '@/components/SegmentThumbnail';
 import { SegmentsProgressBar } from '@/components/SegmentsProgressBar';
+import { useControlsVisibility } from '@/hooks/useControlsVisibility';
 import { cn } from '@/lib/utils';
 import { parseTime, formatTime } from '@/utils/time';
 
@@ -35,8 +36,48 @@ const SegmentPage = () => {
     // Detect initial seek percentage from navigation state
     const initialSeekPct = location.state?.seekPct ?? null;
 
-    // Container ref for fullscreen API
+    // Container ref for fullscreen API and coordinate tracking
     const containerRef = useRef<HTMLDivElement>(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    // Custom controls visibility logic
+    const { showControls, resetTimer } = useControlsVisibility(containerRef, isFullscreen);
+
+    useEffect(() => {
+        const handleFsChange = () => {
+            setIsFullscreen(!!document.fullscreenElement && document.fullscreenElement === containerRef.current);
+        };
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.code === 'KeyF' && !e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey) {
+                const target = e.target as HTMLElement;
+                const isInput = target.tagName === 'INPUT' ||
+                    target.tagName === 'TEXTAREA' ||
+                    target.isContentEditable;
+                if (!isInput) {
+                    e.preventDefault();
+                    toggleFullscreen();
+                    resetTimer();
+                }
+            }
+        };
+
+        document.addEventListener('fullscreenchange', handleFsChange);
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('fullscreenchange', handleFsChange);
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [resetTimer]);
+
+    const toggleFullscreen = () => {
+        if (!containerRef.current) return;
+        if (!document.fullscreenElement) {
+            containerRef.current.requestFullscreen().catch(() => { });
+        } else {
+            document.exitFullscreen();
+        }
+    };
 
     const { playerRef } = useYouTubePlayer({
         youtubeId: segment?.video.youtubeId || '',
@@ -75,12 +116,14 @@ const SegmentPage = () => {
             {/* Desktop header */}
             <div className="hidden md:flex items-center justify-between px-8 pt-8 pb-4">
                 <h1 className="text-4xl font-black tracking-tight truncate">{segmentedVideo.name}</h1>
-                <Button asChild variant="outline" className="rounded-xl px-4">
-                    <Link to={`/segmented-videos/${segmentedVideoId}/segments/${segment.uuid}/edit`} className="flex items-center gap-2">
-                        <Edit2 className="h-4 w-4" />
-                        <span>Редактировать</span>
-                    </Link>
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button asChild variant="outline" className="rounded-xl px-4">
+                        <Link to={`/segmented-videos/${segmentedVideoId}/segments/${segment.uuid}/edit`} className="flex items-center gap-2">
+                            <Edit2 className="h-4 w-4" />
+                            <span>Редактировать</span>
+                        </Link>
+                    </Button>
+                </div>
             </div>
 
             {/* Desktop: 3-column grid. Mobile: single column */}
@@ -89,33 +132,69 @@ const SegmentPage = () => {
                 <div className="md:col-span-2">
                     <div
                         ref={containerRef}
-                        className="w-full bg-black sticky top-[61px] z-20 shadow-xl md:relative md:top-auto md:rounded-2xl md:overflow-hidden outline-none group"
+                        className={cn(
+                            "w-full bg-black sticky top-[61px] z-20 shadow-xl md:relative md:top-auto md:rounded-2xl md:overflow-hidden outline-none group flex flex-col",
+                            isFullscreen && "fixed inset-0 z-[100] rounded-none md:rounded-none h-screen w-screen top-0"
+                        )}
                         tabIndex={0}
                     >
-                        <div style={{ paddingTop: playerPaddingTop, position: 'relative' }}>
-                            <div id="youtube-player" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
+                        <div
+                            className="relative w-full overflow-hidden flex-1 flex flex-col justify-center"
+                            style={isFullscreen ? { height: '100%' } : { paddingTop: playerPaddingTop }}
+                        >
+                            <div
+                                id="youtube-player"
+                                className="absolute inset-0 w-full h-full"
+                                style={isFullscreen ? { position: 'absolute' } : { position: 'absolute' }}
+                            />
 
-                            {/* Progress Overlay */}
-                            <div className="absolute inset-x-0 bottom-0 z-30 transition-opacity duration-300 pointer-events-none group-hover:opacity-100 opacity-100">
-                                <div className="pointer-events-auto">
-                                    <SegmentsProgressBar
-                                        segments={segments}
-                                        currentSegmentUuid={segment.uuid}
-                                        segmentedVideoId={segmentedVideoId!}
-                                        progressPct={progressSync.progressPct}
-                                        isOverlay={true}
-                                        onSeek={(uuid, pct) => {
-                                            if (uuid === segment.uuid) {
-                                                progressSync.seek(pct);
-                                            } else {
-                                                navigate(`/segmented-videos/${segmentedVideoId}/segments/${uuid}`, {
-                                                    state: { seekPct: pct }
-                                                });
-                                            }
-                                        }}
-                                    />
-                                </div>
-                            </div>
+                            {/* Wake-up Scrim: Catches mouse movement when controls are hidden 
+                                (YouTube IFrame blocks mousemove on the parent container) */}
+                            <div
+                                className={cn(
+                                    "absolute inset-0 z-20 bg-transparent",
+                                    showControls ? "pointer-events-none" : "pointer-events-auto"
+                                )}
+                                onMouseMove={resetTimer}
+                                onMouseEnter={resetTimer}
+                                onTouchStart={resetTimer}
+                            />
+
+                            {/* Fullscreen Toggle Button - Internal */}
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={toggleFullscreen}
+                                className={cn(
+                                    "absolute right-4 bottom-[70%] z-40 rounded-full bg-transparent hover:bg-black/40 text-white transition-all duration-300",
+                                    showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+                                )}
+                            >
+                                {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+                            </Button>
+                        </div>
+
+                        {/* Minimalist Integrated Progress Bar - Extreme Bottom Edge */}
+                        <div className={cn(
+                            "absolute bottom-0 left-0 right-0 z-30 transition-opacity duration-500 ease-in-out bg-black/40 px-0 pb-0",
+                            showControls ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                        )}>
+                            <SegmentsProgressBar
+                                segments={segments}
+                                currentSegmentUuid={segment.uuid}
+                                segmentedVideoId={segmentedVideoId!}
+                                progressPct={progressSync.progressPct}
+                                isOverlay={true}
+                                onSeek={(uuid, pct) => {
+                                    if (uuid === segment.uuid) {
+                                        progressSync.seek(pct);
+                                    } else {
+                                        navigate(`/segmented-videos/${segmentedVideoId}/segments/${uuid}`, {
+                                            state: { seekPct: pct }
+                                        });
+                                    }
+                                }}
+                            />
                         </div>
                     </div>
 

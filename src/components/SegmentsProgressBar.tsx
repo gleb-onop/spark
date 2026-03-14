@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Timer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { parseTime, formatTime } from '@/utils/time';
 import type { Segment } from '@/types';
@@ -124,7 +123,7 @@ export const SegmentsProgressBar = ({
             {isOverlay && (
                 <div
                     className="absolute inset-x-0 -top-10 bottom-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent cursor-pointer"
-                    onClick={(e) => {
+                    onClick={(e: React.MouseEvent) => {
                         // Find the target segment under the click or just use the current one's context
                         // For simplicity and safety, we skip direct seeking on the scrim
                         // but capture the click to prevent it hitting the native bar.
@@ -134,17 +133,7 @@ export const SegmentsProgressBar = ({
                 />
             )}
 
-            {!isOverlay && (
-                <div className="flex justify-between items-center text-xs font-bold text-muted-foreground uppercase tracking-wider px-1">
-                    <span>
-                        Сегмент {currentSegmentIndex !== -1 ? currentSegmentIndex + 1 : '-'}/{segments.length}
-                    </span>
-                    <span className="flex items-center gap-1">
-                        <Timer className="w-3 h-3" />
-                        {formatTime(totalDuration)}
-                    </span>
-                </div>
-            )}
+
 
             {/* 3-Layer Progress Structure */}
             <div className={cn(

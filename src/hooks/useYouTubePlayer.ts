@@ -104,7 +104,7 @@ export const useYouTubePlayer = ({
             autoplay: 1,
             controls: 1,
             disablekb: 0,
-            fs: 1,
+            fs: 0,
             mute: 1,
         },
         events: {
