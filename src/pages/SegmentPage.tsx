@@ -176,8 +176,8 @@ const SegmentPage = () => {
 
                         {/* Minimalist Integrated Progress Bar - Extreme Bottom Edge */}
                         <div className={cn(
-                            "absolute bottom-0 left-0 right-0 z-30 transition-opacity duration-500 ease-in-out bg-black/40 px-0 pb-0",
-                            showControls ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+                            "absolute bottom-0 left-0 right-0 z-30 transition-all duration-500 ease-in-out px-0 pb-0",
+                            showControls ? "opacity-100 translate-y-0" : "opacity-60"
                         )}>
                             <SegmentsProgressBar
                                 segments={segments}

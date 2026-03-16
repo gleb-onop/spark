@@ -100,8 +100,8 @@ export const SegmentsProgressBar = ({
     return (
         <div
             className={cn(
-                "w-full flex flex-col gap-2 relative group select-none",
-                isOverlay ? "absolute bottom-8.5 left-0 z-30 px-2 pt-1" : "pt-2"
+                "w-full flex flex-col gap-0 relative group select-none",
+                isOverlay ? "z-30" : "pt-2 gap-2"
             )}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
@@ -119,39 +119,25 @@ export const SegmentsProgressBar = ({
                 </div>
             )}
 
-            {/* Background Gradient (Shadow/Scrim behind bar for visibility and protection) */}
-            {isOverlay && (
-                <div
-                    className="absolute inset-x-0 -top-10 bottom-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent cursor-pointer"
-                    onClick={(e: React.MouseEvent) => {
-                        // Find the target segment under the click or just use the current one's context
-                        // For simplicity and safety, we skip direct seeking on the scrim
-                        // but capture the click to prevent it hitting the native bar.
-                        e.preventDefault();
-                        e.stopPropagation();
-                    }}
-                />
-            )}
-
-
 
             {/* 3-Layer Progress Structure */}
+
             <div className={cn(
                 "w-full flex items-center transition-all duration-200 relative z-10",
-                isOverlay ? "h-[14px] md:h-5" : "h-5"
+                isOverlay ? "h-[3px]" : "h-5"
             )}>
                 {/* Layer 2: Background Tray */}
                 <div className={cn(
-                    "flex w-full transition-all duration-300 items-center px-0.5 relative",
+                    "flex w-full transition-all duration-300 items-center px-0 relative",
                     isOverlay
-                        ? "h-full bg-black/40 backdrop-blur-md rounded-md border border-white/5"
+                        ? "h-full"
                         : "h-3 bg-muted/20 border border-border/30 rounded-full"
                 )}>
                     {/* Layer 3: Refined Adaptive Segments Bar with YouTube Gaps */}
                     <div className={cn(
-                        "flex w-full gap-1 px-1 items-center",
+                        "flex w-full gap-0.5 px-0 items-center",
                         isOverlay
-                            ? "h-[6px] md:gap-1.5"
+                            ? "h-full"
                             : "h-[6px] rounded-full overflow-hidden"
                     )}>
                         {segments.map((segment, index) => {
@@ -185,10 +171,10 @@ export const SegmentsProgressBar = ({
                                     onClick={(e) => isOverlay && handleSegmentClick(e, segment.uuid)}
                                     className={cn(
                                         "h-full transition-all duration-200 relative overflow-hidden flex-1",
-                                        isOverlay && "hover:scale-y-150 origin-center transition-transform",
+                                        isOverlay && "hover:scale-y-[300%] origin-bottom transition-transform group-hover:h-[6px]",
                                         isPassed
-                                            ? "bg-[rgba(var(--brand-rgb),0.75)]"
-                                            : (isCurrent ? "bg-white/30" : "bg-white/10")
+                                            ? "bg-[rgba(var(--brand-rgb),0.85)]"
+                                            : (isCurrent ? "bg-white/40" : "bg-white/20")
                                     )}
                                     style={{
                                         flex: `${widthPercent} 1 0%`,
