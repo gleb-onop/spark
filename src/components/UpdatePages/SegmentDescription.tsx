@@ -1,14 +1,14 @@
 import { Label } from '../ui/label';
 
-interface SegmentConfigProps {
+interface SegmentDescriptionProps {
     description: string;
     setDescription: (desc: string) => void;
 }
 
-export const SegmentConfig = ({
+export const SegmentDescription = ({
     description,
     setDescription,
-}: SegmentConfigProps) => {
+}: SegmentDescriptionProps) => {
     return (
         <div className="space-y-6">
             <div className="space-y-2">

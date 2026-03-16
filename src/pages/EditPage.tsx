@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { YouTubeInputSection } from '../components/UpdatePages/YouTubeInputSection';
-import { SegmentConfig } from '../components/UpdatePages/SegmentConfig';
+import { SegmentDescription } from '../components/UpdatePages/SegmentDescription';
 import { useEditSegment } from '../hooks/useEditSegment';
 
 const EditPage = () => {
@@ -37,7 +37,7 @@ const EditPage = () => {
                         setTimeEnd={actions.setTimeEnd}
                     />
 
-                    <SegmentConfig
+                    <SegmentDescription
                         description={state.description}
                         setDescription={actions.setDescription}
                     />

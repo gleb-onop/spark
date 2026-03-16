@@ -8,7 +8,7 @@ import { generateUUID } from '@/utils/uuid';
 import { PageHeader } from '@/components/PageHeader';
 import { SegmentedVideoSelector } from '../components/UpdatePages/SegmentedVideoSelector';
 import { YouTubeInputSection } from '../components/UpdatePages/YouTubeInputSection';
-import { SegmentConfig } from '../components/UpdatePages/SegmentConfig';
+import { SegmentDescription } from '../components/UpdatePages/SegmentDescription';
 import type { SegmentedVideo } from '../types';
 
 const AddPage = () => {
@@ -144,7 +144,7 @@ const AddPage = () => {
                         setTimeEnd={setTimeEnd}
                     />
 
-                    <SegmentConfig
+                    <SegmentDescription
                         description={description}
                         setDescription={setDescription}
                     />
