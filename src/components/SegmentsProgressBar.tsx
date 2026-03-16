@@ -172,7 +172,7 @@ export const SegmentsProgressBar = ({
                                     onClick={(e) => isOverlay && handleSegmentClick(e, segment.uuid)}
                                     className={cn(
                                         "h-full transition-all duration-200 relative overflow-hidden flex-1",
-                                        isOverlay && "hover:scale-y-[300%] origin-bottom transition-transform group-hover:h-[6px]",
+                                        isOverlay && "hover:scale-y-[200%] origin-bottom transition-transform group-hover:h-[6px]",
                                         isPassed
                                             ? "bg-[rgba(var(--brand-rgb),0.85)]"
                                             : (isCurrent ? "bg-white/40" : "bg-white/20")
