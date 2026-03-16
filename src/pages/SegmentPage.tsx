@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Info, Edit2, Scissors, Maximize, Minimize } from 'lucide-react';
+import { Info, Edit2, Maximize, Minimize } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -12,10 +12,12 @@ import { useLoopSetting } from '@/hooks/useLoopSetting';
 import { useSegmentNavigation } from '@/hooks/useSegmentNavigation';
 import { ExpandableDescription } from '@/components/ExpandableDescription';
 import { SegmentThumbnail } from '@/components/SegmentThumbnail';
+import { SegmentTimeLabel } from '@/components/SegmentTimeLabel';
 import { SegmentsProgressBar } from '@/components/SegmentsProgressBar';
 import { useControlsVisibility } from '@/hooks/useControlsVisibility';
 import { cn } from '@/lib/utils';
-import { parseTime, formatTime } from '@/utils/time';
+
+const isFullscreenSupported = typeof document !== 'undefined' && !!document.fullscreenEnabled;
 
 const SegmentPage = () => {
     const { segmentedVideoId, segmentId } = useParams<{ segmentedVideoId: string; segmentId: string }>();
@@ -100,8 +102,7 @@ const SegmentPage = () => {
     if (!segment || !segmentedVideo) return null;
 
     const descriptionText = segment.description || segment.video.description || '';
-    const playerPaddingTop = segment.video.isVertical ? "min(177.78%, 85vh)" : "56.25%";
-    const isFullscreenSupported = typeof document !== 'undefined' && !!document.fullscreenEnabled;
+    const playerPaddingTop = segment.video.isVertical ? 'min(177.78%, 85vh)' : '56.25%';
 
     return (
         <div className="bg-background pb-24 md:pb-8">
@@ -137,7 +138,7 @@ const SegmentPage = () => {
                     <div
                         ref={containerRef}
                         className={cn(
-                            "w-full bg-black z-20 shadow-xl md:relative md:top-auto md:rounded-2xl md:overflow-hidden outline-none group flex flex-col",
+                            "w-full bg-black relative z-20 shadow-xl md:top-auto md:rounded-2xl md:overflow-hidden outline-none group flex flex-col",
                             !segment.video.isVertical && "sticky top-[61px]",
                             "fullscreen:fixed fullscreen:inset-0 fullscreen:h-screen fullscreen:w-screen fullscreen:rounded-none",
                             "webkit-fullscreen:fixed webkit-fullscreen:inset-0 webkit-fullscreen:h-screen webkit-fullscreen:w-screen"
@@ -149,10 +150,9 @@ const SegmentPage = () => {
                         <div
                             className={cn(
                                 "relative w-full overflow-hidden flex-1 flex flex-col justify-center",
-                                "pt-[var(--player-padding)] fullscreen:pt-0 fullscreen:h-full",
-                                "webkit-fullscreen:pt-0 webkit-fullscreen:h-full"
+                                "fullscreen:h-full webkit-fullscreen:h-full"
                             )}
-                            style={{ "--player-padding": playerPaddingTop } as React.CSSProperties}
+                            style={{ paddingTop: isFullscreen ? 0 : playerPaddingTop }}
                         >
 
                             <div
@@ -213,16 +213,9 @@ const SegmentPage = () => {
                     {/* Info under player */}
                     <main className="px-5 py-5 flex flex-col gap-6 fade-in duration-500 w-full max-w-full md:px-0 md:pt-6">
                         <section className="flex flex-col gap-4">
-                            {segment.timeStart && (() => {
-                                const startText = formatTime(parseTime(segment.timeStart), true);
-                                const endText = segment.timeEnd ? formatTime(parseTime(segment.timeEnd), true) : '';
-                                return (
-                                    <div className="flex items-center gap-2 text-sm text-brand font-black bg-brand/10 w-fit px-3 py-1 rounded-xl border border-brand/20 shadow-sm animate-in fade-in slide-in-from-left-4 duration-500 delay-100">
-                                        <Scissors className="h-4 w-4" />
-                                        <span>{startText} {endText ? `– ${endText}` : ''}</span>
-                                    </div>
-                                );
-                            })()}
+                            {segment.timeStart && (
+                                <SegmentTimeLabel timeStart={segment.timeStart} timeEnd={segment.timeEnd} variant="full" showMs />
+                            )}
 
                             <ExpandableDescription text={descriptionText} />
                         </section>
@@ -277,15 +270,9 @@ const SegmentPage = () => {
                                     />
                                     <div className="flex-1 min-w-0">
                                         <div className="text-xs font-medium line-clamp-2">{seg.description || 'Без описания'}</div>
-                                        {seg.timeStart && (() => {
-                                            const formattedStart = formatTime(parseTime(seg.timeStart));
-                                            const formattedEnd = seg.timeEnd ? formatTime(parseTime(seg.timeEnd)) : '';
-                                            return (
-                                                <div className="text-[10px] text-brand font-bold mt-0.5">
-                                                    {formattedStart} {formattedEnd ? `– ${formattedEnd}` : ''}
-                                                </div>
-                                            );
-                                        })()}
+                                        {seg.timeStart && (
+                                            <SegmentTimeLabel timeStart={seg.timeStart} timeEnd={seg.timeEnd} variant="compact" />
+                                        )}
                                     </div>
                                 </Link>
                             ))}
