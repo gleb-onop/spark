@@ -3,7 +3,7 @@ import { ensureYouTubeIframeAPIReady, type YTPlayer, type YTEvent, type YTPlayer
 
 export interface YouTubeBaseOptions {
     videoId: string;
-    elementId: string;
+    target: string | HTMLElement | null;
     playerVars?: YTPlayerOptions['playerVars'];
     events?: YTPlayerOptions['events'];
     /** Optional ref to sync with the player instance. If not provided, a local one is used. */
@@ -16,7 +16,7 @@ export interface YouTubeBaseOptions {
  */
 export const useYouTubeBase = ({
     videoId,
-    elementId,
+    target,
     playerVars,
     events,
     playerRef: externalPlayerRef,
@@ -38,7 +38,7 @@ export const useYouTubeBase = ({
         let isMounted = true;
 
         const initPlayer = async () => {
-            if (!videoId || !elementId) return;
+            if (!videoId || !target) return;
 
             await ensureYouTubeIframeAPIReady();
             if (!isMounted) return;
@@ -55,7 +55,7 @@ export const useYouTubeBase = ({
             }
 
             // Create new player
-            const newPlayer = new window.YT.Player(elementId, {
+            const newPlayer = new window.YT.Player(target as any, {
                 videoId,
                 playerVars: {
                     modestbranding: 1,
@@ -103,10 +103,11 @@ export const useYouTubeBase = ({
                 setPlayer(null);
             }
         };
-    }, [videoId, elementId, JSON.stringify(playerVars)]); // Re-init only if ID or key vars change
+    }, [videoId, target, JSON.stringify(playerVars)]); // Re-init only if ID, target or key vars change
 
     return {
         player,
         playerRef: playerInstRef
     };
 };
+

@@ -10,6 +10,7 @@ interface UseYouTubePlayerProps {
     initialSeekPct?: number | null;
     onComplete: () => void;
     onSegmentEnded: () => void;
+    playerElement?: HTMLElement | null;
 }
 
 export const useYouTubePlayer = ({
@@ -19,6 +20,7 @@ export const useYouTubePlayer = ({
     initialSeekPct,
     onComplete,
     onSegmentEnded,
+    playerElement,
 }: UseYouTubePlayerProps) => {
     const playerRef = useRef<YTPlayer | null>(null);
     const intervalRef = useRef<number | null>(null);
@@ -58,7 +60,7 @@ export const useYouTubePlayer = ({
                 onSegmentEndedRef.current();
             }
         }, 100);
-    }, [hasSegment, startSec, endSec]);
+    }, [hasSegment, endSec]);
 
     // 1. Re-sync player when segment or video changes
     useEffect(() => {
@@ -94,11 +96,11 @@ export const useYouTubePlayer = ({
             }
         }
         return () => stopInterval();
-    }, [youtubeId, startSec, endSec, startPolling, initialSeekPct]);
+    }, [youtubeId, startSec, endSec, startPolling, initialSeekPct, timeStart, timeEnd]);
 
     useYouTubeBase({
         videoId: youtubeId,
-        elementId: 'youtube-player',
+        target: playerElement || 'youtube-player',
         playerRef,
         playerVars: {
             autoplay: 1,
@@ -143,7 +145,6 @@ export const useYouTubePlayer = ({
                 } else if (event.data === YTPlayerState.PAUSED || event.data === YTPlayerState.BUFFERING) {
                     // We don't necessarily stop polling on buffering, 
                     // but on pause we can to save resources.
-                    // Actually, let's just keep it simple.
                 } else {
                     stopInterval();
                 }
@@ -161,3 +162,4 @@ export const useYouTubePlayer = ({
         playerRef
     };
 };
+

@@ -124,7 +124,7 @@ export const SegmentsProgressBar = ({
 
             <div className={cn(
                 "w-full flex items-center transition-all duration-200 relative z-10",
-                isOverlay ? "h-[3px]" : "h-5"
+                isOverlay ? "h-[6px]" : "h-5"
             )}>
                 {/* Layer 2: Background Tray */}
                 <div className={cn(
@@ -139,6 +139,7 @@ export const SegmentsProgressBar = ({
                         isOverlay
                             ? "h-full"
                             : "h-[6px] rounded-full overflow-hidden"
+
                     )}>
                         {segments.map((segment, index) => {
                             const duration = segmentDurations[index];
@@ -176,6 +177,7 @@ export const SegmentsProgressBar = ({
                                             ? "bg-[rgba(var(--brand-rgb),0.85)]"
                                             : (isCurrent ? "bg-white/40" : "bg-white/20")
                                     )}
+
                                     style={{
                                         flex: `${widthPercent} 1 0%`,
                                         minWidth: '2px'

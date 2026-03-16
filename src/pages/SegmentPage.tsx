@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Info, Edit2, Scissors, Maximize, Minimize } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
@@ -43,6 +43,15 @@ const SegmentPage = () => {
     // Custom controls visibility logic
     const { showControls, resetTimer } = useControlsVisibility(containerRef, isFullscreen);
 
+    const toggleFullscreen = useCallback(() => {
+        if (!containerRef.current) return;
+        if (!document.fullscreenElement) {
+            containerRef.current.requestFullscreen().catch(() => { });
+        } else {
+            document.exitFullscreen();
+        }
+    }, []);
+
     useEffect(() => {
         const handleFsChange = () => {
             setIsFullscreen(!!document.fullscreenElement && document.fullscreenElement === containerRef.current);
@@ -68,16 +77,9 @@ const SegmentPage = () => {
             document.removeEventListener('fullscreenchange', handleFsChange);
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [resetTimer]);
+    }, [resetTimer, toggleFullscreen]);
 
-    const toggleFullscreen = () => {
-        if (!containerRef.current) return;
-        if (!document.fullscreenElement) {
-            containerRef.current.requestFullscreen().catch(() => { });
-        } else {
-            document.exitFullscreen();
-        }
-    };
+    const [playerElement, setPlayerElement] = useState<HTMLDivElement | null>(null);
 
     const { playerRef } = useYouTubePlayer({
         youtubeId: segment?.video.youtubeId || '',
@@ -86,6 +88,7 @@ const SegmentPage = () => {
         initialSeekPct,
         onComplete,
         onSegmentEnded: onComplete,
+        playerElement
     });
 
     const progressSync = useProgressSync({
@@ -97,7 +100,8 @@ const SegmentPage = () => {
     if (!segment || !segmentedVideo) return null;
 
     const descriptionText = segment.description || segment.video.description || '';
-    const playerPaddingTop = segment.video.isVertical ? '100%' : '56.25%';
+    const playerPaddingTop = segment.video.isVertical ? "min(177.78%, 85vh)" : "56.25%";
+    const isFullscreenSupported = typeof document !== 'undefined' && !!document.fullscreenEnabled;
 
     return (
         <div className="bg-background pb-24 md:pb-8">
@@ -134,18 +138,24 @@ const SegmentPage = () => {
                         ref={containerRef}
                         className={cn(
                             "w-full bg-black sticky top-[61px] z-20 shadow-xl md:relative md:top-auto md:rounded-2xl md:overflow-hidden outline-none group flex flex-col",
-                            isFullscreen && "fixed inset-0 z-[100] rounded-none md:rounded-none h-screen w-screen top-0"
+                            "fullscreen:fixed fullscreen:inset-0 fullscreen:h-screen fullscreen:w-screen fullscreen:rounded-none",
+                            "webkit-fullscreen:fixed webkit-fullscreen:inset-0 webkit-fullscreen:h-screen webkit-fullscreen:w-screen"
                         )}
                         tabIndex={0}
                     >
+
                         <div
-                            className="relative w-full overflow-hidden flex-1 flex flex-col justify-center"
-                            style={isFullscreen ? { height: '100%' } : { paddingTop: playerPaddingTop }}
+                            className={cn(
+                                "relative w-full overflow-hidden flex-1 flex flex-col justify-center",
+                                "pt-[var(--player-padding)] fullscreen:pt-0 fullscreen:h-full",
+                                "webkit-fullscreen:pt-0 webkit-fullscreen:h-full"
+                            )}
+                            style={{ "--player-padding": playerPaddingTop } as React.CSSProperties}
                         >
+
                             <div
-                                id="youtube-player"
+                                ref={setPlayerElement}
                                 className="absolute inset-0 w-full h-full"
-                                style={isFullscreen ? { position: 'absolute' } : { position: 'absolute' }}
                             />
 
                             {/* Wake-up Scrim: Catches mouse movement when controls are hidden 
@@ -161,24 +171,24 @@ const SegmentPage = () => {
                             />
 
                             {/* Fullscreen Toggle Button - Internal */}
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={toggleFullscreen}
-                                className={cn(
-                                    "absolute right-4 bottom-[70%] z-40 rounded-full bg-transparent hover:bg-black/40 text-white transition-all duration-300",
-                                    showControls ? "opacity-100" : "opacity-0 pointer-events-none"
-                                )}
-                            >
-                                {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
-                            </Button>
+                            {isFullscreenSupported && (
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={toggleFullscreen}
+                                    className={cn(
+                                        "absolute right-4 bottom-[70%] z-40 rounded-full bg-transparent hover:bg-black/40 text-white transition-all duration-300",
+                                        showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+                                    )}
+                                >
+                                    {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+                                </Button>
+                            )}
                         </div>
 
                         {/* Minimalist Integrated Progress Bar - Extreme Bottom Edge */}
-                        <div className={cn(
-                            "absolute bottom-0 left-0 right-0 z-30 transition-all duration-500 ease-in-out px-0 pb-0",
-                            showControls ? "opacity-100 translate-y-0" : "opacity-60"
-                        )}>
+                        <div className="absolute bottom-0 left-0 right-0 z-30 transition-all duration-500 ease-in-out px-0 pb-0 opacity-100">
+
                             <SegmentsProgressBar
                                 segments={segments}
                                 currentSegmentUuid={segment.uuid}

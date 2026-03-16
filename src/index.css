@@ -3,6 +3,7 @@
 @plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is(.dark *));
+@config "../tailwind.config.js";
 
 @theme {
   --color-accent: #FF6B35;
