@@ -137,12 +137,14 @@ const SegmentPage = () => {
                     <div
                         ref={containerRef}
                         className={cn(
-                            "w-full bg-black sticky top-[61px] z-20 shadow-xl md:relative md:top-auto md:rounded-2xl md:overflow-hidden outline-none group flex flex-col",
+                            "w-full bg-black z-20 shadow-xl md:relative md:top-auto md:rounded-2xl md:overflow-hidden outline-none group flex flex-col",
+                            !segment.video.isVertical && "sticky top-[61px]",
                             "fullscreen:fixed fullscreen:inset-0 fullscreen:h-screen fullscreen:w-screen fullscreen:rounded-none",
                             "webkit-fullscreen:fixed webkit-fullscreen:inset-0 webkit-fullscreen:h-screen webkit-fullscreen:w-screen"
                         )}
                         tabIndex={0}
                     >
+
 
                         <div
                             className={cn(
