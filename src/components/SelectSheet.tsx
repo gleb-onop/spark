@@ -76,7 +76,8 @@ export const SelectSheet = ({
                         );
                     })}
                 </div>
-                <div className="h-6" /> {/* Extra bottom padding */}
+                <div className="h-20" /> {/* Bottom padding to clear TabBar */}
+
             </DrawerContent>
         </Drawer>
     );

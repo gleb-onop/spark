@@ -15,6 +15,7 @@ import { SegmentThumbnail } from '@/components/SegmentThumbnail';
 import { SegmentTimeLabel } from '@/components/SegmentTimeLabel';
 import { SegmentsProgressBar } from '@/components/SegmentsProgressBar';
 import { useControlsVisibility } from '@/hooks/useControlsVisibility';
+import { useOrientationFullscreen } from '@/hooks/useOrientationFullscreen';
 import { cn } from '@/lib/utils';
 
 const isFullscreenSupported = typeof document !== 'undefined' && !!document.fullscreenEnabled;
@@ -44,6 +45,9 @@ const SegmentPage = () => {
 
     // Custom controls visibility logic
     const { showControls, resetTimer } = useControlsVisibility(containerRef, isFullscreen);
+
+    // Auto fullscreen on landscape rotation
+    useOrientationFullscreen(containerRef, isFullscreen);
 
     const toggleFullscreen = useCallback(() => {
         if (!containerRef.current) return;

@@ -47,7 +47,7 @@ export const YouTubeInputSection = ({
 
     useYouTubeBase({
         videoId: youtubeId,
-        elementId: 'preview-player',
+        target: 'preview-player',
         playerRef,
         playerVars: {
             autoplay: 0,
