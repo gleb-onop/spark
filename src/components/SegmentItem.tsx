@@ -23,7 +23,7 @@ export const SegmentItem = ({
     return (
         <div
             ref={null}
-            style={{ ...style, touchAction: dragHandleProps ? 'none' : undefined }}
+            style={{ ...style, touchAction: dragHandleProps ? 'manipulation' : undefined }}
             {...dragHandleProps}
             className={cn(
                 "relative overflow-hidden group rounded-2xl transition-all duration-200 select-none",

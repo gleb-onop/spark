@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import {
     useSensor,
     useSensors,
-    MouseSensor,
+    PointerSensor,
     TouchSensor,
     KeyboardSensor,
 } from '@dnd-kit/core';
@@ -27,22 +27,28 @@ export function useSegmentReorder(segments: Segment[], segmentedVideoId: string 
         }
     }, [segments]);
 
+    const isTouchDevice = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
+
+    const mouseSensor = useSensor(PointerSensor, {
+        activationConstraint: {
+            distance: 8,
+        },
+    });
+
+    const touchSensor = useSensor(TouchSensor, {
+        activationConstraint: {
+            delay: 500,
+            tolerance: 5,
+        },
+    });
+
+    const keyboardSensor = useSensor(KeyboardSensor, {
+        coordinateGetter: sortableKeyboardCoordinates,
+    });
+
     const sensors = useSensors(
-        useSensor(MouseSensor, {
-            activationConstraint: {
-                distance: 10,
-                delay: 250,
-            },
-        }),
-        useSensor(TouchSensor, {
-            activationConstraint: {
-                delay: 250,
-                tolerance: 5,
-            },
-        }),
-        useSensor(KeyboardSensor, {
-            coordinateGetter: sortableKeyboardCoordinates,
-        })
+        isTouchDevice ? touchSensor : mouseSensor,
+        keyboardSensor
     );
 
     // Debounced save function with rollback logic
