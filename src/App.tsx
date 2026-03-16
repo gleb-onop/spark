@@ -13,7 +13,7 @@ function App() {
     <BrowserRouter>
       <Toaster position="top-center" expand />
       <TabBar />
-      <div className="max-w-[390px] md:max-w-none md:ml-60 mx-auto min-h-screen relative flex flex-col bg-background selection:bg-accent/30">
+      <div className="max-w-[390px] md:max-w-none md:ml-60 mobile-landscape:ml-20 mobile-landscape:max-w-none mx-auto min-h-screen relative flex flex-col bg-background selection:bg-accent/30">
         <main className="flex-1 min-w-0">
           <Routes>
             <Route path="/" element={<Navigate to="/segmented-videos" replace />} />

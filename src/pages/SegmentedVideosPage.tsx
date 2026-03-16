@@ -46,8 +46,8 @@ const SegmentedVideosPage = () => {
             />
 
             {/* Desktop header (since PageHeader is md:hidden) */}
-            <div className="hidden md:flex items-center justify-between px-8 pt-8 pb-4">
-                <h1 className="text-4xl font-black tracking-tight">Сегментированные видео</h1>
+            <div className="hidden md:flex mobile-landscape:flex items-center justify-between px-8 pt-8 pb-4">
+                <h1 className="text-4xl font-black tracking-tight mobile-landscape:text-2xl">Сегментированные видео</h1>
                 <Button asChild className="rounded-xl shadow-lg shadow-brand/20 bg-brand hover:bg-brand/90 text-white md:w-auto md:px-4">
                     <Link to="/segmented-videos/new" className="flex items-center gap-2">
                         <Plus className="h-5 w-5" />

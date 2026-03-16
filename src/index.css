@@ -3,14 +3,18 @@
 @plugin "tailwindcss-animate";
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant mobile-landscape (@media (orientation: landscape) and (max-height: 500px));
 @config "../tailwind.config.js";
 
 @theme {
   --color-accent: #FF6B35;
   --color-brand: #FF6B35;
   --color-inactive: #2e2e45;
-  --font-sans: 'DM Sans', system-ui, sans-serif;
-  --font-serif: 'Syne', sans-serif;
+  --font-sans: 'DM Sans',
+  system-ui,
+  sans-serif;
+  --font-serif: 'Syne',
+  sans-serif;
 }
 
 :root {

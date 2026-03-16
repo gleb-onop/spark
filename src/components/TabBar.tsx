@@ -27,25 +27,25 @@ const TabBar = () => {
             </nav>
 
             {/* Desktop: fixed left sidebar 240px */}
-            <aside className="hidden md:flex fixed left-0 top-0 bottom-0 w-60 flex-col border-r border-border/50 bg-background/95 backdrop-blur-xl z-[100] py-6 px-4">
-                <div className="text-2xl font-black text-brand font-serif mb-8 px-3 select-none tracking-tight">
+            <aside className="hidden md:flex mobile-landscape:flex fixed left-0 top-0 bottom-0 w-60 mobile-landscape:w-20 flex-col border-r border-border/50 bg-background/95 backdrop-blur-xl z-[100] py-6 px-4 mobile-landscape:px-2">
+                <div className="text-2xl font-black text-brand font-serif mb-8 px-3 select-none tracking-tight mobile-landscape:hidden">
                     Spark ✦
                 </div>
-                <nav className="flex flex-col gap-1">
+                <nav className="flex flex-col gap-1 mobile-landscape:gap-4 mobile-landscape:items-center">
                     {navItems.map(({ to, icon: Icon, label, end }) => (
                         <NavLink
                             key={to}
                             to={to}
                             end={end}
                             className={({ isActive }) =>
-                                `flex items-center gap-3 no-underline transition-all duration-200 px-3 py-2.5 rounded-xl text-sm font-semibold ${isActive
+                                `flex items-center gap-3 no-underline transition-all duration-200 px-3 py-2.5 rounded-xl text-sm font-semibold mobile-landscape:p-2.5 ${isActive
                                     ? 'text-brand bg-brand/10'
                                     : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                                 }`
                             }
                         >
                             <Icon className="h-5 w-5 shrink-0" />
-                            <span>{label}</span>
+                            <span className="mobile-landscape:hidden">{label}</span>
                         </NavLink>
                     ))}
                 </nav>
