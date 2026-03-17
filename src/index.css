@@ -118,6 +118,11 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+::selection {
+  background-color: #3b82f6;
+  color: white;
+}
+
 .app-container {
   max-width: 390px;
   margin: 0 auto;
