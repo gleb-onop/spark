@@ -17,7 +17,7 @@ export const useSegmentValidation = () => {
                         } catch (e) { }
                         validationPlayerRef.current = null;
                     }
-                    console.warn('Validation timed out for video:', videoId);
+                    console.warn('[DEBUG] Validation timed out for video:', videoId);
                     resolve(false);
                 }
             }, 8000);
@@ -33,12 +33,10 @@ export const useSegmentValidation = () => {
                 }
 
                 if (!window.YT || !window.YT.Player) {
-                    clearTimeout(timeout);
-                    resolved = true;
-                    resolve(true);
-                    return;
+                    throw new Error(`DEBUG_YT_MISSING: window.YT is ${typeof (window as any).YT}`);
                 }
 
+                console.log('[DEBUG] Creating validation player for', videoId);
                 validationPlayerRef.current = new window.YT.Player('validation-player', {
                     width: 1,
                     height: 1,

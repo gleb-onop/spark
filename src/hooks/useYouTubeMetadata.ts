@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { debounce } from 'lodash';
-import { parseYouTubeTimestamp } from '@/utils/time';
+import { parseYouTubeTimestamp } from '@/utils/youtube';
 
 const DEBOUNCE_DELAY_MS = 500;
 

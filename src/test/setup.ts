@@ -38,6 +38,7 @@ Object.defineProperty(window, 'IntersectionObserver', {
 // Mock YouTube IFrame API
 Object.defineProperty(window, 'YT', {
     writable: true,
+    configurable: true,
     value: {
         Player: vi.fn().mockImplementation(function () {
             return {

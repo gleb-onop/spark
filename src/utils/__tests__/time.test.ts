@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseTime, formatTime, parseYouTubeTimestamp } from '../time';
+import { parseTime, formatTime } from '../time';
 
 describe('time utils', () => {
     describe('parseTime', () => {
@@ -49,29 +49,6 @@ describe('time utils', () => {
         it('pads milliseconds correctly', () => {
             expect(formatTime(30.005, true)).toBe('0:30.005');
             expect(formatTime(30.05, true)).toBe('0:30.050');
-        });
-    });
-
-    describe('parseYouTubeTimestamp', () => {
-        it('parses numeric seconds', () => {
-            expect(parseYouTubeTimestamp('90')).toBe(90);
-        });
-
-        it('parses hms format', () => {
-            expect(parseYouTubeTimestamp('1h2m3s')).toBe(3723);
-        });
-
-        it('parses ms format', () => {
-            expect(parseYouTubeTimestamp('2m30s')).toBe(150);
-        });
-
-        it('parses partial formats', () => {
-            expect(parseYouTubeTimestamp('1h5s')).toBe(3605);
-            expect(parseYouTubeTimestamp('10m')).toBe(600);
-        });
-
-        it('returns 0 for empty input', () => {
-            expect(parseYouTubeTimestamp('')).toBe(0);
         });
     });
 });

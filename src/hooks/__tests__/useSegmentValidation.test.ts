@@ -1,10 +1,9 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useSegmentValidation } from '../useSegmentValidation';
-import * as youtubeUtils from '../../utils/youtube';
 
 vi.mock('../../utils/youtube', () => ({
-    ensureYouTubeIframeAPIReady: vi.fn(),
+    ensureYouTubeIframeAPIReady: vi.fn(() => Promise.resolve()),
 }));
 
 describe('useSegmentValidation', () => {
@@ -12,8 +11,10 @@ describe('useSegmentValidation', () => {
         vi.useFakeTimers();
         vi.clearAllMocks();
 
-        // Default mock implementation
-        vi.mocked(youtubeUtils.ensureYouTubeIframeAPIReady).mockResolvedValue(undefined);
+        // Mock window.YT.Player
+        vi.stubGlobal('YT', {
+            Player: vi.fn(),
+        });
 
         // Add validation-player element
         document.body.innerHTML = '<div id="validation-player"></div>';
