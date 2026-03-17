@@ -6,7 +6,7 @@ import { useSegmentedVideos } from '@/hooks/useSegmentedVideos';
 import { EmptyState } from '@/components/EmptyState';
 import { SegmentedVideoShelfSection } from '@/components/SegmentedVideoShelfSection';
 
-const SegmentedVideosPage = () => {
+const LibraryPage = () => {
     const { segmentedVideos, segments, isLoading } = useSegmentedVideos();
 
     if (isLoading) {
@@ -69,5 +69,5 @@ const SegmentedVideosPage = () => {
     );
 };
 
-export default SegmentedVideosPage;
+export default LibraryPage;
 

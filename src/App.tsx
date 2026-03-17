@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import TabBar from './components/TabBar';
-import SegmentedVideosPage from './pages/SegmentedVideosPage';
+import LibraryPage from './pages/LibraryPage';
 import SegmentedVideoPage from './pages/SegmentedVideoPage';
 import SegmentPage from './pages/SegmentPage';
 import AddPage from './pages/AddPage';
@@ -17,7 +17,7 @@ function App() {
         <main className="flex-1 min-w-0">
           <Routes>
             <Route path="/" element={<Navigate to="/segmented-videos" replace />} />
-            <Route path="/segmented-videos" element={<SegmentedVideosPage />} />
+            <Route path="/segmented-videos" element={<LibraryPage />} />
             <Route path="/segmented-videos/new" element={<AddPage />} />
             <Route path="/segmented-videos/:segmentedVideoId" element={<SegmentedVideoPage />} />
             <Route path="/segmented-videos/:segmentedVideoId/segments/new" element={<AddPage />} />
