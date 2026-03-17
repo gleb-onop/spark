@@ -6,6 +6,7 @@ import { Button } from '../ui/button';
 import { type YTPlayer, type YTEvent, YTPlayerState } from '@/utils/youtube';
 import { useYouTubeBase } from '@/hooks/useYouTubeBase';
 import { useStableCallback } from '@/hooks/useStableCallback';
+import { cn } from '@/lib/utils';
 import { parseTime, formatTime } from '@/utils/time';
 import { TimeRangeFields } from './TimeRangeFields';
 
@@ -39,8 +40,10 @@ export const YouTubeInputSection = ({
     setTimeEnd = () => { },
 }: YouTubeInputSectionProps) => {
     const playerRef = useRef<YTPlayer | null>(null);
+    const [isPlayerReady, setIsPlayerReady] = useState(false);
     const [isPreviewing, setIsPreviewing] = useState(false);
     const isStartingPreviewRef = useRef(false);
+    const pendingSeekRef = useRef<number | null>(null);
 
     const stableOnDurationReady = useStableCallback(onDurationReady);
 
@@ -54,10 +57,16 @@ export const YouTubeInputSection = ({
         },
         events: {
             onReady: (event: YTEvent) => {
+                setIsPlayerReady(true);
                 stableOnDurationReady(event.target.getDuration());
             },
             onStateChange: (event: YTEvent) => {
                 if (event.data === YTPlayerState.PLAYING) {
+                    if (pendingSeekRef.current !== null) {
+                        event.target.seekTo(pendingSeekRef.current, true);
+                        pendingSeekRef.current = null;
+                    }
+
                     isStartingPreviewRef.current = false;
                     try {
                         if (event.target.isMuted()) {
@@ -66,7 +75,7 @@ export const YouTubeInputSection = ({
                     } catch (e) { }
                 }
 
-                // If user manually pauses or video ends, stop previewing
+                // If user manually pauses or video ends, stop previewing state (RAF loop)
                 if (event.data === YTPlayerState.PAUSED || event.data === YTPlayerState.ENDED) {
                     // Ignore PAUSED state if we just started the preview (often a race condition with seekTo)
                     if (isStartingPreviewRef.current && event.data === YTPlayerState.PAUSED) {
@@ -77,6 +86,11 @@ export const YouTubeInputSection = ({
             }
         }
     });
+
+    // Reset ready state when video ID changes
+    useEffect(() => {
+        setIsPlayerReady(false);
+    }, [youtubeId]);
 
     // Preview range logic with high-precision requestAnimationFrame
     useEffect(() => {
@@ -111,7 +125,7 @@ export const YouTubeInputSection = ({
     }, [isPreviewing, timeEnd]);
 
     const handleTogglePreview = useCallback(() => {
-        if (!playerRef.current) return;
+        if (!playerRef.current || !isPlayerReady) return;
 
         if (isPreviewing) {
             playerRef.current.mute(); // Immediate silence
@@ -119,13 +133,13 @@ export const YouTubeInputSection = ({
             setIsPreviewing(false);
         } else {
             const startSeconds = parseTime(timeStart);
+            pendingSeekRef.current = startSeconds;
             isStartingPreviewRef.current = true;
             playerRef.current.unMute(); // Ensure sound is on for preview
-            playerRef.current.seekTo(startSeconds, true);
             playerRef.current.playVideo();
             setIsPreviewing(true);
         }
-    }, [isPreviewing, timeStart]);
+    }, [isPreviewing, timeStart, isPlayerReady]);
 
     const captureTime = useCallback((setter: (val: string) => void) => {
         if (playerRef.current) {
@@ -134,7 +148,7 @@ export const YouTubeInputSection = ({
         }
     }, []);
 
-
+    const canPreview = isPlayerReady && !!youtubeId;
 
     return (
         <div className="space-y-6">
@@ -159,7 +173,7 @@ export const YouTubeInputSection = ({
                         <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl ring-4 ring-black/5 dark:ring-white/5 bg-black">
                             <div id="preview-player" className="absolute inset-0 w-full h-full" />
 
-                            {!playerRef.current && (
+                            {!isPlayerReady && (
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <Loader2 className="h-8 w-8 animate-spin text-white/20" />
                                 </div>
@@ -214,10 +228,22 @@ export const YouTubeInputSection = ({
                         <Button
                             type="button"
                             onClick={handleTogglePreview}
-                            variant="secondary"
-                            className={`h-12 rounded-2xl font-bold transition-all ${isPreviewing ? 'bg-brand text-white' : 'bg-accent/10 text-accent hover:bg-accent/20'}`}
+                            disabled={!canPreview}
+                            className={cn(
+                                "h-14 rounded-2xl font-black uppercase tracking-widest transition-all",
+                                isPreviewing
+                                    ? "bg-brand text-white shadow-[0_8px_20px_rgb(255,107,53,0.3)] scale-[0.98]"
+                                    : "bg-brand/10 text-brand hover:bg-brand/20 border-2 border-brand/20"
+                            )}
                         >
-                            {isPreviewing ? 'Остановить превью' : 'Предпросмотр отрезка'}
+                            {isPreviewing ? (
+                                <div className="flex items-center gap-2">
+                                    <Square className="h-4 w-4 fill-current" />
+                                    <span>Остановить превью</span>
+                                </div>
+                            ) : (
+                                "Предпросмотр отрезка"
+                            )}
                         </Button>
                     </div>
                 </div>
