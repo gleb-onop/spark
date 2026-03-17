@@ -74,6 +74,7 @@ export const useSegmentValidation = () => {
                     },
                 });
             } catch (err) {
+                console.error('Validation error:', err);
                 if (!resolved) {
                     clearTimeout(timeout);
                     resolved = true;

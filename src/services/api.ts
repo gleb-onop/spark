@@ -126,31 +126,24 @@ export const api = {
 
     deleteSegment: async (segmentUuid: string, segmentedVideoUuid?: string): Promise<void> => {
         await delay(500);
-        if (segmentedVideoUuid) {
-            const segmentedVideos = getFromStorage<SegmentedVideo>(SEGMENTED_VIDEOS_KEY);
-            const updatedSegmentedVideos = segmentedVideos.map(p => {
-                if (p.uuid === segmentedVideoUuid) {
-                    return { ...p, segmentIds: p.segmentIds.filter(id => id !== segmentUuid) };
-                }
-                return p;
-            });
-            saveToStorage(SEGMENTED_VIDEOS_KEY, updatedSegmentedVideos);
-        } else {
-            const segments = getFromStorage<Segment>(SEGMENTS_KEY).filter(v => v.uuid !== segmentUuid);
-            saveToStorage(SEGMENTS_KEY, segments);
+        const segments = getFromStorage<Segment>(SEGMENTS_KEY).filter(v => v.uuid !== segmentUuid);
+        saveToStorage(SEGMENTS_KEY, segments);
 
-            const segmentedVideos = getFromStorage<SegmentedVideo>(SEGMENTED_VIDEOS_KEY);
-            const updatedSegmentedVideos = segmentedVideos.map(p => ({
+        const segmentedVideos = getFromStorage<SegmentedVideo>(SEGMENTED_VIDEOS_KEY);
+        const updatedSegmentedVideos = segmentedVideos.map(p => {
+            if (segmentedVideoUuid && p.uuid !== segmentedVideoUuid) return p;
+            return {
                 ...p,
                 segmentIds: p.segmentIds.filter(id => id !== segmentUuid)
-            }));
-            saveToStorage(SEGMENTED_VIDEOS_KEY, updatedSegmentedVideos);
-        }
+            };
+        });
+        saveToStorage(SEGMENTED_VIDEOS_KEY, updatedSegmentedVideos);
     },
 
     addSegmentedVideoWithSegment: async (segmentedVideoName: string, segmentData: Omit<Segment, 'uuid' | 'createdAt'>): Promise<{ segmentedVideo: SegmentedVideo; segment: Segment }> => {
         const newSegmentedVideo = await api.addSegmentedVideo(segmentedVideoName);
         const newSegment = await api.addSegment(segmentData, newSegmentedVideo.uuid);
-        return { segmentedVideo: newSegmentedVideo, segment: newSegment };
+        const updatedSegmentedVideo = await api.getSegmentedVideo(newSegmentedVideo.uuid);
+        return { segmentedVideo: updatedSegmentedVideo!, segment: newSegment };
     }
 };

@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Info, Edit2, Maximize, Minimize } from 'lucide-react';
+import { Info, Edit2, Maximize, Minimize, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,7 @@ const SegmentPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const { segmentedVideo, segments } = useSegmentedVideo(segmentedVideoId);
+    const { segmentedVideo, segments, isLoading } = useSegmentedVideo(segmentedVideoId);
     const segment = segments.find(f => f.uuid === segmentId);
 
     const { isLooping, toggleLoop } = useLoopSetting();
@@ -102,6 +102,14 @@ const SegmentPage = () => {
         timeStart: segment?.timeStart || null,
         timeEnd: segment?.timeEnd || null,
     });
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <Loader2 className="h-8 w-8 animate-spin text-accent" />
+            </div>
+        );
+    }
 
     if (!segment || !segmentedVideo) return null;
 

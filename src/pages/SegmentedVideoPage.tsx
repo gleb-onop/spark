@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { MoreVertical, Trash2, FolderOpen, Plus, Play } from 'lucide-react';
+import { MoreVertical, Trash2, FolderOpen, Plus, Play, Loader2 } from 'lucide-react';
 import {
     DndContext,
     closestCenter,
@@ -55,7 +55,13 @@ const SegmentedVideoPage = () => {
         navigate('/segmented-videos');
     };
 
-    if (isLoading) return null;
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <Loader2 className="h-8 w-8 animate-spin text-accent" />
+            </div>
+        );
+    }
     if (!segmentedVideo) return <div className="p-8 text-center text-muted-foreground">Сегментированное видео не найдено</div>;
 
     return (
@@ -72,7 +78,7 @@ const SegmentedVideoPage = () => {
                         </Button>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="rounded-full">
+                                <Button variant="ghost" size="icon" className="rounded-full" aria-label="Дополнительно">
                                     <MoreVertical className="h-5 w-5" />
                                 </Button>
                             </DropdownMenuTrigger>
