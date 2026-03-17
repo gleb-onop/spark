@@ -1,8 +1,9 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { api } from '@/services/api';
 import { useYouTubeMetadata } from '@/hooks/useYouTubeMetadata';
+import { usePrevious } from '@/hooks/usePrevious';
 import { formatTime, parseTime } from '@/utils/time';
 import { generateUUID } from '@/utils/uuid';
 import { PageHeader } from '@/components/PageHeader';
@@ -10,6 +11,31 @@ import { SegmentedVideoSelector } from '../components/UpdatePages/SegmentedVideo
 import { YouTubeInputSection } from '../components/UpdatePages/YouTubeInputSection';
 import { SegmentDescription } from '../components/UpdatePages/SegmentDescription';
 import type { SegmentedVideo } from '../types';
+
+/**
+ * Validates the form data. Extracted from component to avoid re-creation and simplify testing.
+ */
+const validateForm = (
+    youtubeId: string,
+    isNewMode: boolean,
+    segmentedVideoId: string,
+    segmentedVideoName: string,
+    timeStart: string,
+    timeEnd: string
+) => {
+    if (!youtubeId) return 'Введите корректную ссылку на YouTube';
+    if (!isNewMode && !segmentedVideoId) return 'Выберите видео для сегментации';
+    if (isNewMode && !segmentedVideoName.trim()) return 'Введите название коллекции';
+
+    if (timeStart && timeEnd) {
+        const start = parseTime(timeStart);
+        const end = parseTime(timeEnd);
+        if (end <= start) return 'Конец должен быть позже начала';
+        if (end - start < 2.5) return 'Минимальная длина отрезка — 2.5 сек';
+    }
+
+    return null;
+};
 
 const AddPage = () => {
     const navigate = useNavigate();
@@ -27,6 +53,15 @@ const AddPage = () => {
     const [timeEnd, setTimeEnd] = useState('');
     const [duration, setDuration] = useState(0);
 
+    // Refs for stable handleDurationReady closure
+    const timeStartRef = useRef(timeStart);
+    const timeEndRef = useRef(timeEnd);
+
+    useEffect(() => {
+        timeStartRef.current = timeStart;
+        timeEndRef.current = timeEnd;
+    }, [timeStart, timeEnd]);
+
     // Shared Data
     const [segmentedVideos, setSegmentedVideos] = useState<SegmentedVideo[]>([]);
     const [error, setError] = useState('');
@@ -34,6 +69,23 @@ const AddPage = () => {
 
     // Custom Hooks
     const { youtubeId, initialTimestamp, urlError } = useYouTubeMetadata(url);
+    const prevYoutubeId = usePrevious(youtubeId);
+
+    // Reset fields when video changes
+    useEffect(() => {
+        if (youtubeId !== prevYoutubeId) {
+            if (youtubeId) {
+                // Video changed to a NEW one - clear times to allow re-sync
+                setTimeStart('');
+                setTimeEnd('');
+            } else {
+                // URL cleared - reset everything
+                setTimeStart('');
+                setTimeEnd('');
+                setDuration(0);
+            }
+        }
+    }, [youtubeId, prevYoutubeId]);
 
     useEffect(() => {
         api.getSegmentedVideos().then(setSegmentedVideos);
@@ -46,31 +98,26 @@ const AddPage = () => {
         }
     }, [initialTimestamp]);
 
+    /**
+     * Stable callback for YouTubeInputSection.
+     * Uses refs to avoid re-creation when timeStart/timeEnd change.
+     */
     const handleDurationReady = useCallback((dur: number) => {
         setDuration(dur);
-        if (!timeStart) setTimeStart('0:00.000');
-        if (!timeEnd) setTimeEnd(formatTime(dur, true));
-    }, [timeStart, timeEnd]);
-
-
-
-    const validateForm = () => {
-        if (!youtubeId) return 'Введите корректную ссылку на YouTube';
-        if (!isNewMode && !segmentedVideoId) return 'Выберите видео для сегментации';
-        if (isNewMode && !segmentedVideoName.trim()) return 'Введите название коллекции';
-
-        if (timeStart && timeEnd) {
-            const start = parseTime(timeStart);
-            const end = parseTime(timeEnd);
-            if (end <= start) return 'Конец должен быть позже начала';
-            if (end - start < 2.5) return 'Минимальная длина отрезка — 2.5 сек';
-        }
-
-        return null;
-    };
+        if (!timeStartRef.current) setTimeStart('0:00.000');
+        if (!timeEndRef.current) setTimeEnd(formatTime(dur, true));
+    }, []);
 
     const handleSave = async () => {
-        const validationError = validateForm();
+        const validationError = validateForm(
+            youtubeId,
+            isNewMode,
+            segmentedVideoId,
+            segmentedVideoName,
+            timeStart,
+            timeEnd
+        );
+
         if (validationError) {
             setError(validationError);
             return;
@@ -173,6 +220,11 @@ const AddPage = () => {
                 </section>
             </main>
 
+            {/* 
+                Hidden player for metadata validation. 
+                YouTube IFrame API fails to initialize in elements with 'display: none'.
+                We position it far off-screen to keep it active without affecting the layout.
+            */}
             <div className="absolute -left-[9999px] -top-[9999px] w-px h-px overflow-hidden">
                 <div id="validation-player" />
             </div>

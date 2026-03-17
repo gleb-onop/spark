@@ -4,30 +4,35 @@
 export const parseTime = (str: string | null): number => {
     if (!str) return 0;
 
-    if (str.includes(':')) {
-        const parts = str.split(':');
+    // Remove any trailing non-digit characters that might come from formatTime(..., true) + some string concat
+    const cleanStr = str.trim();
+
+    if (cleanStr.includes(':')) {
+        const parts = cleanStr.split(':');
         let h = 0, m = 0, sParts = '';
 
         if (parts.length === 3) {
-            h = Number(parts[0]) || 0;
-            m = Number(parts[1]) || 0;
+            h = parseFloat(parts[0]) || 0;
+            m = parseFloat(parts[1]) || 0;
             sParts = parts[2];
         } else if (parts.length === 2) {
-            m = Number(parts[0]) || 0;
+            m = parseFloat(parts[0]) || 0;
             sParts = parts[1];
         } else {
             sParts = parts[0];
         }
 
         const [s, ms] = (sParts || '').split('.');
-        const seconds = Number(s) || 0;
+        const seconds = parseFloat(s) || 0;
 
-        // Handle ms based on length (e.g. .5 -> 500ms, .50 -> 500ms, .500 -> 500ms)
-        const msSeconds = ms ? Number(`0.${ms}`) : 0;
+        // Handle ms as a decimal fraction: .5 -> 0.5, .05 -> 0.05, .005 -> 0.005
+        const msSeconds = ms ? parseFloat(`0.${ms}`) : 0;
 
         return (h * 3600) + (m * 60) + seconds + msSeconds;
     }
-    return Number(str) || 0;
+
+    // Likely just seconds or HHMMSS format (though spec says h:mm:ss)
+    return parseFloat(cleanStr) || 0;
 };
 
 /**

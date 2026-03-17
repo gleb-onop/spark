@@ -14,15 +14,15 @@ interface SegmentsProgressBarProps {
 }
 
 const getSegmentDuration = (segment: Segment) => {
-    const start = parseTime(segment.timeStart);
-    let end = segment.timeEnd ? parseTime(segment.timeEnd) : segment.video.duration;
+    const start = parseTime(segment.timeStart) || 0;
+    let end = segment.timeEnd ? parseTime(segment.timeEnd) : (segment.video?.duration || 0);
 
-    if (!end && segment.video.duration) {
+    if (!end && segment.video?.duration) {
         end = segment.video.duration;
     }
 
-    const duration = Math.max(0, (end || 0) - start);
-    return duration;
+    const duration = Math.max(0, (Number(end) || 0) - start);
+    return isNaN(duration) ? 0 : duration;
 };
 
 export const SegmentsProgressBar = ({
@@ -46,7 +46,7 @@ export const SegmentsProgressBar = ({
         [segmentDurations]
     );
 
-    if (!segments || segments.length <= 1) return null;
+    if (!segments || segments.length === 0) return null;
 
     const currentSegmentIndex = segments.findIndex(s => s.uuid === currentSegmentUuid);
 

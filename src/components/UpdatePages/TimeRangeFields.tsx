@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Label } from '../ui/label';
-import { Input } from '../ui/input';
+import { MaskedTimeInput } from './MaskedTimeInput';
 import { parseTime, formatTime } from '@/utils/time';
 
 interface TimeRangeFieldsProps {
@@ -52,7 +52,7 @@ export const TimeRangeFields = ({
         if (duration > 0) {
             const endSeconds = parseTime(localEnd);
             if (endSeconds > duration) {
-                const maxTimeStr = formatTime(duration);
+                const maxTimeStr = formatTime(duration, true);
                 setLocalEnd(maxTimeStr);
                 onChangeEnd(maxTimeStr);
                 return;
@@ -65,25 +65,23 @@ export const TimeRangeFields = ({
     return (
         <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-4 duration-300">
             <div className="space-y-2">
-                <Label htmlFor="start" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Старт (м:сс.мс)</Label>
-                <Input
+                <Label htmlFor="start" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Старт (ч:мм:сс.мс)</Label>
+                <MaskedTimeInput
                     id="start"
                     value={localStart}
-                    onChange={(e) => setLocalStart(e.target.value)}
+                    onChange={setLocalStart}
                     onBlur={handleStartBlur}
-                    placeholder="0:00.000"
-                    className="h-12 rounded-xl bg-muted/30 border-none shadow-inner"
+                    className="h-12"
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="end" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Конец (м:сс.мс)</Label>
-                <Input
+                <Label htmlFor="end" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Конец (ч:мм:сс.мс)</Label>
+                <MaskedTimeInput
                     id="end"
                     value={localEnd}
-                    onChange={(e) => setLocalEnd(e.target.value)}
+                    onChange={setLocalEnd}
                     onBlur={handleEndBlur}
-                    placeholder="1:00.000"
-                    className="h-12 rounded-xl bg-muted/30 border-none shadow-inner"
+                    className="h-12"
                 />
             </div>
         </div>
