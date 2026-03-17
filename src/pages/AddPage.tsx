@@ -191,10 +191,12 @@ const AddPage = () => {
                         setTimeEnd={setTimeEnd}
                     />
 
-                    <SegmentDescription
-                        description={description}
-                        setDescription={setDescription}
-                    />
+                    {youtubeId && (
+                        <SegmentDescription
+                            description={description}
+                            setDescription={setDescription}
+                        />
+                    )}
 
                     {error && (
                         <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 animate-in shake-1 duration-500">
