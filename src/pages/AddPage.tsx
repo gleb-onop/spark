@@ -1,9 +1,10 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { api } from '@/services/api';
 import { useYouTubeMetadata } from '@/hooks/useYouTubeMetadata';
 import { usePrevious } from '@/hooks/usePrevious';
+import { useStableCallback } from '@/hooks/useStableCallback';
 import { formatTime, parseTime } from '@/utils/time';
 import { generateUUID } from '@/utils/uuid';
 import { PageHeader } from '@/components/PageHeader';
@@ -53,15 +54,6 @@ const AddPage = () => {
     const [timeEnd, setTimeEnd] = useState('');
     const [duration, setDuration] = useState(0);
 
-    // Refs for stable handleDurationReady closure
-    const timeStartRef = useRef(timeStart);
-    const timeEndRef = useRef(timeEnd);
-
-    useEffect(() => {
-        timeStartRef.current = timeStart;
-        timeEndRef.current = timeEnd;
-    }, [timeStart, timeEnd]);
-
     // Shared Data
     const [segmentedVideos, setSegmentedVideos] = useState<SegmentedVideo[]>([]);
     const [error, setError] = useState('');
@@ -100,13 +92,13 @@ const AddPage = () => {
 
     /**
      * Stable callback for YouTubeInputSection.
-     * Uses refs to avoid re-creation when timeStart/timeEnd change.
+     * useStableCallback ensures the closure always has the latest state without re-creating the function.
      */
-    const handleDurationReady = useCallback((dur: number) => {
+    const handleDurationReady = useStableCallback((dur: number) => {
         setDuration(dur);
-        if (!timeStartRef.current) setTimeStart('0:00.000');
-        if (!timeEndRef.current) setTimeEnd(formatTime(dur, true));
-    }, []);
+        if (!timeStart) setTimeStart('0:00.000');
+        if (!timeEnd) setTimeEnd(formatTime(dur, true));
+    });
 
     const handleSave = async () => {
         const validationError = validateForm(

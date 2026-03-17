@@ -5,6 +5,7 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { type YTPlayer, type YTEvent, YTPlayerState } from '@/utils/youtube';
 import { useYouTubeBase } from '@/hooks/useYouTubeBase';
+import { useStableCallback } from '@/hooks/useStableCallback';
 import { parseTime, formatTime } from '@/utils/time';
 import { TimeRangeFields } from './TimeRangeFields';
 
@@ -39,11 +40,9 @@ export const YouTubeInputSection = ({
 }: YouTubeInputSectionProps) => {
     const playerRef = useRef<YTPlayer | null>(null);
     const [isPreviewing, setIsPreviewing] = useState(false);
+    const isStartingPreviewRef = useRef(false);
 
-    const onDurationReadyRef = useRef(onDurationReady);
-    useEffect(() => {
-        onDurationReadyRef.current = onDurationReady;
-    }, [onDurationReady]);
+    const stableOnDurationReady = useStableCallback(onDurationReady);
 
     useYouTubeBase({
         videoId: youtubeId,
@@ -55,22 +54,25 @@ export const YouTubeInputSection = ({
         },
         events: {
             onReady: (event: YTEvent) => {
-                if (onDurationReadyRef.current) {
-                    onDurationReadyRef.current(event.target.getDuration());
-                }
+                stableOnDurationReady(event.target.getDuration());
             },
             onStateChange: (event: YTEvent) => {
-                // If user manually pauses or video ends, stop previewing
-                if (event.data === YTPlayerState.PAUSED || event.data === YTPlayerState.ENDED) {
-                    setIsPreviewing(false);
-                }
-                // Automatically restore sound whenever the video starts playing
                 if (event.data === YTPlayerState.PLAYING) {
+                    isStartingPreviewRef.current = false;
                     try {
                         if (event.target.isMuted()) {
                             event.target.unMute();
                         }
                     } catch (e) { }
+                }
+
+                // If user manually pauses or video ends, stop previewing
+                if (event.data === YTPlayerState.PAUSED || event.data === YTPlayerState.ENDED) {
+                    // Ignore PAUSED state if we just started the preview (often a race condition with seekTo)
+                    if (isStartingPreviewRef.current && event.data === YTPlayerState.PAUSED) {
+                        return;
+                    }
+                    setIsPreviewing(false);
                 }
             }
         }
@@ -117,6 +119,7 @@ export const YouTubeInputSection = ({
             setIsPreviewing(false);
         } else {
             const startSeconds = parseTime(timeStart);
+            isStartingPreviewRef.current = true;
             playerRef.current.unMute(); // Ensure sound is on for preview
             playerRef.current.seekTo(startSeconds, true);
             playerRef.current.playVideo();
@@ -124,19 +127,12 @@ export const YouTubeInputSection = ({
         }
     }, [isPreviewing, timeStart]);
 
-    const captureStartTime = () => {
+    const captureTime = useCallback((setter: (val: string) => void) => {
         if (playerRef.current) {
             const currentTime = playerRef.current.getCurrentTime();
-            setTimeStart(formatTime(currentTime, true));
+            setter(formatTime(currentTime, true));
         }
-    };
-
-    const captureEndTime = () => {
-        if (playerRef.current) {
-            const currentTime = playerRef.current.getCurrentTime();
-            setTimeEnd(formatTime(currentTime, true));
-        }
-    };
+    }, []);
 
 
 
@@ -187,7 +183,7 @@ export const YouTubeInputSection = ({
                         <div className="grid grid-cols-2 gap-3">
                             <Button
                                 type="button"
-                                onClick={captureStartTime}
+                                onClick={() => captureTime(setTimeStart)}
                                 variant="outline"
                                 className="h-12 rounded-2xl border-dashed border-2 hover:border-brand hover:text-brand transition-all flex items-center gap-2 group"
                             >
@@ -197,7 +193,7 @@ export const YouTubeInputSection = ({
                             </Button>
                             <Button
                                 type="button"
-                                onClick={captureEndTime}
+                                onClick={() => captureTime(setTimeEnd)}
                                 variant="outline"
                                 className="h-12 rounded-2xl border-dashed border-2 hover:border-brand hover:text-brand transition-all flex items-center gap-2 group"
                             >
