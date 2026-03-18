@@ -23,7 +23,7 @@ export const SegmentTimeLabel = ({ timeStart, timeEnd, variant = 'full', showMs 
 
     return (
         <div className="flex items-center gap-2 text-sm text-brand font-black bg-brand/10 w-fit px-3 py-1 rounded-xl border border-brand/20 shadow-sm animate-in fade-in slide-in-from-left-4 duration-500 delay-100">
-            <Scissors className="h-4 w-4" />
+            <Scissors data-testid="scissors-icon" className="h-4 w-4" />
             <span>{label}</span>
         </div>
     );

@@ -4,9 +4,35 @@ import { SegmentsProgressBar } from '../SegmentsProgressBar';
 import { MemoryRouter } from 'react-router-dom';
 
 const mockSegments = [
-    { uuid: '1', timeStart: '0:00', timeEnd: '1:00', description: 'Seg 1' },
-    { uuid: '2', timeStart: '1:00', timeEnd: '2:00', description: 'Seg 2' },
+    {
+        uuid: '1',
+        timeStart: '0:00',
+        timeEnd: '1:00',
+        description: 'Seg 1',
+        video: { duration: 120 }
+    },
+    {
+        uuid: '2',
+        timeStart: '1:00',
+        timeEnd: '2:00',
+        description: 'Seg 2',
+        video: { duration: 120 }
+    },
 ];
+
+vi.mock('@/utils/time', () => ({
+    parseTime: vi.fn((t: string) => {
+        if (t === '0:00') return 0;
+        if (t === '1:00') return 60;
+        if (t === '2:00') return 120;
+        return 0;
+    }),
+    formatTime: vi.fn((s: number) => {
+        const mins = Math.floor(s / 60);
+        const secs = Math.floor(s % 60);
+        return `${mins}:${String(secs).padStart(2, '0')}`;
+    }),
+}));
 
 describe('SegmentsProgressBar', () => {
     it('should render correct number of segments', () => {
@@ -24,7 +50,7 @@ describe('SegmentsProgressBar', () => {
         expect(links).toHaveLength(2);
     });
 
-    it('should highlight current segment', () => {
+    it('should highlight current segment and show progress based on progressPct', () => {
         render(
             <MemoryRouter>
                 <SegmentsProgressBar
@@ -36,10 +62,9 @@ describe('SegmentsProgressBar', () => {
             </MemoryRouter>
         );
 
-        const links = screen.getAllByRole('link');
-        // The current segment should have a child div for progress
-        const progressDiv = links[0].querySelector('div[style*="width: 50%"]');
+        const progressDiv = screen.getByTestId('segment-progress');
         expect(progressDiv).toBeInTheDocument();
+        expect(progressDiv).toHaveStyle('width: 50%');
     });
 
     it('should call onSeek when clicked in overlay mode', () => {
@@ -69,7 +94,7 @@ describe('SegmentsProgressBar', () => {
         expect(onSeek).toHaveBeenCalledWith('1', 50);
     });
 
-    it('should show tooltip on hover in overlay mode', async () => {
+    it('should show tooltip on hover in overlay mode with correct time', async () => {
         render(
             <MemoryRouter>
                 <SegmentsProgressBar
@@ -81,10 +106,12 @@ describe('SegmentsProgressBar', () => {
             </MemoryRouter>
         );
 
-        const container = screen.getByRole('link', { name: /Seg 1/i }).closest('.group');
+        // Find the link by label
+        const firstSegmentLink = screen.getByRole('link', { name: /Seg 1/i });
+        const container = firstSegmentLink.closest('.group');
         if (!container) throw new Error('Container not found');
 
-        // Mock getBoundingClientRect
+        // Mock getBoundingClientRect for container
         container.getBoundingClientRect = vi.fn().mockReturnValue({
             left: 0,
             width: 100,
@@ -94,8 +121,8 @@ describe('SegmentsProgressBar', () => {
 
         fireEvent.mouseMove(container, { clientX: 50 });
 
-        // Total duration is 120s (2 segments of 60s each)
-        // 50% of 120s is 60s -> 1:00
+        // Total duration is 120s (from our mock logic)
+        // 50% of 120s is 60s -> formatTime(60) -> "1:00"
         expect(await screen.findByText('1:00')).toBeInTheDocument();
     });
 });

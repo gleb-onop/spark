@@ -194,6 +194,7 @@ export const SegmentsProgressBar = ({
                                     {/* Current Playing Content */}
                                     {isCurrent && (
                                         <div
+                                            data-testid="segment-progress"
                                             className="absolute left-0 top-0 h-full bg-[rgba(var(--brand-rgb),1)] z-20 will-change-[width]"
                                             style={{ width: `${progressPct}%` }}
                                         />

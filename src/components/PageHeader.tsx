@@ -35,6 +35,7 @@ export const PageHeader = ({
                     <Button
                         variant="ghost"
                         size="icon"
+                        aria-label="Назад"
                         onClick={() => typeof backPath === 'number' ? navigate(backPath) : navigate(backPath)}
                         className="rounded-full shrink-0"
                     >
@@ -53,9 +54,17 @@ export const PageHeader = ({
                         className="h-5 w-9 data-[state=checked]:bg-accent"
                     />
                     {theme === 'light' ? (
-                        <Sun className="h-4 w-4 text-muted-foreground" />
+                        <Sun
+                            data-testid="sun-icon"
+                            aria-label="Светлая тема"
+                            className="h-4 w-4 text-muted-foreground"
+                        />
                     ) : (
-                        <Moon className="h-4 w-4 text-muted-foreground" />
+                        <Moon
+                            data-testid="moon-icon"
+                            aria-label="Тёмная тема"
+                            className="h-4 w-4 text-muted-foreground"
+                        />
                     )}
                 </div>
             </div>
