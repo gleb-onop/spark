@@ -46,7 +46,12 @@ const AddPage = () => {
     const isNewMode = !existingSegmentedVideoId;
 
     // Form State
-    const [segmentedVideoName, setSegmentedVideoName] = useState('');
+    const [segmentedVideoName, setSegmentedVideoName] = useState(() => {
+        const now = new Date();
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        return `untitled-${dateStr}`;
+    });
     const [segmentedVideoId, setSegmentedVideoId] = useState(existingSegmentedVideoId);
     const [url, setUrl] = useState('');
     const [description, setDescription] = useState('');
