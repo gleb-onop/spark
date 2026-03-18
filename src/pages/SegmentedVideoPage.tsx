@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { MoreVertical, Trash2, FolderOpen, Plus, Play, Loader2 } from 'lucide-react';
+import { MoreVertical, Trash2, FolderOpen, Plus, Play, Loader2, ChevronLeft } from 'lucide-react';
 import {
     DndContext,
     closestCenter,
@@ -98,11 +98,18 @@ const SegmentedVideoPage = () => {
 
             {/* Desktop header (since PageHeader is md:hidden) */}
             <div className="hidden md:flex items-center justify-between px-8 pt-8 pb-4">
-                <div className="flex flex-col gap-1 min-w-0 flex-1">
-                    <h1 className="text-4xl font-black tracking-tight truncate">{segmentedVideo.name}</h1>
-                    <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                        <FolderOpen className="h-3 w-3 shrink-0" />
-                        Сегментов: {localSegments.length}
+                <div className="flex items-center gap-4 min-w-0 flex-1">
+                    <Button variant="ghost" size="icon" asChild className="rounded-full h-10 w-10 shrink-0">
+                        <Link to="/segmented-videos">
+                            <ChevronLeft className="h-6 w-6" />
+                        </Link>
+                    </Button>
+                    <div className="flex flex-col gap-1 min-w-0">
+                        <h1 className="text-4xl font-black tracking-tight truncate">{segmentedVideo.name}</h1>
+                        <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                            <FolderOpen className="h-3 w-3 shrink-0" />
+                            Сегментов: {localSegments.length}
+                        </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">

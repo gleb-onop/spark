@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Info, Edit2, Maximize, Minimize, Loader2 } from 'lucide-react';
+import { Info, Edit2, Maximize, Minimize, Loader2, ChevronLeft } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -132,7 +132,14 @@ const SegmentPage = () => {
 
             {/* Desktop header */}
             <div className="hidden md:flex items-center justify-between px-8 pt-8 pb-4">
-                <h1 className="text-4xl font-black tracking-tight truncate">{segmentedVideo.name}</h1>
+                <div className="flex items-center gap-4 min-w-0 flex-1">
+                    <Button variant="ghost" size="icon" asChild className="rounded-full h-10 w-10 shrink-0">
+                        <Link to={`/segmented-videos/${segmentedVideoId}`}>
+                            <ChevronLeft className="h-6 w-6" />
+                        </Link>
+                    </Button>
+                    <h1 className="text-4xl font-black tracking-tight truncate">{segmentedVideo.name}</h1>
+                </div>
                 <div className="flex items-center gap-2">
                     <Button asChild variant="outline" className="rounded-xl px-4">
                         <Link to={`/segmented-videos/${segmentedVideoId}/segments/${segment.uuid}/edit`} className="flex items-center gap-2">
