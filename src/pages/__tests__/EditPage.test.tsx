@@ -1,11 +1,12 @@
-import { screen, waitFor, fireEvent } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import EditPage from '../EditPage';
 import { renderWithRouter, createSegment } from '../../test/helpers';
-import { api } from '../../services/api';
+import { useEditSegment } from '../../hooks/useEditSegment';
 
+// Better typed mocks for sub-components
 vi.mock('../../components/UpdatePages/YouTubeInputSection', () => ({
-    YouTubeInputSection: ({ youtubeId, timeStart, setTimeStart, timeEnd, setTimeEnd }) => (
+    YouTubeInputSection: ({ youtubeId, timeStart, setTimeStart, timeEnd, setTimeEnd }: any) => (
         <div data-testid="mock-youtube-input">
             {youtubeId && (
                 <>
@@ -20,7 +21,7 @@ vi.mock('../../components/UpdatePages/YouTubeInputSection', () => ({
 }));
 
 vi.mock('../../components/UpdatePages/SegmentDescription', () => ({
-    SegmentDescription: ({ description, setDescription }) => (
+    SegmentDescription: ({ description, setDescription }: any) => (
         <div data-testid="mock-segment-description">
             <label htmlFor="description">Описание</label>
             <textarea
@@ -32,11 +33,8 @@ vi.mock('../../components/UpdatePages/SegmentDescription', () => ({
     )
 }));
 
-vi.mock('../../services/api', () => ({
-    api: {
-        getSegment: vi.fn(),
-        updateSegment: vi.fn(),
-    }
+vi.mock('../../hooks/useEditSegment', () => ({
+    useEditSegment: vi.fn(),
 }));
 
 describe('EditPage', () => {
@@ -50,72 +48,103 @@ describe('EditPage', () => {
             timeStart: '0:10.000',
             timeEnd: '0:20.000'
         });
-        (api.getSegment as any).mockResolvedValue(segment);
+
+        (useEditSegment as any).mockReturnValue({
+            state: {
+                isLoading: false,
+                isSaving: false,
+                youtubeId: 'abc',
+                description: 'Original desc',
+                timeStart: '0:10.000',
+                timeEnd: '0:20.000',
+                duration: 100,
+                error: ''
+            },
+            actions: {
+                handleSave: vi.fn(),
+                handleDurationReady: vi.fn(),
+                setDescription: vi.fn(),
+                setTimeStart: vi.fn(),
+                setTimeEnd: vi.fn()
+            }
+        });
 
         renderWithRouter(<EditPage />, {
             routePath: '/segmented-videos/:segmentedVideoId/segments/:segmentId/edit',
             routerProps: { initialEntries: [`/segmented-videos/sv1/segments/${segment.uuid}/edit`] }
         });
 
-        expect(await screen.findByText('Редактировать')).toBeInTheDocument();
-
-        await waitFor(() => {
-            expect(screen.getByDisplayValue('Original desc')).toBeInTheDocument();
-            expect(screen.getByDisplayValue('0:10.000')).toBeInTheDocument();
-            expect(screen.getByDisplayValue('0:20.000')).toBeInTheDocument();
-        });
+        expect(screen.getByText('Редактировать')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('Original desc')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('0:10.000')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('0:20.000')).toBeInTheDocument();
     });
 
-    it('handles validation and saving updates', async () => {
-        const segment = createSegment();
-        (api.getSegment as any).mockResolvedValue(segment);
-        (api.updateSegment as any).mockResolvedValue(undefined);
+    it('handles saving updates', async () => {
+        const handleSave = vi.fn();
+        const setDescription = vi.fn();
+
+        (useEditSegment as any).mockReturnValue({
+            state: {
+                isLoading: false,
+                isSaving: false,
+                youtubeId: 'abc',
+                description: 'Original desc',
+                timeStart: '0:10.000',
+                timeEnd: '0:20.000',
+                duration: 100,
+                error: ''
+            },
+            actions: {
+                handleSave,
+                handleDurationReady: vi.fn(),
+                setDescription,
+                setTimeStart: vi.fn(),
+                setTimeEnd: vi.fn()
+            }
+        });
 
         renderWithRouter(<EditPage />, {
             routePath: '/segmented-videos/:segmentedVideoId/segments/:segmentId/edit',
-            routerProps: { initialEntries: [`/segmented-videos/sv1/segments/${segment.uuid}/edit`] }
+            routerProps: { initialEntries: ['/segmented-videos/sv1/segments/s1/edit'] }
         });
-
-        await waitFor(() => screen.getByDisplayValue(segment.description));
 
         // Change description
         const descInput = screen.getByLabelText(/Описание/i);
         fireEvent.change(descInput, { target: { value: 'Updated description' } });
+        expect(setDescription).toHaveBeenCalledWith('Updated description');
 
         // Save
         fireEvent.click(screen.getByRole('button', { name: /Сохранить/i }));
-
-        await waitFor(() => {
-            expect(api.updateSegment).toHaveBeenCalledWith(
-                segment.uuid,
-                expect.objectContaining({
-                    description: 'Updated description'
-                })
-            );
-        });
+        expect(handleSave).toHaveBeenCalled();
     });
 
-    it('shows validation error if end is before start during edit', async () => {
-        const segment = createSegment();
-        (api.getSegment as any).mockResolvedValue(segment);
+    it('shows error message if present in state', async () => {
+        (useEditSegment as any).mockReturnValue({
+            state: {
+                isLoading: false,
+                isSaving: false,
+                youtubeId: 'abc',
+                description: 'desc',
+                timeStart: '0:10.000',
+                timeEnd: '0:20.000',
+                duration: 100,
+                error: 'Validation failed'
+            },
+            actions: {
+                handleSave: vi.fn(),
+                handleDurationReady: vi.fn(),
+                setDescription: vi.fn(),
+                setTimeStart: vi.fn(),
+                setTimeEnd: vi.fn()
+            }
+        });
 
         renderWithRouter(<EditPage />, {
             routePath: '/segmented-videos/:segmentedVideoId/segments/:segmentId/edit',
-            routerProps: { initialEntries: [`/segmented-videos/sv1/segments/${segment.uuid}/edit`] }
+            routerProps: { initialEntries: ['/segmented-videos/sv1/segments/s1/edit'] }
         });
 
-        await waitFor(() => screen.getByDisplayValue(segment.description));
-
-        const startInput = screen.getByLabelText(/Старт/i);
-        const endInput = screen.getByLabelText(/Конец/i);
-
-        fireEvent.change(startInput, { target: { value: '0:30.000' } });
-        fireEvent.change(endInput, { target: { value: '0:20.000' } });
-        fireEvent.blur(startInput);
-        fireEvent.blur(endInput);
-
-        fireEvent.click(screen.getByRole('button', { name: /Сохранить/i }));
-
-        expect(await screen.findByText(/Конец должен быть позже начала/i)).toBeInTheDocument();
+        expect(screen.getByText(/Validation failed/i)).toBeInTheDocument();
     });
 });

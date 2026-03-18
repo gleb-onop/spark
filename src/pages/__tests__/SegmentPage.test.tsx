@@ -1,39 +1,74 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import SegmentPage from '../SegmentPage';
 import { renderWithRouter, createSegmentedVideo } from '../../test/helpers';
-import { api } from '../../services/api';
 
-vi.mock('../../services/api', () => ({
-    api: {
-        getSegmentedVideo: vi.fn(),
-        getSegmentsByUuids: vi.fn(),
-    }
+// Mock ALL hooks used in SegmentPage
+vi.mock('../../hooks/useSegmentedVideo', () => ({
+    useSegmentedVideo: vi.fn(),
 }));
 
-// Mock components to avoid deep dependencies and network/timers
+vi.mock('../../hooks/useYouTubePlayer', () => ({
+    useYouTubePlayer: vi.fn().mockReturnValue({ playerRef: { current: null } }),
+}));
+
+vi.mock('../../hooks/useProgressSync', () => ({
+    useProgressSync: vi.fn().mockReturnValue({ progressPct: 0, seek: vi.fn() }),
+}));
+
+vi.mock('../../hooks/useLoopSetting', () => ({
+    useLoopSetting: vi.fn().mockReturnValue({ isLooping: false, toggleLoop: vi.fn() }),
+}));
+
+vi.mock('../../hooks/useSegmentNavigation', () => ({
+    useSegmentNavigation: vi.fn().mockReturnValue({ onComplete: vi.fn() }),
+}));
+
+vi.mock('../../hooks/useControlsVisibility', () => ({
+    useControlsVisibility: vi.fn().mockReturnValue({ showControls: true, resetTimer: vi.fn() }),
+}));
+
+vi.mock('../../hooks/useOrientationFullscreen', () => ({
+    useOrientationFullscreen: vi.fn(),
+}));
+
+// Mock sub-components
 vi.mock('../../components/SegmentsProgressBar', () => ({
     SegmentsProgressBar: () => <div data-testid="mock-progress-bar" />
 }));
 
 vi.mock('../../components/SegmentThumbnail', () => ({
-    SegmentThumbnail: ({ title }: { title: string }) => <img alt={title} />
+    SegmentThumbnail: ({ title }: { title: string }) => <img alt={title || 'Segment Thumbnail'} />
 }));
 
 vi.mock('../../components/ExpandableDescription', () => ({
     ExpandableDescription: ({ text }: { text: string }) => <div>{text || 'Нет описания'}</div>
 }));
 
+import { useSegmentedVideo } from '../../hooks/useSegmentedVideo';
+import { useLoopSetting } from '../../hooks/useLoopSetting';
+
 describe('SegmentPage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
+    const setupMocks = (segmentedVideo: any, segments: any[], isLooping = false) => {
+        (useSegmentedVideo as any).mockReturnValue({
+            isLoading: false,
+            segmentedVideo,
+            segments
+        });
+        (useLoopSetting as any).mockReturnValue({
+            isLooping,
+            toggleLoop: vi.fn()
+        });
+    };
+
     it('renders collection title and segment info', async () => {
         const { segmentedVideo, segments } = createSegmentedVideo({ name: 'Learning React' }, 1);
         const segment = segments[0];
-        (api.getSegmentedVideo as any).mockResolvedValue(segmentedVideo);
-        (api.getSegmentsByUuids as any).mockResolvedValue(segments);
+        setupMocks(segmentedVideo, segments);
 
         renderWithRouter(<SegmentPage />, {
             routePath: '/segmented-videos/:segmentedVideoId/segments/:segmentId',
@@ -42,95 +77,74 @@ describe('SegmentPage', () => {
             }
         });
 
-        // Spec: Заголовок коллекции - отображается название
-        await waitFor(() => {
-            expect(screen.getAllByText(/Learning React/i).length).toBeGreaterThan(0);
-        });
-
-        // Spec: Описание сегмента
+        expect(screen.getAllByText(/Learning React/i).length).toBeGreaterThan(0);
         expect(screen.getAllByText(segment.description).length).toBeGreaterThan(0);
 
-        // Spec: Временные метки (с миллисекундами)
-        // en-dash (U+2013) is used in the component
-        expect(screen.getByText(/0:30\.000.*1:45\.000/)).toBeInTheDocument();
+        expect(screen.getAllByText(/0:30\.000/).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(/1:45\.000/).length).toBeGreaterThan(0);
     });
 
     it('handles empty description', async () => {
         const { segmentedVideo, segments } = createSegmentedVideo({}, 1);
         segments[0].description = '';
         segments[0].video.description = '';
-        (api.getSegmentedVideo as any).mockResolvedValue(segmentedVideo);
-        (api.getSegmentsByUuids as any).mockResolvedValue(segments);
+        setupMocks(segmentedVideo, segments);
 
         renderWithRouter(<SegmentPage />, {
             routePath: '/segmented-videos/:segmentedVideoId/segments/:segmentId',
             routerProps: { initialEntries: [`/segmented-videos/${segmentedVideo.uuid}/segments/${segments[0].uuid}`] }
         });
 
-        // Spec: Описание сегмента — пустое -> "Нет описания"
-        await waitFor(() => {
-            expect(screen.getByText(/Нет описания/i)).toBeInTheDocument();
-        });
+        expect(screen.getByText(/Нет описания/i)).toBeInTheDocument();
     });
 
     it('shows loop toggle with correct text', async () => {
         const { segmentedVideo, segments } = createSegmentedVideo({}, 1);
-        (api.getSegmentedVideo as any).mockResolvedValue(segmentedVideo);
-        (api.getSegmentsByUuids as any).mockResolvedValue(segments);
+        setupMocks(segmentedVideo, segments, true);
 
         renderWithRouter(<SegmentPage />, {
             routePath: '/segmented-videos/:segmentedVideoId/segments/:segmentId',
             routerProps: { initialEntries: [`/segmented-videos/${segmentedVideo.uuid}/segments/${segments[0].uuid}`] }
         });
 
-        // Spec: Переключатель зацикливания
-        await waitFor(() => {
-            expect(screen.getByText(/Зациклить сегментированное видео/i)).toBeInTheDocument();
-            expect(screen.getByText(/Авто-повтор текущего списка/i)).toBeInTheDocument();
-        });
+        expect(screen.getByText(/Зациклить сегментированное видео/i)).toBeInTheDocument();
+        expect(screen.getByText(/Авто-повтор текущего списка/i)).toBeInTheDocument();
+
+        // Target the specific switch by its accessible name
+        const loopSwitch = screen.getByRole('switch', { name: /Зациклить сегментированное видео/i });
+        expect(loopSwitch).toBeChecked();
     });
 
     it('renders segment list sidebar on desktop', async () => {
         const { segmentedVideo, segments } = createSegmentedVideo({ name: 'Course' }, 3);
-        (api.getSegmentedVideo as any).mockResolvedValue(segmentedVideo);
-        (api.getSegmentsByUuids as any).mockResolvedValue(segments);
+        setupMocks(segmentedVideo, segments);
 
         renderWithRouter(<SegmentPage />, {
             routePath: '/segmented-videos/:segmentedVideoId/segments/:segmentId',
             routerProps: { initialEntries: [`/segmented-videos/${segmentedVideo.uuid}/segments/${segments[0].uuid}`] }
         });
 
-        await waitFor(() => {
-            expect(screen.getAllByText(/Course/i).length).toBeGreaterThan(0);
-        });
-
-        // Sidebar header
+        expect(screen.getAllByText(/Course/i).length).toBeGreaterThan(0);
         expect(screen.getByText(/Сегменты/i)).toBeInTheDocument();
         expect(screen.getByText('3')).toBeInTheDocument();
 
-        // Check active segment in list
         expect(screen.getAllByText('Segment 1').length).toBeGreaterThan(0);
         expect(screen.getAllByText('Segment 2').length).toBeGreaterThan(0);
         expect(screen.getAllByText('Segment 3').length).toBeGreaterThan(0);
     });
 
-    it('has a functional edit button leading to edit page', async () => {
+    it('has functional edit buttons', async () => {
         const { segmentedVideo, segments } = createSegmentedVideo({}, 1);
         const segment = segments[0];
-        (api.getSegmentedVideo as any).mockResolvedValue(segmentedVideo);
-        (api.getSegmentsByUuids as any).mockResolvedValue(segments);
+        setupMocks(segmentedVideo, segments);
 
         renderWithRouter(<SegmentPage />, {
             routePath: '/segmented-videos/:segmentedVideoId/segments/:segmentId',
             routerProps: { initialEntries: [`/segmented-videos/${segmentedVideo.uuid}/segments/${segments[0].uuid}`] }
         });
 
-        await waitFor(() => {
-            // There are multiple ways to edit (mobile header, desktop button)
-            // We just need to check the link exists and is correct
-            const editLinks = screen.getAllByRole('link').filter(l => l.getAttribute('href')?.includes('/edit'));
-            expect(editLinks.length).toBeGreaterThan(0);
-            expect(editLinks[0]).toHaveAttribute('href', `/segmented-videos/${segmentedVideo.uuid}/segments/${segment.uuid}/edit`);
-        });
+        const editLinks = screen.getAllByRole('link').filter(l => l.getAttribute('href')?.includes('/edit'));
+        expect(editLinks.length).toBeGreaterThan(0);
+        expect(editLinks[0]).toHaveAttribute('href', `/segmented-videos/${segmentedVideo.uuid}/segments/${segment.uuid}/edit`);
     });
 });

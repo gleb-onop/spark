@@ -58,7 +58,7 @@ const SegmentedVideoPage = () => {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <Loader2 className="h-8 w-8 animate-spin text-accent" />
+                <Loader2 aria-label="Загрузка" className="h-8 w-8 animate-spin text-accent" />
             </div>
         );
     }
@@ -109,9 +109,13 @@ const SegmentedVideoPage = () => {
                     {localSegments.length > 0 && (
                         <Button
                             asChild
+                            data-testid="play-button-desktop"
                             className="rounded-xl shadow-lg shadow-brand/25 bg-brand text-white hover:bg-brand/90 px-5"
                         >
-                            <Link to={`/segmented-videos/${segmentedVideo.uuid}/segments/${localSegments[0].uuid}`} className="flex items-center gap-2">
+                            <Link
+                                to={`/segmented-videos/${segmentedVideo.uuid}/segments/${localSegments[0].uuid}`}
+                                className="flex items-center gap-2"
+                            >
                                 <Play className="h-5 w-5 fill-current" />
                                 <span>Воспроизвести</span>
                             </Link>

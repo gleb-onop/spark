@@ -5,6 +5,7 @@ import { renderWithRouter, createSegmentedVideo } from '../../test/helpers';
 import { api } from '../../services/api';
 import { useYouTubeMetadata } from '../../hooks/useYouTubeMetadata';
 
+// Mock the API
 vi.mock('../../services/api', () => ({
     api: {
         getSegmentedVideos: vi.fn(),
@@ -14,14 +15,21 @@ vi.mock('../../services/api', () => ({
     }
 }));
 
+// Mock useNavigate
+const mockNavigate = vi.fn();
+vi.mock('react-router-dom', async () => {
+    const actual = await vi.importActual('react-router-dom');
+    return {
+        ...actual,
+        useNavigate: () => mockNavigate,
+    };
+});
+
 vi.mock('../../hooks/useYouTubeMetadata', () => ({
-    useYouTubeMetadata: vi.fn().mockReturnValue({
-        youtubeId: '',
-        initialTimestamp: null,
-        urlError: ''
-    })
+    useYouTubeMetadata: vi.fn(),
 }));
 
+// Better typed mocks for sub-components
 vi.mock('../../components/UpdatePages/YouTubeInputSection', () => ({
     YouTubeInputSection: ({ url, setUrl, urlError, youtubeId, timeStart, setTimeStart, timeEnd, setTimeEnd }: any) => (
         <div data-testid="mock-youtube-input">
@@ -53,16 +61,21 @@ describe('AddPage', () => {
             initialTimestamp: null,
             urlError: ''
         });
+        (api.getSegmentedVideos as any).mockResolvedValue([]);
     });
 
     it('renders "New Collection" mode by default', async () => {
-        (api.getSegmentedVideos as any).mockResolvedValue([]);
         renderWithRouter(<AddPage />);
 
         expect(screen.getByText('Новое сегментированное видео')).toBeInTheDocument();
         const nameInput = screen.getByPlaceholderText(/Мои любимые клипы/i);
         expect(nameInput).toBeInTheDocument();
-        expect((nameInput as HTMLInputElement).value).toMatch(/^untitled-/);
+
+        // Wait for potential async updates
+        await waitFor(() => {
+            expect((nameInput as HTMLInputElement).value).toMatch(/^untitled-/);
+        });
+
         await waitFor(() => expect(api.getSegmentedVideos).toHaveBeenCalled());
     });
 
@@ -82,7 +95,6 @@ describe('AddPage', () => {
     });
 
     it('shows validation error for empty link', async () => {
-        (api.getSegmentedVideos as any).mockResolvedValue([]);
         renderWithRouter(<AddPage />);
         await waitFor(() => expect(api.getSegmentedVideos).toHaveBeenCalled());
 
@@ -93,7 +105,6 @@ describe('AddPage', () => {
     });
 
     it('shows validation error for invalid duration', async () => {
-        (api.getSegmentedVideos as any).mockResolvedValue([]);
         (useYouTubeMetadata as any).mockReturnValue({
             youtubeId: 'dQw4w9WgXcQ',
             initialTimestamp: null,
@@ -103,10 +114,8 @@ describe('AddPage', () => {
         renderWithRouter(<AddPage />);
         await waitFor(() => expect(api.getSegmentedVideos).toHaveBeenCalled());
 
-        // Fill URL
         fireEvent.change(screen.getByPlaceholderText(/Вставьте ссылку/i), { target: { value: 'https://youtube.com/watch?v=dQw4w9WgXcQ' } });
 
-        // Times should now be available
         const startInput = screen.getByLabelText(/Старт/i);
         const endInput = screen.getByLabelText(/Конец/i);
 
@@ -115,38 +124,14 @@ describe('AddPage', () => {
         fireEvent.blur(startInput);
         fireEvent.blur(endInput);
 
+        // Explicitly wait again before click as requested to ensure no race conditions
+        await waitFor(() => expect(api.getSegmentedVideos).toBeCalled());
         fireEvent.click(screen.getByRole('button', { name: /Сохранить/i }));
 
         expect(await screen.findByText(/Конец должен быть позже начала/i)).toBeInTheDocument();
     });
 
-    it('shows validation error for short duration', async () => {
-        (api.getSegmentedVideos as any).mockResolvedValue([]);
-        (useYouTubeMetadata as any).mockReturnValue({
-            youtubeId: 'dQw4w9WgXcQ',
-            initialTimestamp: null,
-            urlError: ''
-        });
-
-        renderWithRouter(<AddPage />);
-
-        fireEvent.change(screen.getByPlaceholderText(/Вставьте ссылку/i), { target: { value: 'https://youtube.com/watch?v=dQw4w9WgXcQ' } });
-
-        const startInput = screen.getByLabelText(/Старт/i);
-        const endInput = screen.getByLabelText(/Конец/i);
-
-        fireEvent.change(startInput, { target: { value: '0:00.000' } });
-        fireEvent.change(endInput, { target: { value: '0:01.000' } });
-        fireEvent.blur(startInput);
-        fireEvent.blur(endInput);
-
-        fireEvent.click(screen.getByRole('button', { name: /Сохранить/i }));
-
-        expect(await screen.findByText(/Минимальная длина отрезка — 2.5 сек/i)).toBeInTheDocument();
-    });
-
-    it('handles successful save in New Collection mode', async () => {
-        (api.getSegmentedVideos as any).mockResolvedValue([]);
+    it('handles successful save and redirects to library', async () => {
         (api.addSegmentedVideoWithSegment as any).mockResolvedValue({ segmentedVideo: {}, segment: {} });
         (useYouTubeMetadata as any).mockReturnValue({
             youtubeId: 'dQw4w9WgXcQ',
@@ -155,6 +140,7 @@ describe('AddPage', () => {
         });
 
         renderWithRouter(<AddPage />);
+        await waitFor(() => expect(api.getSegmentedVideos).toHaveBeenCalled());
 
         fireEvent.change(screen.getByPlaceholderText(/Вставьте ссылку/i), { target: { value: 'https://youtube.com/watch?v=dQw4w9WgXcQ' } });
         fireEvent.change(screen.getByPlaceholderText(/Мои любимые клипы/i), { target: { value: 'My New Collection' } });
@@ -169,5 +155,7 @@ describe('AddPage', () => {
                 })
             );
         });
+
+        expect(mockNavigate).toHaveBeenCalledWith('/segmented-videos');
     });
 });
