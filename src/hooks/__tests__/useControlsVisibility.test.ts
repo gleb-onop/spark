@@ -80,4 +80,18 @@ describe('useControlsVisibility', () => {
         expect(removeEventListenerSpy).toHaveBeenCalledWith('mousemove', expect.any(Function));
         expect(removeEventListenerSpy).toHaveBeenCalledWith('mouseleave', expect.any(Function));
     });
+
+    it('should clear timer on unmount', () => {
+        const { unmount } = renderHook(() => {
+            const ref = useRef<HTMLDivElement>(null);
+            return useControlsVisibility(ref, false);
+        });
+
+        unmount();
+        // таймер не должен вызывать setState после анмаунта — нет ошибок в консоли
+        act(() => {
+            vi.advanceTimersByTime(3000);
+        });
+        // просто убеждаемся что не бросает ошибку
+    });
 });

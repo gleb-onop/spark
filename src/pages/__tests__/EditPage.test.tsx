@@ -4,6 +4,34 @@ import EditPage from '../EditPage';
 import { renderWithRouter, createSegment } from '../../test/helpers';
 import { api } from '../../services/api';
 
+vi.mock('../../components/UpdatePages/YouTubeInputSection', () => ({
+    YouTubeInputSection: ({ youtubeId, timeStart, setTimeStart, timeEnd, setTimeEnd }) => (
+        <div data-testid="mock-youtube-input">
+            {youtubeId && (
+                <>
+                    <label htmlFor="start">Старт</label>
+                    <input id="start" value={timeStart} onChange={(e) => setTimeStart(e.target.value)} />
+                    <label htmlFor="end">Конец</label>
+                    <input id="end" value={timeEnd} onChange={(e) => setTimeEnd(e.target.value)} />
+                </>
+            )}
+        </div>
+    )
+}));
+
+vi.mock('../../components/UpdatePages/SegmentDescription', () => ({
+    SegmentDescription: ({ description, setDescription }) => (
+        <div data-testid="mock-segment-description">
+            <label htmlFor="description">Описание</label>
+            <textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+            />
+        </div>
+    )
+}));
+
 vi.mock('../../services/api', () => ({
     api: {
         getSegment: vi.fn(),
@@ -25,7 +53,7 @@ describe('EditPage', () => {
         (api.getSegment as any).mockResolvedValue(segment);
 
         renderWithRouter(<EditPage />, {
-            routePath: '/segmented-videos/:segmentedVideoId/segments/:segmentUuid/edit',
+            routePath: '/segmented-videos/:segmentedVideoId/segments/:segmentId/edit',
             routerProps: { initialEntries: [`/segmented-videos/sv1/segments/${segment.uuid}/edit`] }
         });
 
@@ -44,7 +72,7 @@ describe('EditPage', () => {
         (api.updateSegment as any).mockResolvedValue(undefined);
 
         renderWithRouter(<EditPage />, {
-            routePath: '/segmented-videos/:segmentedVideoId/segments/:segmentUuid/edit',
+            routePath: '/segmented-videos/:segmentedVideoId/segments/:segmentId/edit',
             routerProps: { initialEntries: [`/segmented-videos/sv1/segments/${segment.uuid}/edit`] }
         });
 
@@ -72,7 +100,7 @@ describe('EditPage', () => {
         (api.getSegment as any).mockResolvedValue(segment);
 
         renderWithRouter(<EditPage />, {
-            routePath: '/segmented-videos/:segmentedVideoId/segments/:segmentUuid/edit',
+            routePath: '/segmented-videos/:segmentedVideoId/segments/:segmentId/edit',
             routerProps: { initialEntries: [`/segmented-videos/sv1/segments/${segment.uuid}/edit`] }
         });
 

@@ -1,13 +1,34 @@
 import { renderHook, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { useEffect } from 'react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useYouTubePlayer } from '../useYouTubePlayer';
-import type { YTPlayer } from '@/utils/youtube';
+import { type YTPlayer, YTPlayerState } from '../../utils/youtube';
+
+// Declared at module level because vi.mock factory captures these via closure
+let mockPlayer: any;
+let lastEvents: any;
+
+vi.mock('../useYouTubeBase', () => ({
+    useYouTubeBase: vi.fn().mockImplementation(({ playerRef, events }) => {
+        lastEvents = events;
+        useEffect(() => {
+            if (playerRef) {
+                playerRef.current = mockPlayer;
+                events?.onReady?.({ target: mockPlayer });
+            }
+        }, []); // Fix: remove events from deps to avoid infinite loops
+        return { player: mockPlayer, playerRef };
+    }),
+}));
 
 describe('useYouTubePlayer', () => {
-    let mockPlayer: YTPlayer;
+    afterEach(() => {
+        vi.useRealTimers();
+    });
 
     beforeEach(() => {
         vi.useFakeTimers();
+        lastEvents = null;
         mockPlayer = {
             getCurrentTime: vi.fn().mockReturnValue(0),
             getPlayerState: vi.fn().mockReturnValue(-1),
@@ -17,31 +38,6 @@ describe('useYouTubePlayer', () => {
             setVolume: vi.fn(),
             destroy: vi.fn(),
         } as unknown as YTPlayer;
-
-        // Mock window.YT.Player constructor
-        vi.stubGlobal('YT', {
-            Player: vi.fn().mockImplementation((id, config) => {
-                const player = {
-                    ...mockPlayer,
-                    ...config.events
-                };
-                // Simulate onReady
-                setTimeout(() => {
-                    if (config.events?.onReady) {
-                        config.events.onReady({ target: player });
-                    }
-                }, 0);
-                return player;
-            }),
-            PlayerState: {
-                UNSTARTED: -1,
-                ENDED: 0,
-                PLAYING: 1,
-                PAUSED: 2,
-                BUFFERING: 3,
-                CUED: 5,
-            },
-        });
     });
 
     it('should initialize player and seek to start time', async () => {
@@ -74,7 +70,8 @@ describe('useYouTubePlayer', () => {
 
         // Simulate player playing
         await act(async () => {
-            vi.runAllTimers();
+            lastEvents?.onStateChange?.({ target: mockPlayer, data: YTPlayerState.PLAYING });
+            vi.runOnlyPendingTimers();
         });
 
         // Current time: 9.9s (within 0.15s buffer of 10s)

@@ -24,6 +24,8 @@ export interface YTPlayer {
     getDuration(): number;
     getCurrentTime(): number;
     getPlayerState(): number;
+    addEventListener(event: string, handler: (event: any) => void): void;
+    removeEventListener(event: string, handler: (event: any) => void): void;
 }
 
 export interface YTEvent {

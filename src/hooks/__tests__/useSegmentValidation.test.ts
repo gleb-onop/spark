@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react';
+import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useSegmentValidation } from '../useSegmentValidation';
 
@@ -13,7 +13,6 @@ vi.mock('../../utils/youtube', async (importOriginal) => {
 
 describe('useSegmentValidation', () => {
     beforeEach(() => {
-        vi.useFakeTimers();
         vi.clearAllMocks();
 
         // Ensure a predictable YT mock
@@ -27,11 +26,12 @@ describe('useSegmentValidation', () => {
 
     afterEach(() => {
         vi.useRealTimers();
+        document.body.innerHTML = '';
     });
 
     it('should resolve true when onReady is triggered', async () => {
-        let onReadyCb: any;
-        (window.YT.Player as any).mockImplementation((_id: string, config: any) => {
+        let onReadyCb: any = null;
+        (window.YT.Player as any).mockImplementation(function (_id: string, config: any) {
             onReadyCb = config.events.onReady;
             return {
                 destroy: vi.fn(),
@@ -45,10 +45,9 @@ describe('useSegmentValidation', () => {
             validationPromise = result.current.validateSegment('valid-id');
         });
 
-        // Run all microtasks to reach the point after ensureYouTubeIframeAPIReady
-        await act(async () => {
-            await vi.runAllTicks();
-        });
+        await waitFor(() => {
+            if (typeof onReadyCb !== 'function') throw new Error('onReadyCb not yet captured');
+        }, { timeout: 2000 });
 
         await act(async () => {
             onReadyCb();
@@ -59,8 +58,8 @@ describe('useSegmentValidation', () => {
     });
 
     it('should resolve false when onError is triggered', async () => {
-        let onErrorCb: any;
-        (window.YT.Player as any).mockImplementation((_id: string, config: any) => {
+        let onErrorCb: any = null;
+        (window.YT.Player as any).mockImplementation(function (_id: string, config: any) {
             onErrorCb = config.events.onError;
             return {
                 destroy: vi.fn(),
@@ -74,11 +73,9 @@ describe('useSegmentValidation', () => {
             validationPromise = result.current.validateSegment('invalid-id');
         });
 
-        await act(async () => {
-            await Promise.resolve();
-            await Promise.resolve();
-            await Promise.resolve();
-        });
+        await waitFor(() => {
+            if (typeof onErrorCb !== 'function') throw new Error('onErrorCb not yet captured');
+        }, { timeout: 2000 });
 
         await act(async () => {
             onErrorCb();
@@ -89,9 +86,12 @@ describe('useSegmentValidation', () => {
     });
 
     it('should resolve false after timeout', async () => {
-        (window.YT.Player as any).mockImplementation(() => ({
-            destroy: vi.fn(),
-        }));
+        vi.useFakeTimers();
+        (window.YT.Player as any).mockImplementation(function () {
+            return {
+                destroy: vi.fn(),
+            };
+        });
 
         const { result } = renderHook(() => useSegmentValidation());
 
@@ -101,13 +101,7 @@ describe('useSegmentValidation', () => {
         });
 
         await act(async () => {
-            await Promise.resolve();
-            await Promise.resolve();
-            await Promise.resolve();
-        });
-
-        await act(async () => {
-            vi.advanceTimersByTime(8001);
+            vi.advanceTimersByTime(10000);
         });
 
         const isValid = await validationPromise!;
@@ -116,9 +110,11 @@ describe('useSegmentValidation', () => {
 
     it('should destroy existing player before creating new one', async () => {
         const destroySpy = vi.fn();
-        (window.YT.Player as any).mockImplementation(() => ({
-            destroy: destroySpy,
-        }));
+        (window.YT.Player as any).mockImplementation(function () {
+            return {
+                destroy: destroySpy,
+            };
+        });
 
         const { result } = renderHook(() => useSegmentValidation());
 
@@ -127,18 +123,13 @@ describe('useSegmentValidation', () => {
             result.current.validateSegment('id-1');
         });
 
-        await act(async () => {
-            await Promise.resolve();
-            await Promise.resolve();
-            await Promise.resolve();
-        });
+        await waitFor(() => {
+            expect(window.YT.Player).toHaveBeenCalled();
+        }, { timeout: 2000 });
 
         // Second call should destroy first
         await act(async () => {
             result.current.validateSegment('id-2');
-            await Promise.resolve();
-            await Promise.resolve();
-            await Promise.resolve();
         });
 
         expect(destroySpy).toHaveBeenCalled();

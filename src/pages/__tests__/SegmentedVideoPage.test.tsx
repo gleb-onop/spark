@@ -1,4 +1,5 @@
 import { screen, waitFor, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import SegmentedVideoPage from '../SegmentedVideoPage';
 import { renderWithRouter, createSegmentedVideo } from '../../test/helpers';
@@ -81,6 +82,7 @@ describe('SegmentedVideoPage', () => {
     });
 
     it('opens delete confirmation dialog and handles deletion', async () => {
+        const user = userEvent.setup();
         const { segmentedVideo, segments } = createSegmentedVideo({ name: 'To Delete' }, 1);
         (api.getSegmentedVideo as any).mockResolvedValue(segmentedVideo);
         (api.getSegmentsByUuids as any).mockResolvedValue(segments);
@@ -94,20 +96,21 @@ describe('SegmentedVideoPage', () => {
         await waitFor(() => expect(screen.getAllByText('To Delete').length).toBeGreaterThan(0));
 
         // Open menu and click delete
-        // Multiple menus can exist because of the mobile and desktop headers
-        const menuBtns = screen.getAllByRole('button', { name: /Дополнительно/i }).filter(btn => btn.tagName.toLowerCase() === 'button');
-        fireEvent.click(menuBtns[0]);
+        const menuBtn = screen.getByRole('button', { name: /Дополнительно/i });
+        await user.click(menuBtn);
 
-        const deleteItem = screen.getByText(/Удалить сегментированное видео/i);
-        fireEvent.click(deleteItem);
+        const deleteItem = await screen.findByText(/Удалить сегментированное видео/i);
+        await user.click(deleteItem);
 
         // Confirmation dialog
-        expect(screen.getByText(/Вы уверены, что хотите удалить "To Delete"?/i)).toBeInTheDocument();
+        expect(await screen.findByText(/Вы уверены, что хотите удалить.*"To Delete"\?/i)).toBeInTheDocument();
 
         const confirmBtn = screen.getByRole('button', { name: /Удалить/i });
-        fireEvent.click(confirmBtn);
+        await user.click(confirmBtn);
 
-        expect(api.deleteSegmentedVideo).toHaveBeenCalledWith(segmentedVideo.uuid);
+        await waitFor(() => {
+            expect(api.deleteSegmentedVideo).toHaveBeenCalledWith(segmentedVideo.uuid);
+        });
     });
 
     it('play button leads to first segment player', async () => {

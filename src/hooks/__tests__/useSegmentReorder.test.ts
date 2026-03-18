@@ -1,5 +1,5 @@
-import { renderHook, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { renderHook, act, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useSegmentReorder } from '../useSegmentReorder';
 import { api } from '@/services/api';
 import { toast } from 'sonner';
@@ -26,6 +26,10 @@ describe('useSegmentReorder', () => {
     beforeEach(() => {
         vi.useFakeTimers();
         vi.clearAllMocks();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
     });
 
     it('should initialize local segments', () => {
@@ -68,10 +72,14 @@ describe('useSegmentReorder', () => {
     });
 
     it('should rollback and show error toast on api failure', async () => {
+        vi.useRealTimers();
         (api.reorderSegments as any).mockRejectedValue(new Error('API Error'));
         const { result } = renderHook(() => useSegmentReorder(mockSegments, 'video-1'));
 
         act(() => {
+            // Need to call handleDragStart to populate previousSegmentsRef
+            result.current.handleDragStart({ active: { id: '1' } } as any);
+
             result.current.handleDragEnd({
                 active: { id: '1' },
                 over: { id: '2' },
@@ -81,12 +89,10 @@ describe('useSegmentReorder', () => {
         // Optimistic update happened
         expect(result.current.localSegments[0].uuid).toBe('2');
 
-        await act(async () => {
-            vi.advanceTimersByTime(1000);
-        });
-
-        // Rolled back
-        expect(result.current.localSegments[0].uuid).toBe('1');
+        // Rolled back - use waitFor to be sure (debounce is 1000ms)
+        await waitFor(() => {
+            expect(result.current.localSegments[0].uuid).toBe('1');
+        }, { timeout: 3000 });
         expect(toast.error).toHaveBeenCalledWith('Не удалось сохранить новый порядок сегментов');
     });
 

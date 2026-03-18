@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-const STORAGE_KEY = 'spark_looping';
+export const STORAGE_KEY = 'spark_looping';
 
 export const useLoopSetting = () => {
     const [isLooping, setIsLooping] = useState(() => {

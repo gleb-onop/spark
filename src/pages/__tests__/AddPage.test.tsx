@@ -1,20 +1,58 @@
-import { screen, waitFor, fireEvent, act } from '@testing-library/react';
+import { screen, waitFor, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import AddPage from '../AddPage';
 import { renderWithRouter, createSegmentedVideo } from '../../test/helpers';
 import { api } from '../../services/api';
+import { useYouTubeMetadata } from '../../hooks/useYouTubeMetadata';
 
 vi.mock('../../services/api', () => ({
     api: {
         getSegmentedVideos: vi.fn(),
+        getSegments: vi.fn(),
         addSegment: vi.fn(),
         addSegmentedVideoWithSegment: vi.fn(),
     }
 }));
 
+vi.mock('../../hooks/useYouTubeMetadata', () => ({
+    useYouTubeMetadata: vi.fn().mockReturnValue({
+        youtubeId: '',
+        initialTimestamp: null,
+        urlError: ''
+    })
+}));
+
+vi.mock('../../components/UpdatePages/YouTubeInputSection', () => ({
+    YouTubeInputSection: ({ url, setUrl, urlError, youtubeId, timeStart, setTimeStart, timeEnd, setTimeEnd }: any) => (
+        <div data-testid="mock-youtube-input">
+            <label htmlFor="segment-url">Ссылка на YouTube</label>
+            <input
+                id="segment-url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="Вставьте ссылку..."
+            />
+            {urlError && <div>{urlError}</div>}
+            {youtubeId && (
+                <>
+                    <label htmlFor="start">Старт</label>
+                    <input id="start" value={timeStart} onChange={(e) => setTimeStart(e.target.value)} />
+                    <label htmlFor="end">Конец</label>
+                    <input id="end" value={timeEnd} onChange={(e) => setTimeEnd(e.target.value)} />
+                </>
+            )}
+        </div>
+    )
+}));
+
 describe('AddPage', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        (useYouTubeMetadata as any).mockReturnValue({
+            youtubeId: '',
+            initialTimestamp: null,
+            urlError: ''
+        });
     });
 
     it('renders "New Collection" mode by default', async () => {
@@ -22,7 +60,9 @@ describe('AddPage', () => {
         renderWithRouter(<AddPage />);
 
         expect(screen.getByText('Новое сегментированное видео')).toBeInTheDocument();
-        expect(screen.getByPlaceholderText(/Мои любимые клипы/i)).toBeInTheDocument();
+        const nameInput = screen.getByPlaceholderText(/Мои любимые клипы/i);
+        expect(nameInput).toBeInTheDocument();
+        expect((nameInput as HTMLInputElement).value).toMatch(/^untitled-/);
         await waitFor(() => expect(api.getSegmentedVideos).toHaveBeenCalled());
     });
 
@@ -54,22 +94,19 @@ describe('AddPage', () => {
 
     it('shows validation error for invalid duration', async () => {
         (api.getSegmentedVideos as any).mockResolvedValue([]);
+        (useYouTubeMetadata as any).mockReturnValue({
+            youtubeId: 'dQw4w9WgXcQ',
+            initialTimestamp: null,
+            urlError: ''
+        });
+
         renderWithRouter(<AddPage />);
         await waitFor(() => expect(api.getSegmentedVideos).toHaveBeenCalled());
 
-        // Set name
-        const nameInput = screen.getByPlaceholderText(/Мои любимые клипы/i);
-        fireEvent.change(nameInput, { target: { value: 'Test' } });
+        // Fill URL
+        fireEvent.change(screen.getByPlaceholderText(/Вставьте ссылку/i), { target: { value: 'https://youtube.com/watch?v=dQw4w9WgXcQ' } });
 
-        // Set valid link to trigger metadata (mocked debounce)
-        const urlInput = screen.getByPlaceholderText(/Вставьте ссылку/i);
-        fireEvent.change(urlInput, { target: { value: 'dQw4w9WgXcQ' } });
-
-        await act(async () => {
-            await new Promise(r => setTimeout(r, 600)); // wait for debounce without fake timers
-        });
-
-        // Set invalid times (end < start)
+        // Times should now be available
         const startInput = screen.getByLabelText(/Старт/i);
         const endInput = screen.getByLabelText(/Конец/i);
 
@@ -78,22 +115,22 @@ describe('AddPage', () => {
         fireEvent.blur(startInput);
         fireEvent.blur(endInput);
 
-        const saveBtn = screen.getByRole('button', { name: /Сохранить/i });
-        fireEvent.click(saveBtn);
+        fireEvent.click(screen.getByRole('button', { name: /Сохранить/i }));
 
         expect(await screen.findByText(/Конец должен быть позже начала/i)).toBeInTheDocument();
     });
 
     it('shows validation error for short duration', async () => {
         (api.getSegmentedVideos as any).mockResolvedValue([]);
+        (useYouTubeMetadata as any).mockReturnValue({
+            youtubeId: 'dQw4w9WgXcQ',
+            initialTimestamp: null,
+            urlError: ''
+        });
+
         renderWithRouter(<AddPage />);
 
-        fireEvent.change(screen.getByPlaceholderText(/Мои любимые клипы/i), { target: { value: 'Test' } });
-        fireEvent.change(screen.getByPlaceholderText(/Вставьте ссылку/i), { target: { value: 'dQw4w9WgXcQ' } });
-
-        await act(async () => {
-            await new Promise(r => setTimeout(r, 600));
-        });
+        fireEvent.change(screen.getByPlaceholderText(/Вставьте ссылку/i), { target: { value: 'https://youtube.com/watch?v=dQw4w9WgXcQ' } });
 
         const startInput = screen.getByLabelText(/Старт/i);
         const endInput = screen.getByLabelText(/Конец/i);
@@ -111,17 +148,17 @@ describe('AddPage', () => {
     it('handles successful save in New Collection mode', async () => {
         (api.getSegmentedVideos as any).mockResolvedValue([]);
         (api.addSegmentedVideoWithSegment as any).mockResolvedValue({ segmentedVideo: {}, segment: {} });
+        (useYouTubeMetadata as any).mockReturnValue({
+            youtubeId: 'dQw4w9WgXcQ',
+            initialTimestamp: null,
+            urlError: ''
+        });
 
         renderWithRouter(<AddPage />);
 
+        fireEvent.change(screen.getByPlaceholderText(/Вставьте ссылку/i), { target: { value: 'https://youtube.com/watch?v=dQw4w9WgXcQ' } });
         fireEvent.change(screen.getByPlaceholderText(/Мои любимые клипы/i), { target: { value: 'My New Collection' } });
-        fireEvent.change(screen.getByPlaceholderText(/Вставьте ссылку/i), { target: { value: 'dQw4w9WgXcQ' } });
 
-        await act(async () => {
-            await new Promise(r => setTimeout(r, 600));
-        });
-
-        // Times should be default or we can set them
         fireEvent.click(screen.getByRole('button', { name: /Сохранить/i }));
 
         await waitFor(() => {

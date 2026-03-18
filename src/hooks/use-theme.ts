@@ -2,7 +2,7 @@ import { useState, useEffect } from "react"
 
 export type Theme = "light" | "dark"
 
-const THEME_KEY = "spark_theme"
+export const THEME_KEY = "spark_theme"
 
 export function useTheme() {
     const [theme, setTheme] = useState<Theme>(() => {

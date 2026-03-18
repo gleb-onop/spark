@@ -52,7 +52,9 @@ describe('LibraryPage', () => {
             expect(screen.getByText('My Collection')).toBeInTheDocument();
         });
 
-        expect(screen.getByText(/егментов: 2/i)).toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.getByText((content) => content.includes('егментов: 2'))).toBeInTheDocument();
+        });
 
         // Check "все" link
         const allLink = screen.getByText(/все/i).closest('a');

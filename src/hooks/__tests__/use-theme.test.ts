@@ -1,8 +1,8 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { useTheme } from '../use-theme';
+import { useTheme, THEME_KEY } from '../use-theme';
 
-const THEME_KEY = "spark_theme";
+
 
 describe('useTheme', () => {
     beforeEach(() => {

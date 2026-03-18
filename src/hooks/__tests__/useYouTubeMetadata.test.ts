@@ -12,7 +12,7 @@ describe('useYouTubeMetadata', () => {
     });
 
     it('parses watch v= link', () => {
-        const { result, rerender } = renderHook(({ url }) => useYouTubeMetadata(url), {
+        const { result } = renderHook(({ url }) => useYouTubeMetadata(url), {
             initialProps: { url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' }
         });
 

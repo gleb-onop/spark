@@ -26,10 +26,8 @@ export const renderWithRouter = (
 
 // --- Test Data Factories ---
 
-let counter = 0;
-
 export const createVideo = (overrides: Partial<Video> = {}): Video => ({
-    uuid: `video-${++counter}`,
+    uuid: `video-${Math.random().toString(36).slice(2, 11)}`,
     youtubeId: 'dQw4w9WgXcQ',
     description: '',
     duration: 120,
@@ -40,7 +38,7 @@ export const createVideo = (overrides: Partial<Video> = {}): Video => ({
 });
 
 export const createSegment = (overrides: Partial<Segment> = {}): Segment => ({
-    uuid: `segment-${++counter}`,
+    uuid: `segment-${Math.random().toString(36).slice(2, 11)}`,
     description: 'Test segment description',
     timeStart: '0:30.000',
     timeEnd: '1:45.000',
@@ -58,7 +56,7 @@ export const createSegmentedVideo = (
     );
 
     const segmentedVideo: SegmentedVideo = {
-        uuid: `sv-${++counter}`,
+        uuid: `sv-${Math.random().toString(36).slice(2, 11)}`,
         name: 'Приветствия на английском',
         createdAt: Date.now(),
         segmentIds: segments.map(s => s.uuid),

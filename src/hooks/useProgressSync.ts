@@ -74,11 +74,10 @@ export const useProgressSync = ({
                 setCurrentTime(player.getCurrentTime());
             }
         };
-
         const player = playerRef.current;
-        const p = player as any;
-        if (p && typeof p.addEventListener === 'function') {
-            p.addEventListener('onStateChange', handleStateChange);
+
+        if (player && typeof player.addEventListener === 'function') {
+            player.addEventListener('onStateChange', handleStateChange);
         }
 
         // Run sync immediately and then on interval
@@ -87,8 +86,8 @@ export const useProgressSync = ({
 
         return () => {
             window.clearInterval(intervalId);
-            if (p && typeof p.removeEventListener === 'function') {
-                p.removeEventListener('onStateChange', handleStateChange);
+            if (player && typeof player.removeEventListener === 'function') {
+                player.removeEventListener('onStateChange', handleStateChange);
             }
         };
     }, [playerRef, handleStateChange]); // Stable dependencies

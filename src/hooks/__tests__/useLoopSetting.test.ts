@@ -1,8 +1,6 @@
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, beforeEach } from 'vitest';
-import { useLoopSetting } from '../useLoopSetting';
-
-const STORAGE_KEY = 'spark_looping';
+import { useLoopSetting, STORAGE_KEY } from '../useLoopSetting';
 
 describe('useLoopSetting', () => {
     beforeEach(() => {

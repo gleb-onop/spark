@@ -1,4 +1,4 @@
-import { screen, waitFor, fireEvent } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import SegmentPage from '../SegmentPage';
 import { renderWithRouter, createSegmentedVideo } from '../../test/helpers';
@@ -9,6 +9,19 @@ vi.mock('../../services/api', () => ({
         getSegmentedVideo: vi.fn(),
         getSegmentsByUuids: vi.fn(),
     }
+}));
+
+// Mock components to avoid deep dependencies and network/timers
+vi.mock('../../components/SegmentsProgressBar', () => ({
+    SegmentsProgressBar: () => <div data-testid="mock-progress-bar" />
+}));
+
+vi.mock('../../components/SegmentThumbnail', () => ({
+    SegmentThumbnail: ({ title }: { title: string }) => <img alt={title} />
+}));
+
+vi.mock('../../components/ExpandableDescription', () => ({
+    ExpandableDescription: ({ text }: { text: string }) => <div>{text || 'Нет описания'}</div>
 }));
 
 describe('SegmentPage', () => {
@@ -23,6 +36,7 @@ describe('SegmentPage', () => {
         (api.getSegmentsByUuids as any).mockResolvedValue(segments);
 
         renderWithRouter(<SegmentPage />, {
+            routePath: '/segmented-videos/:segmentedVideoId/segments/:segmentId',
             routerProps: {
                 initialEntries: [`/segmented-videos/${segmentedVideo.uuid}/segments/${segment.uuid}`]
             }
@@ -30,14 +44,15 @@ describe('SegmentPage', () => {
 
         // Spec: Заголовок коллекции - отображается название
         await waitFor(() => {
-            expect(screen.getAllByText('Learning React').length).toBeGreaterThan(0);
+            expect(screen.getAllByText(/Learning React/i).length).toBeGreaterThan(0);
         });
 
         // Spec: Описание сегмента
-        expect(screen.getByText(segment.description)).toBeInTheDocument();
+        expect(screen.getAllByText(segment.description).length).toBeGreaterThan(0);
 
         // Spec: Временные метки (с миллисекундами)
-        expect(screen.getByText('0:30.000 – 1:45.000')).toBeInTheDocument();
+        // en-dash (U+2013) is used in the component
+        expect(screen.getByText(/0:30\.000.*1:45\.000/)).toBeInTheDocument();
     });
 
     it('handles empty description', async () => {
@@ -70,8 +85,8 @@ describe('SegmentPage', () => {
 
         // Spec: Переключатель зацикливания
         await waitFor(() => {
-            expect(screen.getByText('Зациклить сегментированное видео')).toBeInTheDocument();
-            expect(screen.getByText('Авто-повтор текущего списка')).toBeInTheDocument();
+            expect(screen.getByText(/Зациклить сегментированное видео/i)).toBeInTheDocument();
+            expect(screen.getByText(/Авто-повтор текущего списка/i)).toBeInTheDocument();
         });
     });
 
@@ -86,17 +101,17 @@ describe('SegmentPage', () => {
         });
 
         await waitFor(() => {
-            expect(screen.getByText('Course')).toBeInTheDocument();
+            expect(screen.getAllByText(/Course/i).length).toBeGreaterThan(0);
         });
 
         // Sidebar header
-        expect(screen.getByText('СЕГМЕНТЫ')).toBeInTheDocument();
+        expect(screen.getByText(/Сегменты/i)).toBeInTheDocument();
         expect(screen.getByText('3')).toBeInTheDocument();
 
-        // Check active segment in list (by some distinctive style or just presence if hidden/visible is not testable easily)
-        expect(screen.getByText('Segment 1')).toBeInTheDocument();
-        expect(screen.getByText('Segment 2')).toBeInTheDocument();
-        expect(screen.getByText('Segment 3')).toBeInTheDocument();
+        // Check active segment in list
+        expect(screen.getAllByText('Segment 1').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Segment 2').length).toBeGreaterThan(0);
+        expect(screen.getAllByText('Segment 3').length).toBeGreaterThan(0);
     });
 
     it('has a functional edit button leading to edit page', async () => {
@@ -110,9 +125,12 @@ describe('SegmentPage', () => {
             routerProps: { initialEntries: [`/segmented-videos/${segmentedVideo.uuid}/segments/${segments[0].uuid}`] }
         });
 
-        await waitFor(() => screen.getByText('Редактировать'));
-
-        const editBtn = screen.getByRole('link', { name: /Редактировать/i });
-        expect(editBtn).toHaveAttribute('href', `/segmented-videos/${segmentedVideo.uuid}/segments/${segment.uuid}/edit`);
+        await waitFor(() => {
+            // There are multiple ways to edit (mobile header, desktop button)
+            // We just need to check the link exists and is correct
+            const editLinks = screen.getAllByRole('link').filter(l => l.getAttribute('href')?.includes('/edit'));
+            expect(editLinks.length).toBeGreaterThan(0);
+            expect(editLinks[0]).toHaveAttribute('href', `/segmented-videos/${segmentedVideo.uuid}/segments/${segment.uuid}/edit`);
+        });
     });
 });

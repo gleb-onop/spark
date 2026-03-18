@@ -9,7 +9,6 @@ export const useSegmentValidation = () => {
             let resolved = false;
 
             const timeout = setTimeout(() => {
-                console.log('[DEBUG] Timeout reached for', videoId, 'resolved:', resolved);
                 if (!resolved) {
                     resolved = true;
                     if (validationPlayerRef.current) {
@@ -18,7 +17,6 @@ export const useSegmentValidation = () => {
                         } catch (e) { }
                         validationPlayerRef.current = null;
                     }
-                    console.warn('Validation timed out for video:', videoId);
                     resolve(false);
                 }
             }, 8000);
@@ -36,14 +34,12 @@ export const useSegmentValidation = () => {
                 }
 
                 if (!window.YT || !window.YT.Player) {
-                    console.log('[DEBUG] YT API missing for', videoId);
                     clearTimeout(timeout);
                     resolved = true;
                     resolve(true); // Fallback to success if API is not available
                     return;
                 }
 
-                console.log('[DEBUG] Creating Player for', videoId);
                 validationPlayerRef.current = new window.YT.Player('validation-player', {
                     width: 1,
                     height: 1,
@@ -55,7 +51,6 @@ export const useSegmentValidation = () => {
                     },
                     events: {
                         onReady: () => {
-                            console.log('[DEBUG] onReady for', videoId);
                             if (!resolved) {
                                 clearTimeout(timeout);
                                 resolved = true;
@@ -69,7 +64,6 @@ export const useSegmentValidation = () => {
                             }
                         },
                         onError: () => {
-                            console.log('[DEBUG] onError for', videoId);
                             if (!resolved) {
                                 clearTimeout(timeout);
                                 resolved = true;
@@ -85,7 +79,6 @@ export const useSegmentValidation = () => {
                     },
                 });
             } catch (err) {
-                console.error('[DEBUG] Catch block for', videoId, err);
                 if (!resolved) {
                     clearTimeout(timeout);
                     resolved = true;
