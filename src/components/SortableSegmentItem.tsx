@@ -6,9 +6,10 @@ import type { Segment } from '../types';
 interface SortableSegmentItemProps {
     segment: Segment;
     segmentedVideoId: string;
+    index: number;
 }
 
-export const SortableSegmentItem = ({ segment, segmentedVideoId }: SortableSegmentItemProps) => {
+export const SortableSegmentItem = ({ segment, segmentedVideoId, index }: SortableSegmentItemProps) => {
     const {
         attributes,
         listeners,
@@ -28,6 +29,7 @@ export const SortableSegmentItem = ({ segment, segmentedVideoId }: SortableSegme
             <SegmentItem
                 segment={segment}
                 segmentedVideoId={segmentedVideoId}
+                index={index}
                 dragHandleProps={{ ...attributes, ...listeners }}
                 isDragging={isDragging}
             />

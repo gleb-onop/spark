@@ -8,6 +8,7 @@ import { parseTime, formatTime } from '@/utils/time';
 interface SegmentItemProps {
     segment: Segment;
     segmentedVideoId: string;
+    index?: number;
     dragHandleProps?: HTMLAttributes<HTMLDivElement>;
     isDragging?: boolean;
     style?: CSSProperties;
@@ -16,6 +17,7 @@ interface SegmentItemProps {
 export const SegmentItem = ({
     segment,
     segmentedVideoId,
+    index,
     dragHandleProps,
     isDragging,
     style
@@ -31,6 +33,11 @@ export const SegmentItem = ({
             )}
         >
             <div className="relative z-10 p-1 flex items-center gap-1 transition-transform duration-200 ease-out">
+                {index !== undefined && (
+                    <div className="pl-4 pr-1 text-sm font-black tabular-nums text-muted-foreground/60 select-none">
+                        {index + 1}
+                    </div>
+                )}
                 <div className="p-2 text-muted-foreground/40 opacity-0 group-hover:opacity-100 md:opacity-100 transition-opacity shrink-0">
                     <GripVertical className="h-5 w-5" />
                 </div>

@@ -184,11 +184,12 @@ const SegmentedVideoPage = () => {
                             strategy={verticalListSortingStrategy}
                         >
                             <div className="flex flex-col gap-5">
-                                {localSegments.map((segment) => (
+                                {localSegments.map((segment, index) => (
                                     <SortableSegmentItem
                                         key={segment.uuid}
                                         segment={segment}
                                         segmentedVideoId={segmentedVideo.uuid}
+                                        index={index}
                                     />
                                 ))}
                             </div>
@@ -209,6 +210,7 @@ const SegmentedVideoPage = () => {
                                     <SegmentItem
                                         segment={activeSegment}
                                         segmentedVideoId={segmentedVideo.uuid}
+                                        index={localSegments.findIndex(s => s.uuid === activeSegment.uuid)}
                                     />
                                 </div>
                             ) : null}
