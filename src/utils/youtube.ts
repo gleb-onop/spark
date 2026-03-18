@@ -170,13 +170,32 @@ export const extractYouTubeMetadata = (input: string): {
 
     try {
         const urlObj = new URL(input.startsWith('http') ? input : `https://${input}`);
+        const hostname = urlObj.hostname.replace('www.', '');
+        const pathname = urlObj.pathname;
 
-        if (urlObj.hostname.includes('youtu.be')) {
-            videoId = urlObj.pathname.slice(1);
+        // Block specific unsupported formats
+        if (hostname.includes('youtube.com')) {
+            if (pathname === '/playlist' || (pathname === '/' && urlObj.searchParams.has('list'))) {
+                return { videoId: null, initialTimestamp: null, error: 'Списки воспроизведения не поддерживаются' };
+            }
+            if (pathname.startsWith('/embed/')) {
+                return { videoId: null, initialTimestamp: null, error: 'Встроенные видео (embed) не поддерживаются' };
+            }
+            if (pathname.startsWith('/live') || pathname === '/live') {
+                return { videoId: null, initialTimestamp: null, error: 'Прямые трансляции (live) не поддерживаются' };
+            }
+        }
+
+        if (hostname.includes('youtu.be')) {
+            videoId = pathname.slice(1);
         } else if (urlObj.searchParams.has('v')) {
             videoId = urlObj.searchParams.get('v') || '';
+        } else if (pathname.startsWith('/v/')) {
+            videoId = pathname.slice(3).split('?')[0];
+        } else if (pathname.startsWith('/shorts/')) {
+            videoId = pathname.split('/')[2] || '';
         } else {
-            const pathParts = urlObj.pathname.split('/').filter(Boolean);
+            const pathParts = pathname.split('/').filter(Boolean);
             videoId = pathParts[pathParts.length - 1] || '';
         }
 

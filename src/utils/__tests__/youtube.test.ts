@@ -60,6 +60,29 @@ describe('youtube utils', () => {
             expect(result.videoId).toBe('dQw4w9WgXcQ');
         });
 
+        it('extracts ID from legacy /v/ URL', () => {
+            const result = extractYouTubeMetadata('https://www.youtube.com/v/dQw4w9WgXcQ');
+            expect(result.videoId).toBe('dQw4w9WgXcQ');
+        });
+
+        it('returns specific error for playlists', () => {
+            const result = extractYouTubeMetadata('https://www.youtube.com/playlist?list=PL63B6931050F0058C');
+            expect(result.error).toBe('Списки воспроизведения не поддерживаются');
+            expect(result.videoId).toBeNull();
+        });
+
+        it('returns specific error for embeds', () => {
+            const result = extractYouTubeMetadata('https://www.youtube.com/embed/dQw4w9WgXcQ');
+            expect(result.error).toBe('Встроенные видео (embed) не поддерживаются');
+            expect(result.videoId).toBeNull();
+        });
+
+        it('returns specific error for live streams', () => {
+            const result = extractYouTubeMetadata('https://www.youtube.com/live/dQw4w9WgXcQ');
+            expect(result.error).toBe('Прямые трансляции (live) не поддерживаются');
+            expect(result.videoId).toBeNull();
+        });
+
         it('handles start parameter', () => {
             const result = extractYouTubeMetadata('https://www.youtube.com/watch?v=dQw4w9WgXcQ&start=120');
             expect(result.initialTimestamp).toBe(120);
