@@ -223,3 +223,40 @@ export const extractYouTubeMetadata = (input: string): {
         error: 'Не удалось распознать ссылку'
     };
 };
+
+export interface YTMetadata {
+    title: string;
+    author_name: string;
+    author_url: string;
+    type: string;
+    height: number;
+    width: number;
+    version: string;
+    provider_name: string;
+    provider_url: string;
+    thumbnail_height: number;
+    thumbnail_width: number;
+    thumbnail_url: string;
+    html: string;
+}
+
+const oembedCache = new Map<string, YTMetadata>();
+
+/**
+ * Fetches YouTube oEmbed metadata for a video.
+ */
+export async function getYouTubeOEmbed(videoId: string): Promise<YTMetadata> {
+    if (oembedCache.has(videoId)) {
+        return oembedCache.get(videoId)!;
+    }
+
+    const url = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error('Failed to fetch YouTube oEmbed metadata');
+    }
+
+    const data = await response.json();
+    oembedCache.set(videoId, data);
+    return data;
+}

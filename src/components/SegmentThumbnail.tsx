@@ -1,5 +1,6 @@
 import { Scissors } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useYouTubeOEmbed } from '@/hooks/useYouTubeOEmbed';
 
 interface SegmentThumbnailProps {
     youtubeId: string;
@@ -18,6 +19,7 @@ export const SegmentThumbnail = ({
     className,
     size = 'md'
 }: SegmentThumbnailProps) => {
+    const { thumbnailUrl } = useYouTubeOEmbed(youtubeId);
     const isShowingSegment = !!timeStart;
 
     const sizeClasses = {
@@ -29,7 +31,7 @@ export const SegmentThumbnail = ({
     return (
         <div className={cn("relative overflow-hidden bg-black ring-1 ring-black/5 dark:ring-white/10", sizeClasses[size], className)}>
             <img
-                src={`https://i.ytimg.com/vi/${youtubeId}/mqdefault.jpg`}
+                src={thumbnailUrl}
                 alt={title}
                 className="absolute inset-0 w-full h-full object-cover"
             />
