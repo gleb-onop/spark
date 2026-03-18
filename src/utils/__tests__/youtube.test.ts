@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseYouTubeTimestamp } from '../youtube';
+import { parseYouTubeTimestamp, extractYouTubeMetadata } from '../youtube';
 
 describe('youtube utils', () => {
     describe('parseYouTubeTimestamp', () => {
@@ -23,6 +23,58 @@ describe('youtube utils', () => {
         it('returns 0 for empty or null input', () => {
             expect(parseYouTubeTimestamp('')).toBe(0);
             expect(parseYouTubeTimestamp(null)).toBe(0);
+        });
+    });
+
+    describe('extractYouTubeMetadata', () => {
+        it('extracts ID from standard watch URL', () => {
+            const result = extractYouTubeMetadata('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+            expect(result.videoId).toBe('dQw4w9WgXcQ');
+            expect(result.error).toBeNull();
+        });
+
+        it('extracts ID and timestamp from watch URL', () => {
+            const result = extractYouTubeMetadata('https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=90');
+            expect(result.videoId).toBe('dQw4w9WgXcQ');
+            expect(result.initialTimestamp).toBe(90);
+        });
+
+        it('extracts ID from youtu.be short URL', () => {
+            const result = extractYouTubeMetadata('https://youtu.be/dQw4w9WgXcQ');
+            expect(result.videoId).toBe('dQw4w9WgXcQ');
+        });
+
+        it('extracts ID and timestamp from youtu.be short URL', () => {
+            const result = extractYouTubeMetadata('https://youtu.be/dQw4w9WgXcQ?t=1m30s');
+            expect(result.videoId).toBe('dQw4w9WgXcQ');
+            expect(result.initialTimestamp).toBe(90);
+        });
+
+        it('extracts ID from shorts URL', () => {
+            const result = extractYouTubeMetadata('https://www.youtube.com/shorts/dQw4w9WgXcQ');
+            expect(result.videoId).toBe('dQw4w9WgXcQ');
+        });
+
+        it('handles plain 11-character IDs', () => {
+            const result = extractYouTubeMetadata('dQw4w9WgXcQ');
+            expect(result.videoId).toBe('dQw4w9WgXcQ');
+        });
+
+        it('handles start parameter', () => {
+            const result = extractYouTubeMetadata('https://www.youtube.com/watch?v=dQw4w9WgXcQ&start=120');
+            expect(result.initialTimestamp).toBe(120);
+        });
+
+        it('returns error for invalid input', () => {
+            const result = extractYouTubeMetadata('not-a-youtube-url-at-all');
+            expect(result.videoId).toBeNull();
+            expect(result.error).toBe('Не удалось распознать ссылку');
+        });
+
+        it('handles empty input', () => {
+            const result = extractYouTubeMetadata('');
+            expect(result.videoId).toBeNull();
+            expect(result.error).toBeNull();
         });
     });
 });

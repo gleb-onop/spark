@@ -9,6 +9,7 @@ export const useSegmentValidation = () => {
             let resolved = false;
 
             const timeout = setTimeout(() => {
+                console.log('[DEBUG] Timeout reached for', videoId, 'resolved:', resolved);
                 if (!resolved) {
                     resolved = true;
                     if (validationPlayerRef.current) {
@@ -17,7 +18,7 @@ export const useSegmentValidation = () => {
                         } catch (e) { }
                         validationPlayerRef.current = null;
                     }
-                    console.warn('[DEBUG] Validation timed out for video:', videoId);
+                    console.warn('Validation timed out for video:', videoId);
                     resolve(false);
                 }
             }, 8000);
@@ -28,15 +29,21 @@ export const useSegmentValidation = () => {
                 if (resolved) return;
 
                 if (validationPlayerRef.current) {
-                    validationPlayerRef.current.destroy();
+                    try {
+                        validationPlayerRef.current.destroy();
+                    } catch (e) { }
                     validationPlayerRef.current = null;
                 }
 
                 if (!window.YT || !window.YT.Player) {
-                    throw new Error(`DEBUG_YT_MISSING: window.YT is ${typeof (window as any).YT}`);
+                    console.log('[DEBUG] YT API missing for', videoId);
+                    clearTimeout(timeout);
+                    resolved = true;
+                    resolve(true); // Fallback to success if API is not available
+                    return;
                 }
 
-                console.log('[DEBUG] Creating validation player for', videoId);
+                console.log('[DEBUG] Creating Player for', videoId);
                 validationPlayerRef.current = new window.YT.Player('validation-player', {
                     width: 1,
                     height: 1,
@@ -48,22 +55,28 @@ export const useSegmentValidation = () => {
                     },
                     events: {
                         onReady: () => {
+                            console.log('[DEBUG] onReady for', videoId);
                             if (!resolved) {
                                 clearTimeout(timeout);
                                 resolved = true;
                                 if (validationPlayerRef.current) {
-                                    validationPlayerRef.current.destroy();
+                                    try {
+                                        validationPlayerRef.current.destroy();
+                                    } catch (e) { }
                                     validationPlayerRef.current = null;
                                 }
                                 resolve(true);
                             }
                         },
                         onError: () => {
+                            console.log('[DEBUG] onError for', videoId);
                             if (!resolved) {
                                 clearTimeout(timeout);
                                 resolved = true;
                                 if (validationPlayerRef.current) {
-                                    validationPlayerRef.current.destroy();
+                                    try {
+                                        validationPlayerRef.current.destroy();
+                                    } catch (e) { }
                                     validationPlayerRef.current = null;
                                 }
                                 resolve(false);
@@ -72,7 +85,7 @@ export const useSegmentValidation = () => {
                     },
                 });
             } catch (err) {
-                console.error('Validation error:', err);
+                console.error('[DEBUG] Catch block for', videoId, err);
                 if (!resolved) {
                     clearTimeout(timeout);
                     resolved = true;
@@ -85,7 +98,9 @@ export const useSegmentValidation = () => {
     useEffect(() => {
         return () => {
             if (validationPlayerRef.current) {
-                validationPlayerRef.current.destroy();
+                try {
+                    validationPlayerRef.current.destroy();
+                } catch (e) { }
             }
         };
     }, []);

@@ -69,7 +69,7 @@ describe('SegmentsProgressBar', () => {
         expect(onSeek).toHaveBeenCalledWith('1', 50);
     });
 
-    it('should show tooltip on hover in overlay mode', () => {
+    it('should show tooltip on hover in overlay mode', async () => {
         render(
             <MemoryRouter>
                 <SegmentsProgressBar
@@ -81,13 +81,21 @@ describe('SegmentsProgressBar', () => {
             </MemoryRouter>
         );
 
-        const container = screen.getByRole('link', { name: /Seg 1/i }).parentElement?.parentElement?.parentElement;
+        const container = screen.getByRole('link', { name: /Seg 1/i }).closest('.group');
         if (!container) throw new Error('Container not found');
+
+        // Mock getBoundingClientRect
+        container.getBoundingClientRect = vi.fn().mockReturnValue({
+            left: 0,
+            width: 100,
+            top: 0,
+            height: 10,
+        });
 
         fireEvent.mouseMove(container, { clientX: 50 });
 
         // Total duration is 120s (2 segments of 60s each)
         // 50% of 120s is 60s -> 1:00
-        expect(screen.getByText('1:00')).toBeInTheDocument();
+        expect(await screen.findByText('1:00')).toBeInTheDocument();
     });
 });

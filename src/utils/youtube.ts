@@ -152,3 +152,55 @@ export const parseYouTubeTimestamp = (t: string | null): number => {
 
     return totalSeconds;
 };
+
+/**
+ * Extracts YouTube video ID and initial timestamp from a URL or plain ID.
+ */
+export const extractYouTubeMetadata = (input: string): {
+    videoId: string | null;
+    initialTimestamp: number | null;
+    error: string | null;
+} => {
+    if (!input) {
+        return { videoId: null, initialTimestamp: null, error: null };
+    }
+
+    let videoId = '';
+    let t: string | null = null;
+
+    try {
+        const urlObj = new URL(input.startsWith('http') ? input : `https://${input}`);
+
+        if (urlObj.hostname.includes('youtu.be')) {
+            videoId = urlObj.pathname.slice(1);
+        } else if (urlObj.searchParams.has('v')) {
+            videoId = urlObj.searchParams.get('v') || '';
+        } else {
+            const pathParts = urlObj.pathname.split('/').filter(Boolean);
+            videoId = pathParts[pathParts.length - 1] || '';
+        }
+
+        t = urlObj.searchParams.get('t') || urlObj.searchParams.get('start');
+    } catch (e) {
+        // Ignore, it might be just an 11-char ID
+    }
+
+    // Fallback for plain ID if it's a valid-looking 11-char ID
+    if (!videoId && /^[a-zA-Z0-9_-]{11}$/.test(input.trim())) {
+        videoId = input.trim();
+    }
+
+    if (videoId) {
+        return {
+            videoId,
+            initialTimestamp: t ? parseYouTubeTimestamp(t) : null,
+            error: null
+        };
+    }
+
+    return {
+        videoId: null,
+        initialTimestamp: null,
+        error: 'Не удалось распознать ссылку'
+    };
+};

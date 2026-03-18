@@ -1,23 +1,32 @@
 import { renderHook, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useSegmentValidation } from '../useSegmentValidation';
 
-vi.mock('../../utils/youtube', () => ({
-    ensureYouTubeIframeAPIReady: vi.fn(() => Promise.resolve()),
-}));
+// Mock the whole module to control ensureYouTubeIframeAPIReady
+vi.mock('../../utils/youtube', async (importOriginal) => {
+    const original = await importOriginal<any>();
+    return {
+        ...original,
+        ensureYouTubeIframeAPIReady: vi.fn(() => Promise.resolve()),
+    };
+});
 
 describe('useSegmentValidation', () => {
     beforeEach(() => {
         vi.useFakeTimers();
         vi.clearAllMocks();
 
-        // Mock window.YT.Player
-        vi.stubGlobal('YT', {
+        // Ensure a predictable YT mock
+        (window as any).YT = {
             Player: vi.fn(),
-        });
+        };
 
         // Add validation-player element
         document.body.innerHTML = '<div id="validation-player"></div>';
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
     });
 
     it('should resolve true when onReady is triggered', async () => {
@@ -31,18 +40,21 @@ describe('useSegmentValidation', () => {
 
         const { result } = renderHook(() => useSegmentValidation());
 
-        const validationPromise = result.current.validateSegment('valid-id');
-
-        // Let it reach the player creation
+        let validationPromise: Promise<boolean>;
         await act(async () => {
-            await Promise.resolve();
+            validationPromise = result.current.validateSegment('valid-id');
         });
 
-        act(() => {
+        // Run all microtasks to reach the point after ensureYouTubeIframeAPIReady
+        await act(async () => {
+            await vi.runAllTicks();
+        });
+
+        await act(async () => {
             onReadyCb();
         });
 
-        const isValid = await validationPromise;
+        const isValid = await validationPromise!;
         expect(isValid).toBe(true);
     });
 
@@ -57,18 +69,22 @@ describe('useSegmentValidation', () => {
 
         const { result } = renderHook(() => useSegmentValidation());
 
-        const validationPromise = result.current.validateSegment('invalid-id');
-
-        // Let it reach the player creation
+        let validationPromise: Promise<boolean>;
         await act(async () => {
+            validationPromise = result.current.validateSegment('invalid-id');
+        });
+
+        await act(async () => {
+            await Promise.resolve();
+            await Promise.resolve();
             await Promise.resolve();
         });
 
-        act(() => {
+        await act(async () => {
             onErrorCb();
         });
 
-        const isValid = await validationPromise;
+        const isValid = await validationPromise!;
         expect(isValid).toBe(false);
     });
 
@@ -79,18 +95,22 @@ describe('useSegmentValidation', () => {
 
         const { result } = renderHook(() => useSegmentValidation());
 
-        const validationPromise = result.current.validateSegment('slow-id');
-
-        // Let it reach the player creation
+        let validationPromise: Promise<boolean>;
         await act(async () => {
+            validationPromise = result.current.validateSegment('slow-id');
+        });
+
+        await act(async () => {
+            await Promise.resolve();
+            await Promise.resolve();
             await Promise.resolve();
         });
 
-        act(() => {
-            vi.advanceTimersByTime(8000);
+        await act(async () => {
+            vi.advanceTimersByTime(8001);
         });
 
-        const isValid = await validationPromise;
+        const isValid = await validationPromise!;
         expect(isValid).toBe(false);
     });
 
@@ -105,13 +125,18 @@ describe('useSegmentValidation', () => {
         // First call
         await act(async () => {
             result.current.validateSegment('id-1');
-            await Promise.resolve(); // allow ensureYouTubeIframeAPIReady to resolve
-            await Promise.resolve(); // allow reaching player creation
+        });
+
+        await act(async () => {
+            await Promise.resolve();
+            await Promise.resolve();
+            await Promise.resolve();
         });
 
         // Second call should destroy first
         await act(async () => {
             result.current.validateSegment('id-2');
+            await Promise.resolve();
             await Promise.resolve();
             await Promise.resolve();
         });
