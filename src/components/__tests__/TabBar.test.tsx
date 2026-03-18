@@ -47,4 +47,10 @@ describe('TabBar', () => {
         render(<TabBar />, { wrapper: MemoryRouter });
         expect(screen.getByText('Spark ✦')).toBeInTheDocument();
     });
+
+    it('renders theme toggle in desktop sidebar', () => {
+        render(<TabBar />, { wrapper: MemoryRouter });
+        expect(screen.getByText(/Тема/i)).toBeInTheDocument();
+        expect(screen.getByRole('switch')).toBeInTheDocument();
+    });
 });

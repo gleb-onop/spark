@@ -1,5 +1,8 @@
 import { NavLink } from 'react-router-dom';
-import { LayoutGrid, PlusSquare } from 'lucide-react';
+import { LayoutGrid, PlusSquare, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../hooks/use-theme';
+import { Switch } from './ui/switch';
+import { Button } from './ui/button';
 
 const navItems = [
     { to: '/segmented-videos', icon: LayoutGrid, label: 'Видео', end: true },
@@ -7,6 +10,8 @@ const navItems = [
 ];
 
 const TabBar = () => {
+    const { theme, toggleTheme } = useTheme();
+
     return (
         <>
             {/* Mobile: fixed bottom bar */}
@@ -49,6 +54,38 @@ const TabBar = () => {
                         </NavLink>
                     ))}
                 </nav>
+
+                <div className="mt-auto flex flex-col items-center">
+                    {/* Desktop detailed version */}
+                    <div className="hidden md:flex mobile-landscape:hidden w-full items-center justify-between p-3 bg-muted/30 rounded-2xl border border-border/50">
+                        <div className="flex items-center gap-2">
+                            {theme === 'light' ? (
+                                <Sun className="h-4 w-4 text-muted-foreground" />
+                            ) : (
+                                <Moon className="h-4 w-4 text-muted-foreground" />
+                            )}
+                            <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Тема</span>
+                        </div>
+                        <Switch
+                            checked={theme === 'dark'}
+                            onCheckedChange={toggleTheme}
+                            className="h-5 w-9 data-[state=checked]:bg-accent"
+                        />
+                    </div>
+
+                    {/* Mobile Landscape compact version */}
+                    <div className="flex md:hidden mobile-landscape:flex items-center justify-center py-2">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={toggleTheme}
+                            className="rounded-xl h-12 w-12 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                            aria-label="Переключить тему"
+                        >
+                            {theme === 'light' ? <Sun className="h-6 w-6" strokeWidth={2.5} /> : <Moon className="h-6 w-6" strokeWidth={2.5} />}
+                        </Button>
+                    </div>
+                </div>
             </aside>
         </>
     );
