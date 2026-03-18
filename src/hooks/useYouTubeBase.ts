@@ -28,11 +28,14 @@ export const useYouTubeBase = ({
     // Important: we want to keep the playerInstRef reference stable.
     const playerInstRef = externalPlayerRef || localPlayerRef;
 
-    // Track latest events to avoid re-creating player when callbacks change
+    // Track latest options to avoid re-creating player when they change referentially
     const eventsRef = useRef(events);
+    const playerVarsRef = useRef(playerVars);
+
     useEffect(() => {
         eventsRef.current = events;
-    }, [events]);
+        playerVarsRef.current = playerVars;
+    }, [events, playerVars]);
 
     useEffect(() => {
         let isMounted = true;
@@ -62,7 +65,7 @@ export const useYouTubeBase = ({
                     rel: 0,
                     showinfo: 0,
                     iv_load_policy: 3,
-                    ...playerVars,
+                    ...playerVarsRef.current,
                 },
                 events: {
                     ...eventsRef.current,
@@ -103,8 +106,7 @@ export const useYouTubeBase = ({
                 setPlayer(null);
             }
         };
-    }, [videoId, target, JSON.stringify(playerVars)]); // Re-init only if ID, target or key vars change
-
+    }, [videoId, target]);
     return {
         player,
         playerRef: playerInstRef
