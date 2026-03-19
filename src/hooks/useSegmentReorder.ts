@@ -11,7 +11,7 @@ import {
     arrayMove,
     sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
-import { debounce } from 'lodash';
+import { debounce } from 'lodash-es';
 import { toast } from 'sonner';
 import { api } from '@/services/api';
 import type { Segment } from '@/types';
