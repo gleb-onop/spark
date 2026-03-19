@@ -59,7 +59,6 @@ export function useSegmentReorder(segments: Segment[], segmentedVideoId: string 
                 try {
                     await api.reorderSegments(segmentedVideoId, segmentIds);
                 } catch (error) {
-                    console.error('Failed to reorder segments:', error);
                     setLocalSegments(currentPreviousSegments);
                     toast.error('Не удалось сохранить новый порядок сегментов');
                 }

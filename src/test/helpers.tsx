@@ -18,6 +18,7 @@ export const renderWithRouter = (
         <MemoryRouter {...routerProps}>
             <Routes>
                 <Route path={routePath} element={children} />
+                <Route path="*" element={<div />} />
             </Routes>
         </MemoryRouter>
     );

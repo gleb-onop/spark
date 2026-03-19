@@ -43,11 +43,9 @@ export const ConfirmDialog = ({
             <DialogContent className="rounded-3xl max-w-[90vw] sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle className="text-2xl font-black">{title}</DialogTitle>
-                    {description && (
-                        <DialogDescription className="text-base text-muted-foreground">
-                            {description}
-                        </DialogDescription>
-                    )}
+                    <DialogDescription className={cn("text-base text-muted-foreground", !description && "sr-only")}>
+                        {description || "\u00A0"}
+                    </DialogDescription>
                 </DialogHeader>
 
                 {children && <div className="py-2">{children}</div>}
