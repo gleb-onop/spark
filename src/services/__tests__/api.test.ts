@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { api } from '../api';
-import { generateUUID } from '../../utils/uuid';
 
 describe('api service', () => {
     beforeEach(() => {
