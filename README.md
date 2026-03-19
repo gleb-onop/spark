@@ -1,75 +1,87 @@
-# React + TypeScript + Vite
+# Spark ✦
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Веб-приложение для изучения иностранных языков через видео с YouTube.
+Вырезай короткие отрезки с нужными фразами, собирай в коллекции, слушай как плейлист учебных карточек — без регистрации и сервера.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Запуск
 
-## React Compiler
-
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Сборка
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run build
+npm run preview
 ```
+
+---
+
+## Стек
+
+### Core
+| | |
+|---|---|
+| [React 19](https://react.dev) | UI |
+| [React Router v7](https://reactrouter.com) | Клиентская навигация |
+| [TypeScript](https://www.typescriptlang.org) | Типизация |
+| [Vite](https://vitejs.dev) | Сборка и dev-сервер |
+
+### UI
+| | |
+|---|---|
+| [Tailwind CSS v4](https://tailwindcss.com) | Стилизация |
+| [shadcn/ui](https://ui.shadcn.com) | Компоненты (Dialog, Switch, DropdownMenu, Drawer) |
+| [Radix UI](https://www.radix-ui.com) | Примитивы под shadcn |
+| [Lucide React](https://lucide.dev) | Иконки |
+| [dnd kit](https://dndkit.com) | Drag & Drop сортировка сегментов |
+
+### Браузерные API
+| | |
+|---|---|
+| `localStorage` | Коллекции, сегменты, тема оформления, состояние зацикливания |
+| `sessionStorage` | Громкость и состояние звука между переходами |
+| `Fullscreen API` | Полноэкранный режим плеера |
+| `Screen Orientation API` | Автовход в fullscreen при повороте в ландшафт |
+| `History API` | Через React Router (навигация, передача `seekPct` через `location.state`) |
+| `YouTube IFrame API` | Встраивание и управление плеером |
+
+---
+
+## Структура проекта
+
+```
+src/
+  pages/         # Страницы
+  components/    # UI компоненты
+  hooks/         # Хуки с бизнес-логикой
+  utils/         # Утилиты
+  services/      # Слой данных
+  types/         # Общие TypeScript типы
+```
+
+---
+
+## Ключевые понятия
+
+| Термин | Описание |
+|---|---|
+| **Сегмент** | Отрезок видео с временными границами и описанием |
+| **Сегментированное видео** | Коллекция сегментов на одну тему |
+| **Библиотека** | Все коллекции пользователя |
+
+---
+
+## Хранение данных
+
+Все данные хранятся в localStorage.
+
+---
+
+## Документация
+
+Подробная пользовательская спецификация — [spark-user-spec.md](./docs/spark-user-spec.md)
