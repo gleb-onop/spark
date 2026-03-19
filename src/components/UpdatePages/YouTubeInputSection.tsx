@@ -44,6 +44,7 @@ export const YouTubeInputSection = ({
     const [isPreviewing, setIsPreviewing] = useState(false);
     const isStartingPreviewRef = useRef(false);
     const pendingSeekRef = useRef<number | null>(null);
+    const seekingRef = useRef(false);
 
     const stableOnDurationReady = useStableCallback(onDurationReady);
 
@@ -63,11 +64,14 @@ export const YouTubeInputSection = ({
             onStateChange: (event: YTEvent) => {
                 if (event.data === YTPlayerState.PLAYING) {
                     if (pendingSeekRef.current !== null) {
+                        seekingRef.current = true;
                         event.target.seekTo(pendingSeekRef.current, true);
                         pendingSeekRef.current = null;
+                        // isStartingPreviewRef stays true until seek lands in RAF
+                    } else {
+                        isStartingPreviewRef.current = false;
                     }
 
-                    isStartingPreviewRef.current = false;
                     try {
                         if (event.target.isMuted()) {
                             event.target.unMute();
@@ -81,6 +85,8 @@ export const YouTubeInputSection = ({
                     if (isStartingPreviewRef.current && event.data === YTPlayerState.PAUSED) {
                         return;
                     }
+                    pendingSeekRef.current = null;
+                    seekingRef.current = false;
                     setIsPreviewing(false);
                 }
             }
@@ -101,10 +107,30 @@ export const YouTubeInputSection = ({
 
         const checkTime = () => {
             if (playerRef.current && isPreviewing) {
+                // Wait for seekTo to be SENT
+                if (pendingSeekRef.current !== null || seekingRef.current) {
+                    rafId = requestAnimationFrame(checkTime);
+
+                    // If we've already sent seekTo, monitor when it actually lands
+                    if (seekingRef.current) {
+                        try {
+                            const currentTime = playerRef.current.getCurrentTime();
+                            const startSeconds = parseTime(timeStart);
+                            if (Math.abs(currentTime - startSeconds) < 0.5) {
+                                seekingRef.current = false;
+                                isStartingPreviewRef.current = false;
+                            }
+                        } catch (e) { }
+                    }
+                    return;
+                }
+
                 try {
                     const currentTime = playerRef.current.getCurrentTime();
                     // Increased precision with buffer
                     if (currentTime >= endSeconds - PREVIEW_STOP_BUFFER_SEC) {
+                        pendingSeekRef.current = null;
+                        seekingRef.current = false;
                         playerRef.current.mute(); // Immediate silence
                         playerRef.current.pauseVideo();
                         playerRef.current.seekTo(endSeconds, true); // Freeze on exact frame
@@ -122,21 +148,33 @@ export const YouTubeInputSection = ({
 
         rafId = requestAnimationFrame(checkTime);
         return () => cancelAnimationFrame(rafId);
-    }, [isPreviewing, timeEnd]);
+    }, [isPreviewing, timeEnd, timeStart]);
 
     const handleTogglePreview = useCallback(() => {
         if (!playerRef.current || !isPlayerReady) return;
 
         if (isPreviewing) {
+            pendingSeekRef.current = null;
+            seekingRef.current = false;
             playerRef.current.mute(); // Immediate silence
             playerRef.current.pauseVideo();
             setIsPreviewing(false);
         } else {
             const startSeconds = parseTime(timeStart);
-            pendingSeekRef.current = startSeconds;
             isStartingPreviewRef.current = true;
             playerRef.current.unMute(); // Ensure sound is on for preview
-            playerRef.current.playVideo();
+
+            const playerState = playerRef.current.getPlayerState();
+            if (playerState === YTPlayerState.PLAYING) {
+                // Player is already playing - PLAYING event won't fire, seekTo directly
+                seekingRef.current = true;
+                playerRef.current.seekTo(startSeconds, true);
+            } else {
+                // Player is paused - wait for PLAYING event to trigger seek
+                pendingSeekRef.current = startSeconds;
+                playerRef.current.playVideo();
+            }
+
             setIsPreviewing(true);
         }
     }, [isPreviewing, timeStart, isPlayerReady]);
