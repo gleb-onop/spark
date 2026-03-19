@@ -8,6 +8,7 @@ interface MaskedTimeInputProps {
     onChange: (value: string) => void;
     onBlur?: () => void;
     className?: string;
+    duration?: number;
 }
 
 export const MaskedTimeInput = ({
@@ -15,11 +16,16 @@ export const MaskedTimeInput = ({
     value,
     onChange,
     onBlur,
-    className
+    className,
+    duration = 0,
 }: MaskedTimeInputProps) => {
     // We'll internalize the value into parts: HH, MM, SS, mmm
     // value is expected to be in "h:mm:ss.sss" or similar format supported by parseTime
     const [parts, setParts] = useState({ hh: '', mm: '', ss: '', mmm: '' });
+
+    // Blocking logic
+    const isHourDisabled = duration > 0 && duration < 3600;
+    const isMinuteDisabled = duration > 0 && duration < 60;
 
     // Refs for jumping focus
     const hhRef = useRef<HTMLInputElement>(null);
@@ -41,16 +47,16 @@ export const MaskedTimeInput = ({
         const ms = Math.round((totalSeconds % 1) * 1000);
 
         setParts({
-            hh: h.toString().padStart(2, '0'),
-            mm: m.toString().padStart(2, '0'),
+            hh: (isHourDisabled ? 0 : h).toString().padStart(2, '0'),
+            mm: (isMinuteDisabled ? 0 : m).toString().padStart(2, '0'),
             ss: s.toString().padStart(2, '0'),
             mmm: ms.toString().padStart(3, '0'),
         });
-    }, [value, isFocused]);
+    }, [value, isFocused, isHourDisabled, isMinuteDisabled]);
 
     const updateValue = (newParts: typeof parts) => {
-        const hh = parseInt(newParts.hh) || 0;
-        const mm = parseInt(newParts.mm) || 0;
+        const hh = isHourDisabled ? 0 : (parseInt(newParts.hh) || 0);
+        const mm = isMinuteDisabled ? 0 : (parseInt(newParts.mm) || 0);
         const ss = parseInt(newParts.ss) || 0;
         const mmm = parseInt(newParts.mmm) || 0;
 
@@ -60,6 +66,8 @@ export const MaskedTimeInput = ({
     };
 
     const handleChange = (field: keyof typeof parts, val: string) => {
+        if ((field === 'hh' && isHourDisabled) || (field === 'mm' && isMinuteDisabled)) return;
+
         // Only digits
         const digits = val.replace(/\D/g, '');
         const maxLen = field === 'mmm' ? 3 : 2;
@@ -91,8 +99,9 @@ export const MaskedTimeInput = ({
 
     const handleKeyDown = (field: keyof typeof parts, e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Backspace' && parts[field] === '') {
-            if (field === 'mm') hhRef.current?.focus();
-            else if (field === 'ss') mmRef.current?.focus();
+            if (field === 'mm' && !isHourDisabled) hhRef.current?.focus();
+            else if (field === 'ss' && !isMinuteDisabled) mmRef.current?.focus();
+            else if (field === 'ss' && isMinuteDisabled && !isHourDisabled) hhRef.current?.focus(); // Skip disabled mm
             else if (field === 'mmm') ssRef.current?.focus();
         }
     };
@@ -108,8 +117,8 @@ export const MaskedTimeInput = ({
         setIsFocused(false);
         // Ensure padding on blur
         setParts(prev => ({
-            hh: prev.hh.padStart(2, '0'),
-            mm: prev.mm.padStart(2, '0'),
+            hh: isHourDisabled ? '00' : prev.hh.padStart(2, '0'),
+            mm: isMinuteDisabled ? '00' : prev.mm.padStart(2, '0'),
             ss: prev.ss.padStart(2, '0'),
             mmm: prev.mmm.padStart(3, '0'),
         }));
@@ -117,6 +126,7 @@ export const MaskedTimeInput = ({
     };
 
     const inputClasses = "bg-transparent text-center focus:outline-none w-full p-0 border-none transition-all placeholder:text-muted-foreground/30";
+    const disabledClasses = "opacity-20 pointer-events-none grayscale";
 
     return (
         <div
@@ -127,7 +137,7 @@ export const MaskedTimeInput = ({
             onPaste={handlePaste}
         >
             <div className="flex items-center flex-1 justify-center gap-1">
-                <div className="flex flex-col items-center w-8">
+                <div className={cn("flex flex-col items-center w-8", isHourDisabled && disabledClasses)}>
                     <input
                         ref={hhRef}
                         id={id}
@@ -136,15 +146,24 @@ export const MaskedTimeInput = ({
                         value={parts.hh}
                         onChange={(e) => handleChange('hh', e.target.value)}
                         onKeyDown={(e) => handleKeyDown('hh', e)}
-                        onFocus={(e) => { setIsFocused(true); e.target.select(); }}
+                        onFocus={(e) => {
+                            if (isHourDisabled) {
+                                mmRef.current?.focus();
+                                return;
+                            }
+                            setIsFocused(true);
+                            e.target.select();
+                        }}
                         onMouseUp={(e) => e.preventDefault()}
                         onBlur={handleBlurInternal}
                         placeholder="00"
                         className={inputClasses}
+                        disabled={isHourDisabled}
+                        tabIndex={isHourDisabled ? -1 : 0}
                     />
                 </div>
-                <span className="text-muted-foreground/40 font-light">:</span>
-                <div className="flex flex-col items-center w-8">
+                <span className={cn("text-muted-foreground/40 font-light", isHourDisabled && "opacity-20")}>:</span>
+                <div className={cn("flex flex-col items-center w-8", isMinuteDisabled && disabledClasses)}>
                     <input
                         ref={mmRef}
                         type="text"
@@ -152,14 +171,22 @@ export const MaskedTimeInput = ({
                         value={parts.mm}
                         onChange={(e) => handleChange('mm', e.target.value)}
                         onKeyDown={(e) => handleKeyDown('mm', e)}
-                        onFocus={(e) => { setIsFocused(true); e.target.select(); }}
+                        onFocus={(e) => {
+                            if (isMinuteDisabled) {
+                                ssRef.current?.focus();
+                                return;
+                            }
+                            setIsFocused(true); e.target.select();
+                        }}
                         onMouseUp={(e) => e.preventDefault()}
                         onBlur={handleBlurInternal}
                         placeholder="00"
                         className={inputClasses}
+                        disabled={isMinuteDisabled}
+                        tabIndex={isMinuteDisabled ? -1 : 0}
                     />
                 </div>
-                <span className="text-muted-foreground/40 font-light">:</span>
+                <span className={cn("text-muted-foreground/40 font-light", isMinuteDisabled && "opacity-20")}>:</span>
                 <div className="flex flex-col items-center w-8">
                     <input
                         ref={ssRef}

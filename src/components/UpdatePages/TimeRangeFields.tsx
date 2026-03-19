@@ -72,6 +72,7 @@ export const TimeRangeFields = ({
                     onChange={setLocalStart}
                     onBlur={handleStartBlur}
                     className="h-12"
+                    duration={duration}
                 />
             </div>
             <div className="space-y-2">
@@ -82,6 +83,7 @@ export const TimeRangeFields = ({
                     onChange={setLocalEnd}
                     onBlur={handleEndBlur}
                     className="h-12"
+                    duration={duration}
                 />
             </div>
         </div>
