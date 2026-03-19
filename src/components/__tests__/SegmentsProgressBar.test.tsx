@@ -106,7 +106,7 @@ describe('SegmentsProgressBar', () => {
             </MemoryRouter>
         );
 
-        // Find the link by label
+        // Find the link by label (provided via aria-label)
         const firstSegmentLink = screen.getByRole('link', { name: /Seg 1/i });
         const container = firstSegmentLink.closest('.group');
         if (!container) throw new Error('Container not found');
@@ -124,5 +124,28 @@ describe('SegmentsProgressBar', () => {
         // Total duration is 120s (from our mock logic)
         // 50% of 120s is 60s -> formatTime(60) -> "1:00"
         expect(await screen.findByText('1:00')).toBeInTheDocument();
+    });
+
+    it('should show segment description in tooltip', async () => {
+        render(
+            <MemoryRouter>
+                <SegmentsProgressBar
+                    segments={mockSegments as any}
+                    currentSegmentUuid="1"
+                    segmentedVideoId="video-1"
+                    isOverlay={true}
+                />
+            </MemoryRouter>
+        );
+
+        const firstSegmentLink = screen.getByRole('link', { name: /Seg 1/i });
+        const container = firstSegmentLink.closest('.group');
+        if (!container) throw new Error('Container not found');
+
+        container.getBoundingClientRect = vi.fn().mockReturnValue({ left: 0, width: 100 });
+        fireEvent.mouseMove(container, { clientX: 25 }); // 25% = 30s (Seg 1)
+
+        expect(await screen.findByText(/Seg 1/)).toBeInTheDocument();
+        expect(screen.getByText('0:30')).toBeInTheDocument();
     });
 });

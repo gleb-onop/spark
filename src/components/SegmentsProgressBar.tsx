@@ -26,7 +26,7 @@ const getSegmentDuration = (segment: Segment) => {
 };
 
 export const SegmentsProgressBar = ({
-    segments,
+    segments = [],
     currentSegmentUuid,
     segmentedVideoId,
     progressPct = 0,
@@ -37,7 +37,7 @@ export const SegmentsProgressBar = ({
     const [tooltipX, setTooltipX] = useState(0);
 
     const segmentDurations = useMemo(() =>
-        (segments || []).map(getSegmentDuration),
+        segments.map(getSegmentDuration),
         [segments]
     );
 
@@ -46,21 +46,27 @@ export const SegmentsProgressBar = ({
         [segmentDurations]
     );
 
-    if (!segments || segments.length === 0) return null;
+    const { cumulativeDurations, cumulativeWidths } = useMemo(() => {
+        const durations: number[] = [0];
+        const widths: number[] = [];
+        let totalSec = 0;
+        let totalPct = 0;
+
+        segmentDurations.forEach(dur => {
+            const w = totalDuration > 0 ? (dur / totalDuration) * 100 : (100 / segments.length);
+            widths.push(totalPct);
+            totalPct += w;
+            totalSec += dur;
+            durations.push(totalSec);
+        });
+        widths.push(totalPct);
+
+        return { cumulativeDurations: durations, cumulativeWidths: widths };
+    }, [segmentDurations, totalDuration, segments.length]);
+
+    if (segments.length === 0) return null;
 
     const currentSegmentIndex = segments.findIndex(s => s.uuid === currentSegmentUuid);
-
-    const cumulativeWidths = useMemo(() => {
-        const widths: number[] = [];
-        let total = 0;
-        segmentDurations.forEach(dur => {
-            const w = totalDuration > 0 ? (dur / totalDuration) * 100 : (100 / (segments || []).length);
-            widths.push(total);
-            total += w;
-        });
-        widths.push(total);
-        return widths;
-    }, [segmentDurations, totalDuration, segments]);
 
     const playheadAbsolutePct = useMemo(() => {
         if (currentSegmentIndex === -1) return 0;
@@ -70,6 +76,15 @@ export const SegmentsProgressBar = ({
     }, [currentSegmentIndex, cumulativeWidths, progressPct]);
 
     const hoverAbsolutePct = hoverTime !== null && totalDuration > 0 ? (hoverTime / totalDuration) * 100 : null;
+
+    // Find segment by hover time (efficiently)
+    const hoveredSegment = useMemo(() => {
+        if (hoverTime === null) return null;
+        const index = cumulativeDurations.findIndex((d, i) =>
+            hoverTime >= d && hoverTime < (cumulativeDurations[i + 1] ?? Infinity)
+        );
+        return index !== -1 ? segments[index] : null;
+    }, [hoverTime, cumulativeDurations, segments]);
 
     const handleSegmentClick = (e: React.MouseEvent, segmentUuid: string) => {
         if (!onSeek) return;
@@ -109,13 +124,18 @@ export const SegmentsProgressBar = ({
             {/* Tooltip */}
             {isOverlay && hoverTime !== null && (
                 <div
-                    className="absolute bottom-full mb-2 px-2 py-1 bg-black/95 text-white text-[11px] font-bold rounded-sm pointer-events-none z-50 transition-opacity duration-150 border border-white/10"
+                    className="absolute bottom-full mb-2 px-2 py-1 bg-black/95 text-white text-[11px] font-bold rounded-sm pointer-events-none z-50 transition-opacity duration-150 border border-white/10 flex items-center gap-1.5 whitespace-nowrap"
                     style={{
                         left: tooltipX,
                         transform: 'translateX(-50%)'
                     }}
                 >
-                    {formatTime(hoverTime)}
+                    <span>{formatTime(hoverTime)}</span>
+                    {hoveredSegment?.description && (
+                        <span className="opacity-90 font-black truncate max-w-[150px]">
+                            {hoveredSegment.description}
+                        </span>
+                    )}
                 </div>
             )}
 
@@ -168,7 +188,7 @@ export const SegmentsProgressBar = ({
                                 <Link
                                     key={segment.uuid}
                                     to={`/segmented-videos/${segmentedVideoId}/segments/${segment.uuid}`}
-                                    title={segment.description || `Сегмент ${index + 1}`}
+                                    aria-label={segment.description || `Сегмент ${index + 1}`}
                                     onClick={(e) => isOverlay && handleSegmentClick(e, segment.uuid)}
                                     className={cn(
                                         "h-full transition-all duration-200 relative overflow-hidden flex-1",
@@ -205,13 +225,6 @@ export const SegmentsProgressBar = ({
                     </div>
                 </div>
             </div>
-
-            <style dangerouslySetInnerHTML={{
-                __html: `
-                :root {
-                    --brand-rgb: 255, 60, 0;
-                }
-            `}} />
         </div>
     );
 };
