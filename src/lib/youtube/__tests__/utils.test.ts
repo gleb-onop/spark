@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseYouTubeTimestamp, extractYouTubeMetadata } from '../youtube';
+import { parseYouTubeTimestamp, extractYouTubeMetadata } from '../utils';
 
 describe('youtube utils', () => {
     describe('parseYouTubeTimestamp', () => {
