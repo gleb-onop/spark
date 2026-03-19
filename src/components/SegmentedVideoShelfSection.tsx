@@ -11,7 +11,9 @@ interface SegmentedVideoShelfSectionProps {
 }
 
 export const SegmentedVideoShelfSection = ({ segmentedVideo, segments }: SegmentedVideoShelfSectionProps) => {
-    const segmentedVideoSegments = segments.filter(v => segmentedVideo.segmentIds.includes(v.uuid));
+    const segmentedVideoSegments = segmentedVideo.segmentIds
+        .map(id => segments.find(s => s.uuid === id))
+        .filter((s): s is Segment => !!s);
     const scrollRef = useRef<HTMLDivElement>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
