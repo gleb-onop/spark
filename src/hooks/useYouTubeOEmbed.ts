@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { getYouTubeOEmbed, type YTMetadata } from '@/lib/youtube';
 
+const USE_OEMBED = import.meta.env.VITE_USE_OEMBED !== 'false'
+
 export const useYouTubeOEmbed = (videoId: string) => {
     const [metadata, setMetadata] = useState<YTMetadata | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
-        if (!videoId) {
+        if (!videoId || !USE_OEMBED) {
             setMetadata(null);
             return;
         }
