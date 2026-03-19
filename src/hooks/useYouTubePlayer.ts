@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { parseTime } from '../utils/time';
-import { type YTPlayer, type YTEvent, YTPlayerState } from '../utils/youtube';
+import { type YTPlayer, type YTEvent, YTPlayerState } from '@/lib/youtube';
 import { useYouTubeBase } from './useYouTubeBase';
 
 interface UseYouTubePlayerProps {

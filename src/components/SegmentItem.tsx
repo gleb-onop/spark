@@ -79,4 +79,4 @@ export const SegmentItem = ({
 };
 
 // Add helper to avoid circular dependency or missing cn if used
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/tailwind';

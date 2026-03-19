@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/tailwind';
 import { parseTime, formatTime } from '@/utils/time';
 
 interface MaskedTimeInputProps {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { debounce } from 'lodash';
-import { extractYouTubeMetadata } from '@/utils/youtube';
+import { extractYouTubeMetadata } from '@/lib/youtube';
 
 const DEBOUNCE_DELAY_MS = 500;
 

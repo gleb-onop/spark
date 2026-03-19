@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef, type RefObject } from 'react';
 import { parseTime } from '../utils/time';
-import { type YTPlayer, YTPlayerState } from '../utils/youtube';
+import { type YTPlayer, YTPlayerState } from '@/lib/youtube';
 
 interface UseProgressSyncProps {
     playerRef: RefObject<YTPlayer | null>;

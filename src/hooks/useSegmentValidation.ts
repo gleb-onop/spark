@@ -1,5 +1,5 @@
 import { useCallback, useRef, useEffect } from 'react';
-import { ensureYouTubeIframeAPIReady } from '../utils/youtube';
+import { ensureYouTubeIframeAPIReady } from '@/lib/youtube';
 
 export const useSegmentValidation = () => {
     const validationPlayerRef = useRef<any>(null);

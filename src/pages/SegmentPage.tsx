@@ -16,7 +16,7 @@ import { SegmentTimeLabel } from '@/components/SegmentTimeLabel';
 import { SegmentsProgressBar } from '@/components/SegmentsProgressBar';
 import { useControlsVisibility } from '@/hooks/useControlsVisibility';
 import { useOrientationFullscreen } from '@/hooks/useOrientationFullscreen';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/tailwind';
 
 const isFullscreenSupported = typeof document !== 'undefined' && !!document.fullscreenEnabled;
 

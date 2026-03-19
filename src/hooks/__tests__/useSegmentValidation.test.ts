@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useSegmentValidation } from '../useSegmentValidation';
 
 // Mock the whole module to control ensureYouTubeIframeAPIReady
-vi.mock('../../utils/youtube', async (importOriginal) => {
+vi.mock('@/lib/youtube', async (importOriginal) => {
     const original = await importOriginal<any>();
     return {
         ...original,

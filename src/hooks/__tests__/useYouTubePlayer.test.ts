@@ -2,7 +2,7 @@ import { renderHook, act } from '@testing-library/react';
 import { useEffect } from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useYouTubePlayer } from '../useYouTubePlayer';
-import { type YTPlayer, YTPlayerState } from '../../utils/youtube';
+import { type YTPlayer, YTPlayerState } from '@/lib/youtube';
 
 // Declared at module level because vi.mock factory captures these via closure
 let mockPlayer: any;

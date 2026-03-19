@@ -1,7 +1,8 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useProgressSync } from '../useProgressSync';
-import type { YTPlayer } from '@/utils/youtube';
+import type { YTPlayer } from '@/lib/youtube';
+import { YTPlayerState } from '@/lib/youtube';
 
 describe('useProgressSync', () => {
     let mockPlayer: YTPlayer;
@@ -114,7 +115,7 @@ describe('useProgressSync', () => {
         // Simulate state change to PLAYING via event
         act(() => {
             (mockPlayer.getPlayerState as any).mockReturnValue(1); // PLAYING
-            stateChangeHandler({ data: 1 }); // 1 = PLAYING
+            stateChangeHandler({ data: YTPlayerState.PLAYING });
         });
 
         await waitFor(() => {

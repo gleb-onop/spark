@@ -3,10 +3,10 @@ import { Loader2, Square, Timer, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
-import { type YTPlayer, type YTEvent, YTPlayerState } from '@/utils/youtube';
+import { type YTPlayer, type YTEvent, YTPlayerState } from '@/lib/youtube';
 import { useYouTubeBase } from '@/hooks/useYouTubeBase';
 import { useStableCallback } from '@/hooks/useStableCallback';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/tailwind';
 import { parseTime, formatTime } from '@/utils/time';
 import { TimeRangeFields } from './TimeRangeFields';
 

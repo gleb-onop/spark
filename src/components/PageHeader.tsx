@@ -4,7 +4,7 @@ import { ChevronLeft, Sun, Moon } from 'lucide-react';
 import { Button } from './ui/button';
 import { Switch } from './ui/switch';
 import { useTheme } from '../hooks/use-theme';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/tailwind';
 
 interface PageHeaderProps {
     title: string;

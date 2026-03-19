@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/tailwind';
 import { parseTime, formatTime } from '@/utils/time';
 import type { Segment } from '@/types';
 

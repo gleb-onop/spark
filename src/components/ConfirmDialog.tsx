@@ -8,7 +8,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "./ui/dialog";
-import { cn } from "../lib/utils";
+import { cn } from "../lib/tailwind";
 
 interface ConfirmDialogAction {
     label: string;

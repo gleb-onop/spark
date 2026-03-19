@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getYouTubeOEmbed, type YTMetadata } from '@/utils/youtube';
+import { getYouTubeOEmbed, type YTMetadata } from '@/lib/youtube';
 
 export const useYouTubeOEmbed = (videoId: string) => {
     const [metadata, setMetadata] = useState<YTMetadata | null>(null);

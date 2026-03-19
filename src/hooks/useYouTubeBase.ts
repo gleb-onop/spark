@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ensureYouTubeIframeAPIReady, type YTPlayer, type YTEvent, type YTPlayerOptions } from '../utils/youtube';
+import { ensureYouTubeIframeAPIReady, type YTPlayer, type YTEvent, type YTPlayerOptions } from '@/lib/youtube';
 
 export interface YouTubeBaseOptions {
     videoId: string;

@@ -1,5 +1,5 @@
 import { Scissors } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/tailwind';
 import { useYouTubeOEmbed } from '@/hooks/useYouTubeOEmbed';
 
 interface SegmentThumbnailProps {
