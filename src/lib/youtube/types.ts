@@ -23,7 +23,7 @@ export interface YTPlayer {
     getPlaybackRate(): number;
     getDuration(): number;
     getCurrentTime(): number;
-    getPlayerState(): number;
+    getPlayerState(): YTPlayerState;
     addEventListener(event: string, handler: (event: any) => void): void;
     removeEventListener(event: string, handler: (event: any) => void): void;
 }
