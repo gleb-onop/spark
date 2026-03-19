@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { LayoutGrid, PlusSquare, Sun, Moon } from 'lucide-react';
 import { useTheme } from '../hooks/use-theme';
 import { Switch } from './ui/switch';
@@ -33,9 +33,12 @@ const TabBar = () => {
 
             {/* Desktop: fixed left sidebar 240px */}
             <aside className="hidden md:flex mobile-landscape:flex fixed left-0 top-0 bottom-0 w-60 mobile-landscape:w-20 flex-col border-r border-border/50 bg-background/95 backdrop-blur-xl z-[100] py-6 px-4 mobile-landscape:px-2">
-                <div className="text-2xl font-black text-brand font-serif mb-8 px-3 select-none tracking-tight mobile-landscape:hidden">
+                <Link
+                    to="/"
+                    className="text-2xl font-black text-brand font-serif mb-8 px-3 select-none tracking-tight mobile-landscape:hidden no-underline hover:opacity-80 transition-opacity block"
+                >
                     Spark ✦
-                </div>
+                </Link>
                 <nav className="flex flex-col gap-1 mobile-landscape:gap-4 mobile-landscape:items-center">
                     {navItems.map(({ to, icon: Icon, label, end }) => (
                         <NavLink
