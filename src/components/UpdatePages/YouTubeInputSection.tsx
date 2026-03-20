@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Loader2, Square, Timer, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, Square, Timer, ChevronLeft, ChevronRight, Clipboard } from 'lucide-react';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
@@ -179,6 +179,17 @@ export const YouTubeInputSection = ({
         }
     }, [isPreviewing, timeStart, isPlayerReady]);
 
+    const handlePaste = async () => {
+        try {
+            const text = await navigator.clipboard.readText();
+            if (text) {
+                setUrl(text);
+            }
+        } catch (err) {
+            console.error('Failed to read clipboard:', err);
+        }
+    };
+
     const captureTime = useCallback((setter: (val: string) => void) => {
         if (playerRef.current) {
             const currentTime = playerRef.current.getCurrentTime();
@@ -193,13 +204,24 @@ export const YouTubeInputSection = ({
             {showUrlInput && (
                 <div className="space-y-2">
                     <Label htmlFor="segment-url" className="text-sm font-bold ml-1">Ссылка на YouTube</Label>
-                    <Input
-                        id="segment-url"
-                        value={url}
-                        onChange={(e) => setUrl(e.target.value)}
-                        placeholder="Вставьте ссылку..."
-                        className={`h-14 rounded-2xl bg-muted/30 border-none shadow-inner transition-all ${urlError ? 'ring-2 ring-red-500/50' : ''}`}
-                    />
+                    <div className="relative group/input">
+                        <Input
+                            id="segment-url"
+                            value={url}
+                            onChange={(e) => setUrl(e.target.value)}
+                            placeholder="Вставьте ссылку..."
+                            className={`h-14 pr-16 rounded-2xl bg-muted/30 border-none shadow-inner transition-all ${urlError ? 'ring-2 ring-red-500/50' : ''} group-hover/input:bg-muted/40`}
+                        />
+                        <button
+                            type="button"
+                            onClick={handlePaste}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 h-10 px-3 bg-brand/10 hover:bg-brand/20 text-brand rounded-xl border border-brand/20 transition-all flex items-center gap-2 group/btn active:scale-95"
+                            title="Вставить из буфера"
+                        >
+                            <Clipboard className="h-4 w-4 transition-transform group-hover/btn:scale-110" />
+                            <span className="text-[10px] font-black uppercase tracking-wider hidden sm:inline">Paste</span>
+                        </button>
+                    </div>
                     {urlError && <p className="text-red-500 text-[10px] font-bold uppercase tracking-widest ml-1">{urlError}</p>}
                 </div>
             )}

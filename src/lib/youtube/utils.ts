@@ -43,7 +43,7 @@ export const extractYouTubeMetadata = (input: string): {
         const pathname = urlObj.pathname;
 
         // Block specific unsupported formats
-        if (hostname.includes('youtube.com')) {
+        if (hostname.includes('youtube.com') || hostname.includes('youtu.be')) {
             if (pathname === '/playlist' || (pathname === '/' && urlObj.searchParams.has('list'))) {
                 return { videoId: null, initialTimestamp: null, error: 'Списки воспроизведения не поддерживаются' };
             }
@@ -53,22 +53,22 @@ export const extractYouTubeMetadata = (input: string): {
             if (pathname.startsWith('/live') || pathname === '/live') {
                 return { videoId: null, initialTimestamp: null, error: 'Прямые трансляции (live) не поддерживаются' };
             }
-        }
 
-        if (hostname.includes('youtu.be')) {
-            videoId = pathname.slice(1);
-        } else if (urlObj.searchParams.has('v')) {
-            videoId = urlObj.searchParams.get('v') || '';
-        } else if (pathname.startsWith('/v/')) {
-            videoId = pathname.slice(3).split('?')[0];
-        } else if (pathname.startsWith('/shorts/')) {
-            videoId = pathname.split('/')[2] || '';
-        } else {
-            const pathParts = pathname.split('/').filter(Boolean);
-            videoId = pathParts[pathParts.length - 1] || '';
-        }
+            if (hostname.includes('youtu.be')) {
+                videoId = pathname.slice(1);
+            } else if (urlObj.searchParams.has('v')) {
+                videoId = urlObj.searchParams.get('v') || '';
+            } else if (pathname.startsWith('/v/')) {
+                videoId = pathname.slice(3).split('?')[0];
+            } else if (pathname.startsWith('/shorts/')) {
+                videoId = pathname.split('/')[2] || '';
+            } else {
+                const pathParts = pathname.split('/').filter(Boolean);
+                videoId = pathParts[pathParts.length - 1] || '';
+            }
 
-        t = urlObj.searchParams.get('t') || urlObj.searchParams.get('start');
+            t = urlObj.searchParams.get('t') || urlObj.searchParams.get('start');
+        }
     } catch (e) {
         // Ignore, it might be just an 11-char ID
     }
@@ -89,7 +89,7 @@ export const extractYouTubeMetadata = (input: string): {
     return {
         videoId: null,
         initialTimestamp: null,
-        error: 'Не удалось распознать ссылку'
+        error: 'Другие платформы не поддерживаются, только YouTube'
     };
 };
 

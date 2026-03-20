@@ -47,7 +47,8 @@ npm run preview
 | `sessionStorage` | Громкость и состояние звука между переходами |
 | `Fullscreen API` | Полноэкранный режим плеера |
 | `Screen Orientation API` | Автовход в fullscreen при повороте в ландшафт |
-| `History API` | Через React Router (навигация, передача `seekPct` через `location.state`) |
+| `History API` | Через React Router |
+| `Clipboard API` | Вставка текста из буфера обмена |
 | `YouTube IFrame API` | Встраивание и управление плеером |
 
 ---
