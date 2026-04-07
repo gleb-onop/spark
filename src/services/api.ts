@@ -24,7 +24,7 @@ const saveToStorage = <T>(key: string, data: T[]) => {
 export const api = {
     // Segmented Videos
     getSegmentedVideos: async (): Promise<SegmentedVideo[]> => {
-        await delay(300);
+        await delay(700);
         return getFromStorage<SegmentedVideo>(SEGMENTED_VIDEOS_KEY);
     },
 

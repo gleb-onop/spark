@@ -91,7 +91,7 @@ describe('youtube utils', () => {
         it('returns error for invalid input', () => {
             const result = extractYouTubeMetadata('not-a-youtube-url-at-all');
             expect(result.videoId).toBeNull();
-            expect(result.error).toBe('Не удалось распознать ссылку');
+            expect(result.error).toBe('Другие платформы не поддерживаются, только YouTube');
         });
 
         it('handles empty input', () => {

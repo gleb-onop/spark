@@ -25,7 +25,11 @@ export const useSegmentNavigation = ({
         if (currentIndex < segmentedVideo.segmentIds.length - 1) {
             navigate(`/segmented-videos/${segmentedVideoId}/segments/${segmentedVideo.segmentIds[currentIndex + 1]}`);
         } else if (isLooping) {
-            navigate(`/segmented-videos/${segmentedVideoId}/segments/${segmentedVideo.segmentIds[0]}`);
+            navigate(`/segmented-videos/${segmentedVideoId}/segments/${segmentedVideo.segmentIds[0]}`, {
+                state: { forceRestart: Date.now() }
+            });
+        } else {
+            navigate(`/segmented-videos/${segmentedVideoId}`);
         }
     }, [segmentedVideo, segment, segmentedVideoId, navigate, isLooping]);
 

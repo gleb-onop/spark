@@ -124,4 +124,34 @@ describe('useYouTubePlayer', () => {
 
         expect(mockPlayer.seekTo).toHaveBeenLastCalledWith(60, true);
     });
+
+    it('should re-seek to start when forceRestart changes even if segment is the same', async () => {
+        const { rerender } = renderHook(({ forceRestart }) => useYouTubePlayer({
+            youtubeId: 'ABC',
+            timeStart: '0:30',
+            timeEnd: '1:00',
+            onComplete: vi.fn(),
+            onSegmentEnded: vi.fn(),
+            forceRestart
+        }), {
+            initialProps: { forceRestart: 0 }
+        });
+
+        await act(async () => {
+            vi.runAllTimers();
+        });
+
+        // Initial seek (due to isNewSegment)
+        expect(mockPlayer.seekTo).toHaveBeenCalledWith(30, true);
+        const callsAfterInitial = (mockPlayer.seekTo as any).mock.calls.length;
+
+        // Simulate force restart (e.g. from navigation state) - increment counter
+        await act(async () => {
+            rerender({ forceRestart: 1 });
+            vi.runAllTimers();
+        });
+
+        expect(mockPlayer.seekTo).toHaveBeenCalledTimes(callsAfterInitial + 1);
+        expect(mockPlayer.seekTo).toHaveBeenLastCalledWith(30, true);
+    });
 });

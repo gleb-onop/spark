@@ -11,6 +11,7 @@ interface UseYouTubePlayerProps {
     onComplete: () => void;
     onSegmentEnded: () => void;
     playerElement?: HTMLElement | null;
+    forceRestart?: any;
 }
 
 export const useYouTubePlayer = ({
@@ -21,6 +22,7 @@ export const useYouTubePlayer = ({
     onComplete,
     onSegmentEnded,
     playerElement,
+    forceRestart,
 }: UseYouTubePlayerProps) => {
     const playerRef = useRef<YTPlayer | null>(null);
     const intervalRef = useRef<number | null>(null);
@@ -69,8 +71,10 @@ export const useYouTubePlayer = ({
             const currentSegmentKey = `${youtubeId}-${timeStart}-${timeEnd}`;
             const isNewSegment = currentSegmentKey !== lastSegmentKey.current;
 
-            if (isNewSegment) {
-                lastSegmentKey.current = currentSegmentKey;
+            if (isNewSegment || forceRestart) {
+                if (isNewSegment) {
+                    lastSegmentKey.current = currentSegmentKey;
+                }
                 hasPerformedInitialSeek.current = false;
 
                 // Priority:
@@ -96,7 +100,7 @@ export const useYouTubePlayer = ({
             }
         }
         return () => stopInterval();
-    }, [youtubeId, startSec, endSec, startPolling, initialSeekPct, timeStart, timeEnd]);
+    }, [youtubeId, startSec, endSec, startPolling, initialSeekPct, timeStart, timeEnd, forceRestart]);
 
     useYouTubeBase({
         videoId: youtubeId,

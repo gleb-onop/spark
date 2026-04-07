@@ -72,7 +72,7 @@ describe('useYouTubeMetadata', () => {
         });
 
         expect(result.current.youtubeId).toBe('');
-        expect(result.current.urlError).toBe('Не удалось распознать ссылку');
+        expect(result.current.urlError).toBe('Другие платформы не поддерживаются, только YouTube');
     });
 
     it('clears metadata for empty URL', () => {

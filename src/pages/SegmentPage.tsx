@@ -36,8 +36,9 @@ const SegmentPage = () => {
         isLooping
     });
 
-    // Detect initial seek percentage from navigation state
+    // Detect initial seek percentage and force restart from navigation state
     const initialSeekPct = location.state?.seekPct ?? null;
+    const forceRestart = location.state?.forceRestart ?? null;
 
     // Container ref for fullscreen API and coordinate tracking
     const containerRef = useRef<HTMLDivElement>(null);
@@ -94,7 +95,8 @@ const SegmentPage = () => {
         initialSeekPct,
         onComplete,
         onSegmentEnded: onComplete,
-        playerElement
+        playerElement,
+        forceRestart
     });
 
     const progressSync = useProgressSync({
